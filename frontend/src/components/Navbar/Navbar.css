@@ -1,0 +1,108 @@
+/* src/components/Navbar/Navbar.css */
+
+/* Glassmorphism Navigation Bar */
+.navbar-container {
+  background: rgb(10, 25, 47);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.navbar-container.scrolled {
+  background: rgb(5, 12, 23);
+  border-bottom-color: rgba(212, 175, 55, 0.3);
+  box-shadow: 0 10px 30px -10px rgba(2, 12, 27, 0.7);
+}
+
+/* Nav Item Underline Hover Effect */
+.nav-link-btn {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+.nav-link-btn::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: #D4AF37;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-link-btn:hover::after,
+.nav-link-btn.active::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Gold Glow Accent on Icons */
+.action-icon-btn {
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.action-icon-btn:hover {
+  color: #D4AF37;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 15px rgba(212, 175, 55, 0.15);
+}
+
+/* Lang Toggle Switch Styling */
+.lang-toggle {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  transition: all 0.3s ease;
+}
+
+.lang-toggle:hover {
+  border-color: rgba(212, 175, 55, 0.4);
+  background: rgba(212, 175, 55, 0.05);
+}
+
+/* Mobile Hamburger Menu Icon Animation */
+.hamburger-line {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.hamburger-active .line-top {
+  transform: rotate(45deg) translate(5px, 6px);
+}
+
+.hamburger-active .line-middle {
+  opacity: 0;
+}
+
+.hamburger-active .line-bottom {
+  transform: rotate(-45deg) translate(5px, -6px);
+}
+
+/* Mobile Drawer Overlay */
+.mobile-drawer {
+  background: rgba(10, 25, 47, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+  border-left: 1px solid rgba(212, 175, 55, 0.15);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Custom Scrollbar for Mega Menus */
+.mega-menu-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.mega-menu-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.mega-menu-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.2);
+  border-radius: 3px;
+}
+
+.mega-menu-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(212, 175, 55, 0.4);
+}

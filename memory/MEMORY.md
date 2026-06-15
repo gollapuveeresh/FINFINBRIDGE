@@ -1,0 +1,1 @@
+- [Unified Case Workflow](unified-case-workflow.md) — how recommendation→proposal→approval→invoice→payment→advance works across all 5 departments
