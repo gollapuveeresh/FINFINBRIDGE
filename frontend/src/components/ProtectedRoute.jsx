@@ -10,6 +10,9 @@ export default function ProtectedRoute({ children }) {
     if (location.pathname.startsWith('/admin')) {
       return <Navigate to="/admin/login" state={{ from: location }} replace />;
     }
+    if (location.pathname.startsWith('/crm-admin')) {
+      return <Navigate to="/crm-admin/login" state={{ from: location }} replace />;
+    }
     if (location.pathname.startsWith('/department-admin')) {
       return <Navigate to="/department-admin/login" state={{ from: location }} replace />;
     }

@@ -6,7 +6,7 @@ import { ArrowRight, Landmark, Percent, Rocket, LineChart } from 'lucide-react';
 const WhatWeDo = ({ closeMenu }) => {
   const defaultPreview = {
     title: "Helping Businesses Make Smarter Financial Decisions",
-    desc: "Connect with our advisors to configure specialized growth frameworks and maximize enterprise valuations.",
+    desc: "Connect with our advisors to build specialized growth plans and improve your business value.",
     tag: "FINBRIDGE SOLUTIONS",
     link: "/valuation-advisory",
     btnText: "Explore Services"
@@ -15,31 +15,31 @@ const WhatWeDo = ({ closeMenu }) => {
   const [activePreview, setActivePreview] = useState(defaultPreview);
 
   const financialConsulting = [
-    { name: "Financial Planning", path: "/financial-transformation", desc: "Strategic projections and capital planning to ensure long-term corporate growth" },
-    { name: "Business Valuation", path: "/valuation-advisory", desc: "Accurate enterprise and asset valuation reports backed by global standards" },
+    { name: "Financial Planning", path: "/financial-planning", desc: "Financial projections and capital planning to support long-term business growth" },
+    { name: "Business Valuation", path: "/valuation-advisory", desc: "Accurate business and asset valuation reports backed by global standards" },
     { name: "Corporate Finance", path: "/corporate-finance", desc: "Capital structures, funding optimization, and comprehensive M&A advisory" },
     { name: "Risk Assessment", path: "/risk-compliance", desc: "Identify, control, and mitigate business vulnerabilities and operational risks" }
   ];
 
   const taxAdvisory = [
-    { name: "Tax Planning", path: "/corporate-finance", desc: "Proactive strategies to legally minimize corporate tax liabilities" },
-    { name: "Tax Optimization", path: "/corporate-finance", desc: "Efficiency frameworks aligned with international and local regulations" },
-    { name: "Compliance Management", path: "/risk-compliance", desc: "Regulatory audit preparedness and compliance filings support" },
-    { name: "Tax Reporting", path: "/corporate-finance", desc: "Accurate preparation of financial reporting structures" }
+    { name: "Tax Planning", path: "/tax-planning", desc: "Proactive strategies to legally minimize corporate tax liabilities" },
+    { name: "Tax Optimization", path: "/tax-optimization", desc: "Efficiency frameworks aligned with international and local regulations" },
+    { name: "Compliance Management", path: "/compliance-management", desc: "Regulatory audit preparedness and compliance filings support" },
+    { name: "Tax Reporting", path: "/tax-reporting", desc: "Accurate preparation of financial reporting structures" }
   ];
 
   const investmentAdvisory = [
-    { name: "Portfolio Analysis", path: "/wealth-management", desc: "Evaluate returns, risk tolerance, and asset allocation strategies" },
-    { name: "Wealth Planning", path: "/wealth-management", desc: "Custom plans to grow, secure, and preserve multi-generational wealth" },
-    { name: "Investment Strategy", path: "/wealth-management", desc: "Market-driven growth and hedging strategies for capital gains" },
-    { name: "Risk Analysis", path: "/risk-compliance", desc: "Stress-testing asset classes, equity holdings, and investment groups" }
+    { name: "Portfolio Analysis", path: "/portfolio-analysis", desc: "Evaluate returns, risk tolerance, and asset allocation strategies" },
+    { name: "Wealth Planning", path: "/wealth-planning", desc: "Custom plans to grow, secure, and preserve multi-generational wealth" },
+    { name: "Investment Strategy", path: "/investment-strategy", desc: "Market-driven growth and hedging strategies for capital gains" },
+    { name: "Risk Analysis", path: "/risk-analysis", desc: "Stress-testing asset classes, equity holdings, and investment groups" }
   ];
 
   const startupSolutions = [
-    { name: "Investor Connect", path: "/transaction-services", desc: "Introductions to institutional venture capitals, angels, and family offices" },
-    { name: "Funding Assistance", path: "/transaction-services", desc: "Preparation of pitch decks, financial metrics, and cap-table structuring" },
-    { name: "Growth Capital", path: "/transaction-services", desc: "Structuring debt and equity financing for business scaling" },
-    { name: "Business Planning", path: "/corporate-finance", desc: "Developing GTM plans, financial models, and operational roadmaps" }
+    { name: "Investor Connect", path: "/investor-connect", desc: "Introductions to institutional venture capitals, angels, and family offices" },
+    { name: "Funding Assistance", path: "/funding-assistance", desc: "Preparation of pitch decks, financial metrics, and cap-table structuring" },
+    { name: "Growth Capital", path: "/growth-capital", desc: "Structuring debt and equity financing for business scaling" },
+    { name: "Business Planning", path: "/business-planning", desc: "Developing GTM plans, financial models, and operational roadmaps" }
   ];
 
   const handleHover = (name, desc, path, tag) => {
@@ -184,7 +184,7 @@ const WhatWeDo = ({ closeMenu }) => {
             </AnimatePresence>
             
             <Link
-              to={activePreview.link}
+              to={activePreview.btnText === "Explore Now" ? "/client/login?register=true" : activePreview.link}
               onClick={closeMenu}
               className="mt-6 inline-flex items-center justify-center gap-2 border border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] text-[#D4AF37] font-semibold text-xs tracking-wider uppercase py-3 px-5 transition-all duration-300 rounded-sm font-mono"
             >

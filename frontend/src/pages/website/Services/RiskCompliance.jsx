@@ -66,11 +66,11 @@ const RiskCompliance = () => {
               RISK & COMPLIANCE
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Protect. Comply.<br />
-              <span className="text-[#D4AF37]">Thrive.</span>
+              Protect Comply<br />
+              <span className="text-[#D4AF37]">Thrive</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Integrated risk management and compliance solutions that safeguard your business while enabling sustainable growth.
+              Integrated risk management and compliance solutions that safeguard your business while enabling sustainable growth
             </p>
           </motion.div>
 
@@ -122,7 +122,7 @@ const RiskCompliance = () => {
             >
               <h2 className="text-5xl font-semibold tracking-tight mb-8">Enterprise Risk & Compliance Services</h2>
               <div className="space-y-8 text-lg text-gray-300">
-                <p>Our risk and compliance practice helps organizations navigate complex regulatory landscapes while building resilient risk management frameworks that support strategic objectives.</p>
+                <p>Our risk and compliance practice helps organizations navigate complex regulatory landscapes while building resilient risk management frameworks that support strategic objectives</p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Enterprise Risk Management (ERM)</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Regulatory Compliance Programs</li>
@@ -224,7 +224,7 @@ const RiskCompliance = () => {
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
           <h2 className="text-5xl font-semibold tracking-tight mb-6">Strengthen your risk posture today</h2>
-          <p className="text-xl text-gray-400 mb-10">Let our experts build a resilient compliance and risk management program tailored to your business.</p>
+          <p className="text-xl text-gray-400 mb-10">Let our experts build a resilient compliance and risk management program tailored to your business</p>
         </div>
       </section>
     </div>

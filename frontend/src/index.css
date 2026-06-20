@@ -3,6 +3,15 @@
 
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-size: 17px;
+  line-height: 1.75;
+}
+
 @theme {
   --color-bg: #0A0E1A;
   --color-bg-elevated: #0D1220;
@@ -25,8 +34,8 @@
   --color-status-error: #D35A5A;
   --color-status-info: #4A78C9;
   
-  --font-sans: "Inter", "sans-serif";
-  --font-serif: "Playfair Display", "serif";
+  --font-sans: serif;
+  --font-serif: serif;
   
   --radius-card: 14px;
   --radius-input: 10px;
@@ -329,4 +338,22 @@ tr:hover td {
 
 .text-gold {
   color: #D4AF37;
+}
+
+*:not(.material-symbols-outlined):not(.material-symbols-filled) {
+  font-family: serif !important;
+}
+
+:target {
+  scroll-margin-top: 120px;
+}
+
+#partners:target, #ecosystem:target, #investors:target,
+#planning:target, #optimization:target, #compliance:target, #reporting:target,
+#portfolio:target, #wealth:target, #strategy:target, #risk:target,
+#connect:target, #assistance:target, #capital:target, #planning-startup:target {
+  border-left: 6px solid #D4AF37 !important;
+  box-shadow: inset 20px 0 40px -20px rgba(212, 175, 55, 0.25) !important;
+  background-color: rgba(212, 175, 55, 0.03) !important;
+  transition: all 0.5s ease-in-out;
 }

@@ -5,11 +5,11 @@ import { getDepartmentDashboardPath, getUserDepartment } from '../../utils/depar
 
 /**
  * ConsultantLogin
- * Standalone, route-only entry point for the consultant portal.
- * - Reachable ONLY by typing /consultant (or /consultant/login) into the URL.
- * - No registration: consultant accounts are provisioned by an administrator.
- * - Strict role enforcement: a non-consultant who authenticates here is logged out.
- * - Theme: navy (kinetic-bg / primary-container) with gold highlights.
+ * Standalone, route-only entry point for the consultant portal
+ * - Reachable ONLY by typing /consultant (or /consultant/login) into the URL
+ * - No registration: consultant accounts are provisioned by an administrator
+ * - Strict role enforcement: a non-consultant who authenticates here is logged out
+ * - Theme: navy (kinetic-bg / primary-container) with gold highlights
  */
 export default function ConsultantLogin({
   portalLabel = 'Consultant Desk',
@@ -30,7 +30,7 @@ export default function ConsultantLogin({
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // If a consultant is already signed in, skip the login screen entirely.
+  // If a consultant is already signed in, skip the login screen entirely
   if (isAuthenticated && user?.role === 'consultant') {
     const dest = location.state?.from?.pathname || defaultDestination || getDepartmentDashboardPath(user.role, getUserDepartment(user));
     return <Navigate to={dest} replace />;
@@ -171,7 +171,7 @@ export default function ConsultantLogin({
         </div>
 
         <p className="mt-8 text-center text-label-sm text-on-primary-container opacity-70">
-          You will only ever see the clients assigned to you.
+          You will only ever see the clients assigned to you
         </p>
       </main>
     </div>

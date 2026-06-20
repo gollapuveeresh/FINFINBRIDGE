@@ -5,7 +5,7 @@ import { ArrowRight, Users, Award, Target, Globe } from 'lucide-react';
 
 const About = () => {
   const stats = [
-    { number: "18", label: "Years of Excellence" },
+    { number: "5", label: "Years of Excellence" },
     { number: "450", label: "Clients Worldwide" },
     { number: "92", label: "% Client Retention" },
     { number: "240", label: "Consulting Professionals" }
@@ -36,19 +36,22 @@ const About = () => {
 
   const leadership = [
     {
-      name: "Dr. Victoria Chen",
+      name: "Ms. Sarah Hossain",
       role: "Founder & CEO",
-      bio: "Former Global Head of Valuation at McKinsey with 25+ years in financial advisory."
+      bio: "Founder and Managing Director of FinBridge Solutions, leading the firm's strategic consulting, funding, and investment advisory practice.",
+      image: "/assets/images/dr_victoria_chen.png"
     },
     {
       name: "Alexander Moreau",
       role: "Chief Investment Officer",
-      bio: "Ex-BlackRock Portfolio Manager specializing in alternative investments."
+      bio: "Ex-BlackRock Portfolio Manager specializing in alternative investments.",
+      image: "/assets/images/alexander_moreau.png"
     },
     {
       name: "Priya Sharma",
-      role: "Global Head of Tax",
-      bio: "International tax expert with Big 4 background and LLM from Harvard."
+      role: "Head of Tax",
+      bio: "International tax expert with Big 4 background, leading taxation planning and Tax Shield Pro.",
+      image: "/assets/images/priya_sharma.png"
     }
   ];
 
@@ -68,11 +71,11 @@ const About = () => {
               ABOUT FINBRIDGE
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Trusted Financial<br />
-              <span className="text-[#D4AF37]">Advisors Since 2007</span>
+              Smart Finance.<br />
+              <span className="text-[#D4AF37]">Strong Future.</span>
             </h1>
             <p className="text-2xl text-gray-300">
-              Delivering enterprise-grade financial consulting with the precision of a global firm and the personal attention of a boutique.
+              FinBridge Solutions empowers startups, SMEs, and enterprises to achieve financial growth through strategic consulting, taxation planning, funding assistance, and investment advisory services
             </p>
           </motion.div>
 
@@ -130,7 +133,7 @@ const About = () => {
       </section>
 
       {/* Our Story */}
-      <section className="py-24">
+      <section id="why" className="py-24">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid md:grid-cols-2 gap-20 items-center">
             <motion.div
@@ -140,8 +143,8 @@ const About = () => {
             >
               <h2 className="text-5xl font-semibold tracking-tight mb-10">Our Story</h2>
               <div className="space-y-8 text-lg text-gray-300">
-                <p>Founded in 2007 by financial industry veterans, FinBridge Solutions was built on a simple principle: deliver the highest caliber strategic financial advice with genuine partnership.</p>
-                <p>Today, we serve leading corporations, growth-stage companies, family offices, and institutions across four continents. Our success is measured not just by transactions closed or reports delivered, but by the lasting impact we create for our clients.</p>
+                <p>Founded in 2021 by Ms. Sarah Hossain, FinBridge Solutions Ltd was built on a simple principle: help businesses navigate complex financial landscapes through strategic consulting, taxation planning, funding assistance, and investment advisory.</p>
+                <p>Today, we serve startups, SMEs, and enterprises, supporting their financial growth across business loan consulting, tax management, investment advisory, insurance, and wealth management. Our success is measured by the lasting impact we create for our clients.</p>
               </div>
             </motion.div>
             
@@ -150,7 +153,7 @@ const About = () => {
                 <div className="w-full h-full bg-gradient-to-br from-[#D4AF37]/10 to-transparent flex items-center justify-center">
                   <div className="text-center">
                     <div className="text-8xl mb-4">📍</div>
-                    <div className="text-[#D4AF37] text-xl font-medium">Global Headquarters • New York</div>
+                    <div className="text-[#D4AF37] text-xl font-medium">Headquarters • Chittagong, Bangladesh</div>
                   </div>
                 </div>
               </div>
@@ -160,7 +163,7 @@ const About = () => {
       </section>
 
       {/* Values */}
-      <section className="py-24 bg-black/40">
+      <section id="vision" className="py-24 bg-black/40">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-semibold tracking-tight">Our Guiding Values</h2>
@@ -186,13 +189,10 @@ const About = () => {
       </section>
 
       {/* Leadership */}
-      <section className="py-24">
+      <section id="leadership" className="py-24">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="flex justify-between items-end mb-12">
             <h2 className="text-5xl font-semibold tracking-tight">Leadership Team</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 text-lg hover:gap-3 transition-all">
-              Meet Our Full Team <ArrowRight />
-            </Link>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
@@ -204,10 +204,12 @@ const About = () => {
                 transition={{ delay: index * 0.1 }}
                 className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden group"
               >
-                <div className="h-80 bg-gradient-to-br from-[#1A2A4C] to-[#0A192F] flex items-center justify-center border-b border-white/10">
-                  <div className="w-40 h-40 rounded-full bg-white/10 flex items-center justify-center text-7xl border-4 border-[#D4AF37]/30">
-                    👔
-                  </div>
+                <div className="h-80 bg-gradient-to-br from-[#1A2A4C] to-[#0A192F] flex items-center justify-center border-b border-white/10 overflow-hidden relative">
+                  <img 
+                    src={leader.image} 
+                    alt={leader.name} 
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
                 </div>
                 <div className="p-10">
                   <h3 className="text-2xl font-semibold mb-1">{leader.name}</h3>
@@ -216,6 +218,58 @@ const About = () => {
                 </div>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Network Sections */}
+      {/* 1. Partners */}
+      <section id="partners" className="py-28 bg-[#0D1B3E] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">GLOBAL ALLIANCES</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Strategic Partners</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light">
+              We collaborate with premier global financial networks, banking institutions, and joint venture partners to assist our clients in transnational capital management, cross-border M&A, and international compliance
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🤝</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Institutional Alliances & Joint Ventures</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Business Ecosystem */}
+      <section id="ecosystem" className="py-28 bg-[#0A192F] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🌐</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Collaborative Professional Network</div>
+          </div>
+          <div className="order-1 md:order-2">
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">PROFESSIONAL ECOSYSTEM</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Business Ecosystem</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light">
+              Our collaborative ecosystem brings together certified financial advisors, CFAs, legal experts, and senior tax consultants. This interdisciplinary approach ensures every aspect of your enterprise's financial health is handled in unison by industry-leading specialists
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. Investor Network */}
+      <section id="investors" className="py-28 bg-black/45 border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">CAPITAL ACCELERATION</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Investor Network</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light">
+              We maintain direct, trusted relationships with top-tier venture capital funds, angel networks, institutional allocators, and private family offices. We bridge the gap between high-growth enterprises and strategic capital partners looking for high-value placement opportunities
+            </p>
+          </div>
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">💰</div>
+            <div className="text-[#D4AF37] text-lg font-medium">VC, Angel & Family Office Connections</div>
           </div>
         </div>
       </section>

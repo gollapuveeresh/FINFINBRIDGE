@@ -33,13 +33,13 @@ export default function LandingPage() {
           <div className="container mx-auto px-margin-desktop relative z-10 grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               <span className="inline-block px-4 py-1 rounded-full bg-accent/20/20 text-secondary-fixed text-label-lg border border-secondary/30">
-                Institutional Agility. Modern Precision.
+                Institutional Agility. Modern Precision
               </span>
               <h1 className="text-display-lg text-white max-w-xl leading-tight">
                 Smart Finance, <span className="text-secondary-fixed">Strong Future</span>
               </h1>
               <p className="text-body-lg text-on-primary-container max-w-lg">
-                Navigating complex financial landscapes with Tier-1 consultancy expertise. We bridge the gap between startup ambition and corporate stability.
+                Navigating complex financial landscapes with Tier-1 consultancy expertise. We bridge the gap between startup ambition and corporate stability
               </p>
               <div className="flex gap-4 flex-wrap">
                 <Link to="/login">
@@ -171,7 +171,7 @@ export default function LandingPage() {
           <div className="container mx-auto px-margin-desktop relative z-10 text-center">
             <h2 className="text-display-lg font-bold mb-6">Ready to fortify your financial future?</h2>
             <p className="text-body-lg text-on-primary-container mb-10 max-w-2xl mx-auto">
-              Schedule a confidential consultation with our senior partners today.
+              Schedule a confidential consultation with our senior partners today
             </p>
             <div className="flex flex-col sm:flex-row justify-center gap-4">
               <button className="bg-secondary text-white px-10 py-4 rounded-lg font-bold hover:opacity-90">Book Consultation</button>

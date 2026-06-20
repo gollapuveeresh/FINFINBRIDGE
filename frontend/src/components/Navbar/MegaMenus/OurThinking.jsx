@@ -15,31 +15,31 @@ const OurThinking = ({ closeMenu }) => {
   const [activePreview, setActivePreview] = useState(defaultPreview);
 
   const insights = [
-    { name: "Market Insights", path: "/market-intelligence", desc: "Weekly perspectives on global public & private markets valuations" },
-    { name: "Economic Outlook", path: "/market-intelligence", desc: "Macroeconomic forecasts, interest rates updates, and regulatory assessments" },
-    { name: "Financial Trends", path: "/wealth-management", desc: "Emerging asset class patterns, portfolio risk indices, and return summaries" },
-    { name: "Industry Reports", path: "/valuation-advisory", desc: "In-depth equity research and industry valuation multiple reviews" }
+    { name: "Market Insights", path: "/market-insights", desc: "Weekly perspectives on global public & private markets valuations" },
+    { name: "Economic Outlook", path: "/economic-outlook", desc: "Macroeconomic forecasts, interest rates updates, and regulatory assessments" },
+    { name: "Financial Trends", path: "/financial-trends", desc: "Emerging asset class patterns, portfolio risk indices, and return summaries" },
+    { name: "Industry Reports", path: "/industry-reports", desc: "In-depth equity research and industry valuation multiple reviews" }
   ];
 
   const knowledgeCenter = [
-    { name: "Business Guides", path: "/corporate-finance", desc: "Essential financial playbooks for entrepreneurs, executives, and owners" },
-    { name: "Tax Strategies", path: "/corporate-finance", desc: "Proactive structuring approaches to optimize company tax returns" },
-    { name: "Investment Resources", path: "/wealth-management", desc: "Formulas, models, worksheets, and strategic valuation guidelines" },
-    { name: "Financial Planning", path: "/financial-transformation", desc: "Step-by-step guides to capital budget allocation and reporting setup" }
+    { name: "Business Guides", path: "/business-guides", desc: "Essential financial playbooks for entrepreneurs, executives, and owners" },
+    { name: "Tax Strategies", path: "/tax-strategies", desc: "Proactive structuring approaches to optimize company tax returns" },
+    { name: "Investment Resources", path: "/investment-resources", desc: "Formulas, models, worksheets, and strategic valuation guidelines" },
+    { name: "Financial Planning", path: "/financial-planning-guide", desc: "Step-by-step guides to capital budget allocation and reporting setup" }
   ];
 
   const caseStudies = [
-    { name: "Startup Success Stories", path: "/transaction-services", desc: "How client ventures successfully closed Seed & Series A funding rounds" },
-    { name: "Funding Case Studies", path: "/transaction-services", desc: "M&A, corporate restructuring, and transaction advisory project briefs" },
-    { name: "Client Transformations", path: "/financial-transformation", desc: "Scale reports and profit optimizations for mid-market clients" },
-    { name: "Business Growth Stories", path: "/corporate-finance", desc: "Case studies detailing successful enterprise scaling initiatives" }
+    { name: "Startup Success Stories", path: "/startup-success-stories", desc: "How client ventures successfully closed Seed & Series A funding rounds" },
+    { name: "Funding Case Studies", path: "/funding-case-studies", desc: "M&A, corporate restructuring, and transaction advisory project briefs" },
+    { name: "Client Improvements", path: "/client-transformations", desc: "Growth reports and profit improvements for mid-market clients" },
+    { name: "Business Growth Stories", path: "/business-growth-stories", desc: "Case studies detailing successful business scaling initiatives" }
   ];
 
   const innovation = [
-    { name: "AI in Finance", path: "/digital-finance", desc: "Predictive algorithms, machine learning financial models, and automated reporting" },
-    { name: "FinTech Trends", path: "/digital-finance", desc: "DeFi protocols, digital ledgers, API-driven banking, and payment systems" },
-    { name: "Future of Finance", path: "/digital-finance", desc: "Next-gen banking tools, compliance integrations, and enterprise accounting stack plans" },
-    { name: "Digital Transformation", path: "/digital-finance", desc: "Migrating legacy models, spreadsheets, and ledgers to modern secure clouds" }
+    { name: "AI in Finance", path: "/ai-in-finance", desc: "Predictive algorithms, machine learning financial models, and automated reporting" },
+    { name: "FinTech Trends", path: "/fintech-trends", desc: "DeFi protocols, digital ledgers, API-driven banking, and payment systems" },
+    { name: "Future of Finance", path: "/future-of-finance", desc: "Next-gen banking tools, compliance integrations, and enterprise accounting stack plans" },
+    { name: "Digital Upgrade Guide", path: "/digital-transformation-guide", desc: "Moving legacy systems, spreadsheets, and ledgers to modern secure cloud platforms" }
   ];
 
   const handleHover = (name, desc, path, tag) => {
@@ -184,7 +184,7 @@ const OurThinking = ({ closeMenu }) => {
             </AnimatePresence>
             
             <Link
-              to={activePreview.link}
+              to={(activePreview.btnText === "View Insights" || activePreview.btnText === "Read Insights") ? "/client/login?register=true" : activePreview.link}
               onClick={closeMenu}
               className="mt-6 inline-flex items-center justify-center gap-2 border border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] text-[#D4AF37] font-semibold text-xs tracking-wider uppercase py-3 px-5 transition-all duration-300 rounded-sm font-mono"
             >

@@ -1,1 +1,2 @@
 - [Unified Case Workflow](unified-case-workflow.md) — how recommendation→proposal→approval→invoice→payment→advance works across all 5 departments
+- [Backend Migration State](backend-migration-state.md) — backend rewritten Node/Mongo→Spring Boot but incomplete; frontend still expects old contract, many endpoints missing

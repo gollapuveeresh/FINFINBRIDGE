@@ -101,8 +101,9 @@ export default function VerifyEmail() {
         </div>
 
         <footer className="mt-8 flex justify-center space-x-6">
-          <Link className="text-label-sm text-on-primary-container hover:text-secondary-fixed" to="/about">Privacy Policy</Link>
-          <Link className="text-label-sm text-on-primary-container hover:text-secondary-fixed" to="/about">Terms of Service</Link>
+          <Link className="text-label-sm text-on-primary-container hover:text-secondary-fixed transition-colors" to="/privacy-policy">Privacy Policy</Link>
+          <Link className="text-label-sm text-on-primary-container hover:text-secondary-fixed transition-colors" to="/terms-of-service">Terms of Service</Link>
+          <Link to="/contact" className="text-label-sm text-on-primary-container hover:text-secondary-fixed transition-colors">Contact Support</Link>
         </footer>
       </main>
     </div>

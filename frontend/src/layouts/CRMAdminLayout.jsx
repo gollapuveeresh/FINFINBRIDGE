@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import Topbar from '../components/Topbar';
 import { motion } from 'framer-motion';
 
 const crmMenuItems = [
@@ -64,8 +63,7 @@ export default function CRMAdminLayout({ children }) {
         </div>
       </aside>
 
-      <Topbar role="crm-admin" />
-      <main className="ml-[280px] pt-[112px] min-h-screen p-margin-desktop">
+      <main className="ml-[280px] min-h-screen p-margin-desktop">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}

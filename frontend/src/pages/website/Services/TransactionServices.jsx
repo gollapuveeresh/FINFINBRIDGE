@@ -32,7 +32,7 @@ const TransactionServices = () => {
     { step: "02", title: "Due Diligence", desc: "Rigorous multi-dimensional due diligence" },
     { step: "03", title: "Transaction Structuring", desc: "Optimal deal structuring and negotiation support" },
     { step: "04", title: "Closing & Integration", desc: "Seamless transaction closing and post-deal integration" },
-    { step: "05", title: "Value Creation", desc: "Realize synergies and monitor post-transaction performance" }
+    { step: "05", title: "Achieving Results", desc: "Track performance gains and monitor post-transaction outcomes" }
   ];
 
   const caseStudies = [
@@ -67,10 +67,10 @@ const TransactionServices = () => {
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
               Executing Strategic<br />
-              <span className="text-[#D4AF37]">Transactions Flawlessly.</span>
+              <span className="text-[#D4AF37]">Transactions Flawlessly</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Expert advisory for mergers, acquisitions, divestitures, and capital raises with proven execution excellence.
+              Expert advisory for mergers, acquisitions, divestitures, and capital raises with proven execution excellence
             </p>
           </motion.div>
 
@@ -113,111 +113,106 @@ const TransactionServices = () => {
         </div>
       </section>
 
-      {/* Service Overview */}
-      <section className="py-24 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20">
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-5xl font-semibold tracking-tight mb-8">Full Spectrum Transaction Advisory</h2>
-              <div className="space-y-8 text-lg text-gray-300">
-                <p>We provide comprehensive support across the entire transaction lifecycle, combining deep financial expertise with strategic insight to maximize value.</p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Mergers & Acquisitions</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Private Equity Transactions</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Divestitures & Carve-outs</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Capital Raising</li>
-                </ul>
+      {/* 1. Investor Connect */}
+      <section id="connect" className="py-28 bg-[#0D1B3E] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">GLOBAL ALLIANCES</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Investor Connect</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              We facilitate direct introductions to leading venture capital funds, angel groups, institutional allocators, and family offices globally to accelerate your capital raising needs
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <Handshake className="w-5 h-5" />
               </div>
-            </motion.div>
-            
-            <div className="bg-white/5 border border-white/10 p-12 rounded-3xl">
-              <h3 className="text-3xl font-semibold mb-10">Our Transaction Edge</h3>
-              <div className="space-y-10">
-                {benefits.map((benefit, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex gap-6"
-                  >
-                    <div className="text-[#D4AF37]">{benefit.icon}</div>
-                    <div>
-                      <h4 className="text-xl font-semibold mb-2">{benefit.title}</h4>
-                      <p className="text-gray-400">{benefit.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+              <div>
+                <h4 className="font-semibold text-white">VC & Angel Network</h4>
+                <p className="text-sm text-gray-400">Match with capital partners that match your industry focus.</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🤝</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Global Network Introductions</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Funding Assistance */}
+      <section id="assistance" className="py-28 bg-[#0A192F] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">📝</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Decks, Modeling & Cap Tables</div>
+          </div>
+          <div className="order-1 md:order-2">
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">PITCH PREPARATION</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Funding Assistance</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Prepare high-caliber fundraising materials, including defensible financial forecasts, capitalization tables, and compelling pitch decks designed to withstand rigorous VC due diligence
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Due Diligence Preparedness</h4>
+                <p className="text-sm text-gray-400">Ensure financial models and business metrics conform to expectations.</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Process Timeline */}
-      <section id="process-section" className="py-24 bg-black/40">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-semibold tracking-tight">Proven Transaction Methodology</h2>
-            <p className="mt-4 text-gray-400 max-w-md mx-auto">A structured approach that consistently delivers superior outcomes</p>
+      {/* 3. Growth Capital */}
+      <section id="capital" className="py-28 bg-black/45 border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">SCALING SOLUTIONS</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Growth Capital</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Structure debt, growth equity, or hybrid financing options tailored to your startup's phase. We ensure minimal dilution while securing the runway necessary to execute your objectives
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Structured Debt & Equity</h4>
+                <p className="text-sm text-gray-400">Minimize cost of capital and maximize runway flexibility.</p>
+              </div>
+            </div>
           </div>
-
-          <div className="max-w-4xl mx-auto">
-            {process.map((item, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex gap-8 mb-12 last:mb-0 relative"
-              >
-                {index !== process.length - 1 && (
-                  <div className="absolute left-[27px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-[#D4AF37] to-transparent"></div>
-                )}
-                <div className="w-14 h-14 rounded-2xl bg-[#D4AF37] text-[#0A192F] flex items-center justify-center font-bold text-xl flex-shrink-0 z-10">
-                  {item.step}
-                </div>
-                <div className="pt-2">
-                  <h3 className="text-2xl font-semibold mb-3">{item.title}</h3>
-                  <p className="text-gray-400 text-lg">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">⚡</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Optimal Valuation & Capital Structuring</div>
           </div>
         </div>
       </section>
 
-      {/* Case Studies */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="flex justify-between items-end mb-12">
-            <h2 className="text-5xl font-semibold tracking-tight">Featured Transactions</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
-              Explore More Transactions <ArrowRight className="group-hover:translate-x-1" />
-            </Link>
+      {/* 4. Business Planning */}
+      <section id="planning-startup" className="py-28 bg-[#0D1B3E] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🛡️</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Go-To-Market Plans & Scale Models</div>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {caseStudies.map((study, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ y: -10 }}
-                className="bg-white/5 border border-white/10 rounded-3xl p-10 group hover:border-[#D4AF37]/50 transition-all"
-              >
-                <div className="text-[#D4AF37] text-sm font-medium tracking-widest mb-6">SUCCESS STORY</div>
-                <h3 className="text-3xl font-semibold mb-2">{study.company}</h3>
-                <p className="text-gray-400 mb-8">{study.industry}</p>
-                
-                <div className="border-t border-white/10 pt-8 mt-auto">
-                  <div className="text-5xl font-bold text-[#D4AF37] mb-1">{study.value}</div>
-                  <div className="text-lg text-gray-300">{study.result}</div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="order-1 md:order-2">
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">ROADMAP DEVELOPMENT</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Business Planning</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Develop actionable go-to-market plans, unit economics models, and operational scale roadmaps. We align your product milestones with financial forecasts to guide your executive decisions
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Unit Economics & Modeling</h4>
+                <p className="text-sm text-gray-400">Demonstrate a clear pathway to profitability for capital allocators.</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -225,8 +220,15 @@ const TransactionServices = () => {
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
-          <h2 className="text-5xl font-semibold tracking-tight mb-6">Ready to execute your next strategic transaction?</h2>
-          <p className="text-xl text-gray-400 mb-10">Partner with FinBridge for seamless execution and maximum value creation.</p>
+          <h2 className="text-5xl font-semibold tracking-tight mb-6">Ready to execute your next transaction?</h2>
+          <p className="text-xl text-gray-400 mb-10">Partner with FinBridge for seamless execution and the best possible business outcomes.</p>
+          <Link 
+            to="/contact"
+            className="inline-flex items-center gap-4 bg-[#D4AF37] hover:bg-white text-[#0A192F] px-12 py-5 rounded-2xl font-semibold text-lg transition-all group"
+          >
+            Schedule Consultation
+            <ArrowRight className="group-hover:translate-x-2 transition" />
+          </Link>
         </div>
       </section>
     </div>

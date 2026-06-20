@@ -1,38 +1,150 @@
 // src/pages/Contact.jsx
+import React from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Phone, Mail, MapPin, Clock } from 'lucide-react';
 import LeadCaptureForm from '../../../components/LeadCaptureForm';
 
+const ContactCanvasBackground = () => {
+  const canvasRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+
+    const parent = canvas.parentElement;
+    let width = (canvas.width = parent ? parent.clientWidth : window.innerWidth);
+    let height = (canvas.height = parent ? parent.clientHeight : 800);
+
+    const handleResize = () => {
+      if (!canvas) return;
+      const p = canvas.parentElement;
+      width = canvas.width = p ? p.clientWidth : window.innerWidth;
+      height = canvas.height = p ? p.clientHeight : 800;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const mouse = { x: null, y: null };
+    const handleMouseMove = (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    };
+    const handleMouseLeave = () => {
+      mouse.x = null;
+      mouse.y = null;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseleave', handleMouseLeave);
+
+    // Create random floating data points
+    const points = [];
+    const pointCount = 18;
+    for (let i = 0; i < pointCount; i++) {
+      points.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * 0.18,
+        vy: (Math.random() - 0.5) * 0.18,
+        radius: Math.random() * 1.2 + 0.6,
+        color: `rgba(212, 175, 55, ${Math.random() * 0.2 + 0.15})`
+      });
+    }
+
+    const animate = () => {
+      const p = canvas.parentElement;
+      const currentWidth = p ? p.clientWidth : window.innerWidth;
+      const currentHeight = p ? p.clientHeight : 800;
+      if (canvas.width !== currentWidth || canvas.height !== currentHeight) {
+        width = canvas.width = currentWidth;
+        height = canvas.height = currentHeight;
+      }
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = 'rgba(10, 25, 47, 0.02)';
+      ctx.fillRect(0, 0, width, height);
+
+      // Update and draw points
+      points.forEach(pt => {
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+
+        if (pt.x < 0 || pt.x > width) pt.vx *= -1;
+        if (pt.y < 0 || pt.y > height) pt.vy *= -1;
+
+        // Mouse interact
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = pt.x - mouse.x;
+          const dy = pt.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 150) {
+            const force = (150 - dist) / 150;
+            pt.x += (dx / dist) * force * 0.8;
+            pt.y += (dy / dist) * force * 0.8;
+          }
+        }
+
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+        ctx.fillStyle = pt.color;
+        ctx.fill();
+      });
+
+      // Draw intersecting bezier curves connecting points to create a "communication grid"
+      for (let i = 0; i < points.length; i += 2) {
+        const pt1 = points[i];
+        const pt2 = points[(i + 1) % points.length];
+        const pt3 = points[(i + 2) % points.length];
+
+        if (pt1 && pt2 && pt3) {
+          ctx.beginPath();
+          ctx.moveTo(pt1.x, pt1.y);
+          ctx.quadraticCurveTo(pt2.x, pt2.y, pt3.x, pt3.y);
+          ctx.strokeStyle = 'rgba(212, 175, 55, 0.06)';
+          ctx.lineWidth = 0.55;
+          ctx.stroke();
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (canvas) {
+        canvas.removeEventListener('mouseleave', handleMouseLeave);
+      }
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 pointer-events-none opacity-80" />;
+};
+
 const Contact = () => {
   const offices = [
     {
-      city: "New York",
-      address: "1271 Avenue of the Americas, 42nd Floor",
-      phone: "+1 (212) 555-0189",
-      email: "nyc@finbridge.com"
-    },
-    {
-      city: "London",
-      address: "25 Bank Street, Canary Wharf",
-      phone: "+44 20 7946 0958",
-      email: "london@finbridge.com"
-    },
-    {
-      city: "Singapore",
-      address: "1 Raffles Place, #32-01",
-      phone: "+65 6808 4123",
-      email: "singapore@finbridge.com"
+      city: "Chittagong, Bangladesh",
+      address: "FinBridge Tower, Agrabad Commercial Area",
+      phone: "+880 1719 765432",
+      email: "contact@finbridge.com"
     }
   ];
 
   return (
-    <div className="bg-[#0A192F] text-white">
+    <div className="bg-[#0A192F] text-white relative overflow-hidden">
+      {/* Curved communication grid background */}
+      <ContactCanvasBackground />
       {/* Hero Section */}
       <section className="pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(at_top_right,#D4AF37_0%,transparent_60%)] opacity-10"></div>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -69,26 +181,26 @@ const Contact = () => {
                 <Mail className="text-[#D4AF37]" /> Get In Touch
               </h3>
               <div className="space-y-6">
-                <a href="mailto:advisory@finbridge.com" className="block group">
+                <a href="mailto:contact@finbridge.com" className="block group">
                   <div className="flex items-center gap-4 text-lg">
                     <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-[#D4AF37] group-hover:text-[#0A192F] transition-all">
                       ✉️
                     </div>
                     <div>
                       <div className="text-gray-400 text-sm">Primary Email</div>
-                      <div className="text-white group-hover:text-[#D4AF37] transition-colors">advisory@finbridge.com</div>
+                      <div className="text-white group-hover:text-[#D4AF37] transition-colors">contact@finbridge.com</div>
                     </div>
                   </div>
                 </a>
 
-                <a href="tel:+12125550189" className="block group">
+                <a href="tel:+8801719765432" className="block group">
                   <div className="flex items-center gap-4 text-lg">
                     <div className="w-12 h-12 rounded-2xl bg-white/10 flex items-center justify-center group-hover:bg-[#D4AF37] group-hover:text-[#0A192F] transition-all">
                       📞
                     </div>
                     <div>
-                      <div className="text-gray-400 text-sm">Global Helpline</div>
-                      <div className="text-white group-hover:text-[#D4AF37] transition-colors">+1 (212) 555-0189</div>
+                      <div className="text-gray-400 text-sm">Helpline</div>
+                      <div className="text-white group-hover:text-[#D4AF37] transition-colors">+880 1719 765432</div>
                     </div>
                   </div>
                 </a>
@@ -102,7 +214,7 @@ const Contact = () => {
               </h3>
               <div className="space-y-8">
                 {offices.map((office, index) => (
-                  <motion.div 
+                  <motion.div
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
@@ -125,10 +237,10 @@ const Contact = () => {
             </div>
 
             <div className="pt-8 border-t border-white/10">
-              <div className="flex items-center gap-3 text-sm text-gray-400">
+              {/* <div className="flex items-center gap-3 text-sm text-gray-400">
                 <Clock className="w-5 h-5" />
                 <span>Response within 4 business hours</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>
@@ -139,7 +251,7 @@ const Contact = () => {
         <div className="max-w-4xl mx-auto text-center px-6">
           <h2 className="text-4xl font-semibold mb-6">Not sure where to start?</h2>
           <p className="text-gray-400 text-lg mb-10">Our Client Success team will match you with the right expert based on your industry and objectives.</p>
-          <Link 
+          <Link
             to="/"
             className="inline-flex items-center gap-4 border border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] text-[#D4AF37] px-10 py-4 rounded-2xl font-medium transition-all"
           >

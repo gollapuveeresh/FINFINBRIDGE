@@ -12,7 +12,7 @@ const DigitalFinance = () => {
     },
     {
       icon: <Cloud className="w-8 h-8" />,
-      title: "Cloud Transformation",
+      title: "Cloud Migration",
       desc: "Secure migration to modern cloud finance platforms"
     },
     {
@@ -28,10 +28,10 @@ const DigitalFinance = () => {
   ];
 
   const process = [
-    { step: "01", title: "Digital Maturity Assessment", desc: "Evaluate current technology stack and identify transformation opportunities" },
-    { step: "02", title: "Technology Roadmap", desc: "Design comprehensive digital finance transformation strategy" },
+    { step: "01", title: "Digital Maturity Assessment", desc: "Evaluate current technology stack and identify upgrade opportunities" },
+    { step: "02", title: "Technology Roadmap", desc: "Design comprehensive digital finance upgrade plan" },
     { step: "03", title: "System Implementation", desc: "Deploy ERP, AI tools, and automation solutions" },
-    { step: "04", title: "Change Management", desc: "Training and cultural transformation for sustained adoption" },
+    { step: "04", title: "Change Management", desc: "Training and culture change for sustained adoption" },
     { step: "05", title: "Performance Optimization", desc: "Continuous improvement and value realization tracking" }
   ];
 
@@ -66,11 +66,11 @@ const DigitalFinance = () => {
               DIGITAL FINANCE
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Finance Reimagined.<br />
-              <span className="text-[#D4AF37]">Digitally Empowered.</span>
+              Modern Finance Technology.<br />
+              <span className="text-[#D4AF37]">Technology Enabled.</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Transform your finance organization with cutting-edge digital technologies, automation, and intelligent systems.
+              Upgrade your finance team with modern digital tools, automation, and smart systems that improve accuracy and speed
             </p>
           </motion.div>
 
@@ -116,11 +116,11 @@ const DigitalFinance = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-5xl font-semibold tracking-tight mb-8">Next-Generation Finance Technology</h2>
+              <h2 className="text-5xl font-semibold tracking-tight mb-8">Modern Finance Technology</h2>
               <div className="space-y-8 text-lg text-gray-300">
-                <p>We help organizations harness digital innovation to create more agile, insightful, and efficient finance functions powered by AI, automation, and real-time analytics.</p>
+                <p>We help businesses adopt digital tools to build faster, more accurate, and more efficient finance teams powered by AI, automation, and real-time reporting.</p>
                 <ul className="space-y-4">
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Finance Digital Transformation</li>
+                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Finance Digital Upgrade</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> AI & Predictive Analytics</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Robotic Process Automation</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Integrated Business Planning</li>
@@ -156,8 +156,8 @@ const DigitalFinance = () => {
       <section id="process-section" className="py-24 bg-black/40">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-semibold tracking-tight">Digital Finance Transformation Journey</h2>
-            <p className="mt-4 text-gray-400 max-w-md mx-auto">Structured approach to digital maturity and sustained innovation</p>
+            <h2 className="text-5xl font-semibold tracking-tight">Your Digital Finance Upgrade Path</h2>
+            <p className="mt-4 text-gray-400 max-w-md mx-auto">A clear, step-by-step approach to improving your finance systems</p>
           </div>
 
           <div className="max-w-4xl mx-auto">
@@ -189,8 +189,8 @@ const DigitalFinance = () => {
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="flex justify-between items-end mb-12">
-            <h2 className="text-5xl font-semibold tracking-tight">Digital Finance Transformations</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
+            <h2 className="text-5xl font-semibold tracking-tight">Digital Finance Success Stories</h2>
+            <Link to="/success-stories" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
               View More Success Stories <ArrowRight className="group-hover:translate-x-1" />
             </Link>
           </div>
@@ -219,8 +219,8 @@ const DigitalFinance = () => {
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
-          <h2 className="text-5xl font-semibold tracking-tight mb-6">Accelerate your digital finance journey</h2>
-          <p className="text-xl text-gray-400 mb-10">Build a future-ready finance organization with intelligent automation and real-time insights.</p>
+          <h2 className="text-5xl font-semibold tracking-tight mb-6">Start your digital finance upgrade</h2>
+          <p className="text-xl text-gray-400 mb-10">Build a prepared finance team with smart automation and up-to-date reporting.</p>
         </div>
       </section>
     </div>

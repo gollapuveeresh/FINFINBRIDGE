@@ -23,7 +23,9 @@ export function AuthProvider({ children }) {
     if (activeUser.role !== 'client') { setHasFinancialProfile(true); return true; }
     try {
       const res = await api.get('/financial-profile');
-      const ok = res.data?.status === 'success';
+      // Spring returns the profile entity directly (legacy Node returned { status: 'success' }).
+      // Treat any 2xx body carrying a profile id as "profile exists".
+      const ok = !!(res.data && (res.data.status === 'success' || res.data.id || res.data._id));
       setHasFinancialProfile(ok);
       return ok;
     } catch (err) {
@@ -41,16 +43,33 @@ export function AuthProvider({ children }) {
   // last-logged-in session but can independently switch portals afterwards.
   useEffect(() => {
     const verifySession = async () => {
+      // Skip auth check entirely on B2B and CRM admin pages — they use their own session
+      if (typeof window !== 'undefined' && (
+        window.location.pathname.startsWith('/b2b') ||
+        window.location.pathname.startsWith('/crm-admin')
+      )) {
+        setLoading(false);
+        return;
+      }
       const token = getToken();
       if (!token) { setLoading(false); return; }
       // Ensure sessionStorage has the token for this tab
       sessionStorage.setItem(TOKEN_KEY, token);
       try {
         const res = await api.get('/auth/me');
-        if (res.data?.status === 'success') {
-          setUser(res.data.user);
-          setIsAuthenticated(true);
-          await checkProfile(res.data.user);
+        // Spring Boot returns User object directly, Node.js returned { status, user }
+        const userData = res.data?.user || res.data;
+        if (userData?.role) {
+          if (userData.role === 'client') {
+            clearToken();
+            localStorage.removeItem(TOKEN_KEY);
+            setUser(null);
+            setIsAuthenticated(false);
+          } else {
+            setUser(userData);
+            setIsAuthenticated(true);
+            await checkProfile(userData);
+          }
         } else {
           clearToken();
         }
@@ -65,15 +84,22 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     try {
+      // Clear any stale token before logging in. A leftover/expired token must never
+      // be sent on the login request (the backend would reject the whole request).
+      sessionStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(TOKEN_KEY);
       const res = await api.post('/auth/login', { email, password });
       const data = res.data;
-      if (data.status === 'error') throw new Error(data.message || 'Login failed');
-      // Store in both so new tabs can pick it up, but this tab's session is isolated
-      setToken(data.token);
-      setUser(data.user);
+      // Spring Boot returns: { token, id, name, email, role, department }
+      // Normalize to user object
+      const user = data.user || { id: data.id, name: data.name, email: data.email, role: data.role, department: data.department };
+      const token = data.token;
+      if (!token) throw new Error(data.message || 'Login failed');
+      setToken(token);
+      setUser(user);
       setIsAuthenticated(true);
-      await checkProfile(data.user);
-      return data.user;
+      await checkProfile(user);
+      return user;
     } catch (err) {
       throw new Error(err.response?.data?.message || err.message || 'Login failed');
     }
@@ -85,6 +111,10 @@ export function AuthProvider({ children }) {
       if (department) payload.department = department;
       const res = await api.post('/auth/register', payload);
       const data = res.data;
+      // Spring Boot returns LoginResponse directly on register too
+      if (data.token) {
+        return { status: 'success', message: 'Registration successful! Please log in.' };
+      }
       if (data.status === 'error') throw new Error(data.message || 'Registration failed');
       return data;
     } catch (err) {

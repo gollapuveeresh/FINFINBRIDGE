@@ -45,7 +45,7 @@ export default function DepartmentLeadReview() {
 
   const handleAssign = async (leadId, consultantId) => {
     try {
-      const res = await api.patch(`/leads/${leadId}`, { assignedConsultant: consultantId, status: 'assigned' });
+      const res = await api.patch(`/leads/${leadId}`, { assignedConsultant: consultantId || null, status: consultantId ? 'assigned' : 'qualified' });
       setLeads(prev => prev.map(l => l._id === leadId ? res.data.lead : l));
       if (selected?._id === leadId) setSelected(res.data.lead);
       toast.success('Consultant assigned');

@@ -1,0 +1,20 @@
+---
+name: backend-migration-state
+description: Backend was migrated Node/Mongo → Spring Boot but migration is incomplete; frontend still expects the old contract
+metadata:
+  type: project
+---
+
+The backend was rewritten from Node/Express + MongoDB to **Spring Boot + Postgres** (`backend-springboot/`, port 5000, Flyway migrations, `ddl-auto: validate`). The old `backend/` (Node) was deleted. The **React frontend was NOT updated** and still expects the old Node/Mongo API contract, so there are two systemic mismatches:
+
+1. **Response shapes**: frontend reads `res.data.leads`/`.clients`/etc and `_id`; Spring returns a `Page` (`content`) and `id`. Fixed centrally by a response interceptor in [frontend/src/services/api.js](../frontend/src/services/api.js) that recursively aliases `id`→`_id` and unwraps `Page`→array. Stats objects (`pipeline`/`byDepartment`/`bySource`) don't exist server-side — compute them client-side from the leads list.
+
+2. **Missing endpoints — NOW IMPLEMENTED** (the contract chosen was: backend conforms to the frontend's legacy Node/Mongo shapes — named wrappers like `{leads:[...]}`, `{lead}`, `{cases}`, `{stats}`, plus `_id`). Added controllers/services: invoices, payments, loan-cases, dept-cases; expanded auth (clients, consultant/clients, admins CRUD, consultants CRUD, create-admin/create-consultant, verify-email, forgot/reset password), leads (send-to-department, note, convert→client, rich stats), consultations (accept/assign + nested DTOs), proposals (delete, department filter, nested refs). New Flyway migrations: V8 `loan_case_notes`, V9 `dept_cases` (JSONB `data` column for polymorphic tax/investment/insurance/wealth workflow). dept-cases & loan-cases stage data is assembled into nested objects from flat columns (loan) or merged from JSONB (dept).
+
+Verified 2026-06-18: backend boots against Supabase Postgres (ddl-auto validate passes, V8/V9 applied), 13/13 unit tests pass, frontend builds, all new routes return 403 (secured) not 404. **Backend must be restarted** to pick up the new code/migrations. Frontend kept as the spec; only `services/api.js` (id→_id + Page-unwrap interceptor) and the 2 CRM pages were touched (then reverted to legacy shapes).
+
+Security hardening (2026-06-19): secrets externalized to env vars in [application.yml](../backend-springboot/src/main/resources/application.yml) (`DB_PASSWORD`, `JWT_SECRET`, `MAIL_*`, `CORS_ALLOWED_ORIGINS`, `FRONTEND_URL`) with dev fallbacks — **rotate the committed Supabase password, it's in git history**. Added role-based `@PreAuthorize` via [SecurityRoles](../backend-springboot/src/main/java/com/finbridge/security/SecurityRoles.java) (STAFF / ADMINS / ADMIN_OR_DEPT). Gated: Leads/Invoices/Payments/LoanCases/DeptCases = STAFF (clients 403); auth user-lists/admin-CRUD = ADMINS/ADMIN_OR_DEPT. Left open (services already scope rows by principal): proposals, consultations, notifications, dashboard, financial-profile. Verified: client token 403 on staff endpoints, 200 on own; crm-admin 403 on admin-only. Roles map `role.toUpperCase().replace('-','_')` → ROLE_*. JwtAuthFilter no longer 401s public routes on a stale token. Password min length on register = 8 (`@Size`).
+
+Still TODO (review roadmap): **multi-tenant/owner-level isolation** (a client/consultant can still act on ANY record within an allowed role — needs per-record owner checks in services, not just role gates); payment *creation*/gateway (Razorpay) flow; **ID-generation race** (`count()+1` in Lead/LoanCase/DeptCase/Invoice — use DB sequences); rate-limiting memory leak; B2BService "God Service" split; controller/security integration tests; B2B JWT principals aren't authenticated by JwtAuthFilter (only `users` table) so `/api/b2b/**` protected routes rely on the org-id path param, not real auth.
+
+**B2B → CRM lead flow** (the first thing fixed): B2B org registration now auto-creates a CRM lead in `B2BService.register()`. CRM lead partial-update (status/department/score routing) needed a new `LeadUpdateRequest` DTO because `LeadRequest` requires name+email and lacks status/score. See [[unified-case-workflow]].

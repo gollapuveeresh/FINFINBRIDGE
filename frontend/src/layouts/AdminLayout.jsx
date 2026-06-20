@@ -1,6 +1,5 @@
 import React from 'react';
 import Sidebar from '../components/Sidebar';
-import Topbar from '../components/Topbar';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
@@ -8,8 +7,7 @@ export default function AdminLayout({ children }) {
   return (
     <div className="min-h-screen bg-bg">
       <Sidebar role="admin" />
-      <Topbar role="admin" />
-      <main className="ml-[280px] pt-[112px] min-h-screen p-margin-desktop">
+      <main className="ml-[280px] min-h-screen p-margin-desktop">
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}

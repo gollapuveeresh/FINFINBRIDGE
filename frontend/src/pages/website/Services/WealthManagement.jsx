@@ -23,7 +23,7 @@ const WealthManagement = () => {
     {
       icon: <Shield className="w-8 h-8" />,
       title: "Legacy Protection",
-      desc: "Robust estate and tax-efficient wealth preservation strategies"
+      desc: "Reliable estate and tax-efficient wealth protection strategies"
     }
   ];
 
@@ -66,11 +66,11 @@ const WealthManagement = () => {
               WEALTH MANAGEMENT
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Preserve.<br />
-              <span className="text-[#D4AF37]">Grow. Transfer.</span>
+              Preserve<br />
+              <span className="text-[#D4AF37]">Grow Transfer</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Sophisticated wealth management solutions for high-net-worth individuals, families, and institutions.
+              Sophisticated wealth management solutions for high-net-worth individuals, families, and institutions
             </p>
           </motion.div>
           
@@ -117,111 +117,106 @@ const WealthManagement = () => {
         </div>
       </section>
 
-      {/* Service Overview */}
-      <section className="py-24 border-t border-white/10">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="grid md:grid-cols-2 gap-20">
-            <motion.div 
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-5xl font-semibold tracking-tight mb-8">Institutional-Grade Wealth Management</h2>
-              <div className="space-y-8 text-lg text-gray-300">
-                <p>Our wealth management practice delivers tailored strategies focused on capital preservation, tax efficiency, and multi-generational wealth creation.</p>
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Discretionary Portfolio Management</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Alternative Investments</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Tax Optimization Strategies</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Estate & Succession Planning</li>
-                </ul>
+      {/* 1. Portfolio Analysis */}
+      <section id="portfolio" className="py-28 bg-[#0D1B3E] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">PORTFOLIO OPTIMIZATION</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Portfolio Analysis</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              We evaluate asset allocation patterns, past performance benchmarks, and return indices to structure a highly optimized investment portfolio aligning with your volatility tolerance and growth targets
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <PieChart className="w-5 h-5" />
               </div>
-            </motion.div>
-            
-            <div className="bg-white/5 border border-white/10 p-12 rounded-3xl">
-              <h3 className="text-3xl font-semibold mb-10">Client-Centric Advantages</h3>
-              <div className="space-y-10">
-                {benefits.map((benefit, i) => (
-                  <motion.div 
-                    key={i}
-                    initial={{ opacity: 0, x: -20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex gap-6"
-                  >
-                    <div className="text-[#D4AF37]">{benefit.icon}</div>
-                    <div>
-                      <h4 className="text-xl font-semibold mb-2">{benefit.title}</h4>
-                      <p className="text-gray-400">{benefit.desc}</p>
-                    </div>
-                  </motion.div>
-                ))}
+              <div>
+                <h4 className="font-semibold text-white">Asset Allocation Review</h4>
+                <p className="text-sm text-gray-400">Regular rebalancing suggestions for diversified equities, bonds, and cash</p>
+              </div>
+            </div>
+          </div>
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">📈</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Dynamic Asset Allocation & Allocation Targets</div>
+          </div>
+        </div>
+      </section>
+
+      {/* 2. Wealth Planning */}
+      <section id="wealth" className="py-28 bg-[#0A192F] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">💎</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Legacy Preservation & Family Office Structures</div>
+          </div>
+          <div className="order-1 md:order-2">
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">MULTI-GENERATIONAL WEALTH</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Wealth Planning</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Establish multi-generational wealth preservation strategies using trust structures, estate blueprints, and tax-efficient structures. We secure your family office requirements with legal safeguards
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Legacy Planning & Succession</h4>
+                <p className="text-sm text-gray-400">Secure seamless wealth transfer structures across generational heirs</p>
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Process Timeline */}
-      <section id="process-section" className="py-24 bg-black/40">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-semibold tracking-tight">Our Wealth Management Process</h2>
-            <p className="mt-4 text-gray-400 max-w-md mx-auto">A disciplined, transparent approach to long-term wealth stewardship</p>
+      {/* 3. Investment Strategy */}
+      <section id="strategy" className="py-28 bg-black/45 border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div>
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">MARKET DYNAMICS</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Investment Strategy</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Our market-driven growth models identify high-value public equity strategies, alternative assets placements, and yield-optimization targets. We provide tailored advisory based on active research
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Alternative Investment Access</h4>
+                <p className="text-sm text-gray-400">Structured access to private equity, real estate funds, and hedge assets.</p>
+              </div>
+            </div>
           </div>
-
-          <div className="max-w-4xl mx-auto">
-            {process.map((item, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex gap-8 mb-12 last:mb-0 relative"
-              >
-                {index !== process.length - 1 && (
-                  <div className="absolute left-[27px] top-12 bottom-0 w-0.5 bg-gradient-to-b from-[#D4AF37] to-transparent"></div>
-                )}
-                <div className="w-14 h-14 rounded-2xl bg-[#D4AF37] text-[#0A192F] flex items-center justify-center font-bold text-xl flex-shrink-0 z-10">
-                  {item.step}
-                </div>
-                <div className="pt-2">
-                  <h3 className="text-2xl font-semibold mb-3">{item.title}</h3>
-                  <p className="text-gray-400 text-lg">{item.desc}</p>
-                </div>
-              </motion.div>
-            ))}
+          <div className="p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🚀</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Alpha Generation & Tactical Adjustments</div>
           </div>
         </div>
       </section>
 
-      {/* Case Studies */}
-      <section className="py-24">
-        <div className="max-w-7xl mx-auto px-6 md:px-12">
-          <div className="flex justify-between items-end mb-12">
-            <h2 className="text-5xl font-semibold tracking-tight">Wealth Management Success</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
-              More Client Stories <ArrowRight className="group-hover:translate-x-1" />
-            </Link>
+      {/* 4. Risk Analysis */}
+      <section id="risk" className="py-28 bg-[#0D1B3E] border-t border-white/10 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 md:px-12 grid md:grid-cols-2 gap-12 items-center">
+          <div className="order-2 md:order-1 p-8 rounded-3xl bg-white/[0.02] border border-white/10 text-center">
+            <div className="text-6xl mb-4">🛡️</div>
+            <div className="text-[#D4AF37] text-lg font-medium">Hedging Models & Stress Testing</div>
           </div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {caseStudies.map((study, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ y: -10 }}
-                className="bg-white/5 border border-white/10 rounded-3xl p-10 group hover:border-[#D4AF37]/50 transition-all"
-              >
-                <div className="text-[#D4AF37] text-sm font-medium tracking-widest mb-6">WEALTH JOURNEY</div>
-                <h3 className="text-3xl font-semibold mb-2">{study.company}</h3>
-                <p className="text-gray-400 mb-8">{study.industry}</p>
-                
-                <div className="border-t border-white/10 pt-8 mt-auto">
-                  <div className="text-5xl font-bold text-[#D4AF37] mb-1">{study.value}</div>
-                  <div className="text-lg text-gray-300">{study.result}</div>
-                </div>
-              </motion.div>
-            ))}
+          <div className="order-1 md:order-2">
+            <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">VOLATILITY MITIGATION</span>
+            <h2 className="text-5xl font-bold tracking-tight text-white mb-6">Risk Analysis</h2>
+            <p className="text-gray-300 text-lg leading-relaxed font-light mb-6">
+              Protect your wealth from extreme market fluctuations through systematic portfolio stress-testing, hedging mechanisms, and liability audits. We ensure your assets remain safe in any market climate
+            </p>
+            <div className="flex gap-4">
+              <div className="w-10 h-10 rounded-xl bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="font-semibold text-white">Systemic Risk Mitigation</h4>
+                <p className="text-sm text-gray-400">Identify hidden correlations and exposures across asset groups</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -230,7 +225,14 @@ const WealthManagement = () => {
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
           <h2 className="text-5xl font-semibold tracking-tight mb-6">Secure your financial legacy</h2>
-          <p className="text-xl text-gray-400 mb-10">Partner with FinBridge for expert wealth management that aligns with your vision across generations.</p>
+          <p className="text-xl text-gray-400 mb-10">Partner with FinBridge for expert wealth management that aligns with your vision across generations</p>
+          <Link 
+            to="/contact"
+            className="inline-flex items-center gap-4 bg-[#D4AF37] hover:bg-white text-[#0A192F] px-12 py-5 rounded-2xl font-semibold text-lg transition-all group"
+          >
+            Schedule Consultation
+            <ArrowRight className="group-hover:translate-x-2 transition" />
+          </Link>
         </div>
       </section>
     </div>

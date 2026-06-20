@@ -36,9 +36,8 @@ export const downloadInvoicePDF = (invoice, user) => {
     <html>
       <head>
         <title>Invoice ${invoice.invoiceNumber || ''}</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
-          body { font-family: 'Inter', sans-serif; color: #111827; margin: 40px; font-size: 14px; line-height: 1.5; }
+          body { font-family: serif; color: #111827; margin: 40px; font-size: 14px; line-height: 1.5; }
           .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #E5E7EB; padding-bottom: 20px; margin-bottom: 30px; }
           .logo { font-size: 24px; font-weight: 700; color: #D4AF37; }
           .logo span { display:block; font-size: 11px; color:#6B7280; font-weight:500; letter-spacing:0.05em; }
@@ -152,10 +151,9 @@ export const downloadPDFReport = (profile, summary, loans, user) => {
     <html>
       <head>
         <title>Executive Wealth & Portfolio Statement</title>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           body {
-            font-family: 'Inter', sans-serif;
+            font-family: serif;
             color: #111827;
             margin: 40px;
             font-size: 14px;

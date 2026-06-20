@@ -4,11 +4,11 @@ import { useAuth } from '../../context/AuthContext';
 
 /**
  * AdminLogin
- * Standalone, route-only entry point for the super administrator portal.
- * - Reachable ONLY by typing /admin (or /admin/login) into the URL.
- * - No registration: administrator accounts are provisioned server-side (seedAdmin).
- * - Strict role enforcement: a non-super-admin who authenticates here is logged out.
- * - Theme: navy (kinetic-bg / primary-container) with gold highlights.
+ * Standalone, route-only entry point for the super administrator portal
+ * - Reachable ONLY by typing /admin (or /admin/login) into the URL
+ * - No registration: administrator accounts are provisioned server-side (seedAdmin)
+ * - Strict role enforcement: a non-super-admin who authenticates here is logged out
+ * - Theme: navy (kinetic-bg / primary-container) with gold highlights
  */
 export default function AdminLogin() {
   const { login, logout, isAuthenticated, user } = useAuth();
@@ -21,7 +21,7 @@ export default function AdminLogin() {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // If a super admin is already signed in, skip the login screen entirely.
+  // If a super admin is already signed in, skip the login screen entirely
   if (isAuthenticated && user?.role === 'admin') {
     const dest = location.state?.from?.pathname || '/admin/dashboard';
     return <Navigate to={dest} replace />;
@@ -75,7 +75,7 @@ export default function AdminLogin() {
             <div className="text-center mb-6">
               <h2 className="text-headline-md font-bold text-accent">Secure Sign In</h2>
               <p className="text-body-sm text-text-muted mt-1">
-                Restricted access to platform-wide administration.
+                Restricted access to platform-wide administration
               </p>
             </div>
 
@@ -162,7 +162,7 @@ export default function AdminLogin() {
         </div>
 
         <p className="mt-8 text-center text-label-sm text-on-primary-container opacity-70">
-          Unauthorized access is prohibited and monitored.
+          Unauthorized access is prohibited and monitored
         </p>
       </main>
     </div>

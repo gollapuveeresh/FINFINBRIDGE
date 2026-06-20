@@ -70,7 +70,7 @@ const MarketIntelligence = () => {
               <span className="text-[#D4AF37]">Lead the Future.</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Premium market intelligence and strategic research that empowers confident decision-making in complex business environments.
+              Premium market intelligence and strategic research that empowers confident decision-making in complex business environments
             </p>
           </motion.div>
 

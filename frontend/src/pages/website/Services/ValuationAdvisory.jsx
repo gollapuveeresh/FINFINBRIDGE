@@ -66,11 +66,11 @@ const ValuationAdvisory = () => {
               VALUATION ADVISORY
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Precision Valuation.<br />
-              <span className="text-[#D4AF37]">Strategic Clarity.</span>
+              Precision Valuation<br />
+              <span className="text-[#D4AF37]">Clear Business Direction</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Independent, defensible business valuations that drive confident decisions in M&A, fundraising, and strategic planning.
+              Independent, defensible business valuations that drive confident decisions in M&A, fundraising, and strategic planning
             </p>
           </motion.div>
           
@@ -196,7 +196,7 @@ const ValuationAdvisory = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="flex justify-between items-end mb-12">
             <h2 className="text-5xl font-semibold tracking-tight">Recent Valuation Engagements</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
+            <Link to="/success-stories" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
               View All Success Stories <ArrowRight className="group-hover:translate-x-1" />
             </Link>
           </div>

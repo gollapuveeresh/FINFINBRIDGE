@@ -5,8 +5,8 @@ import { ArrowRight, Building, Target, Users, Landmark, Cpu, HeartPulse, Factory
 
 const WhatWeAre = ({ closeMenu }) => {
   const defaultPreview = {
-    title: "Building Trust Through Financial Excellence",
-    desc: "Our legacy is built on client growth, meticulous risk strategies, and transparency.",
+    title: "Building Trust Through Quality Financial Service",
+    desc: "Our reputation is built on client growth, careful risk management, and transparency.",
     tag: "FINBRIDGE TRUST",
     link: "/about",
     btnText: "Learn More"
@@ -16,24 +16,24 @@ const WhatWeAre = ({ closeMenu }) => {
 
   const companyLinks = [
     { name: "About FinBridge", path: "/about", desc: "Our history, founders, and global presence since 2007" },
-    { name: "Mission & Vision", path: "/about#vision", desc: "What drives us towards excellence and transparency" },
-    { name: "Leadership Team", path: "/about#leadership", desc: "Meet our senior advisors, CFAs, and global partners" },
-    { name: "Why FinBridge", path: "/about#why", desc: "Our commitment to executive standard value and compliance" }
+    { name: "Mission & Vision", path: "/mission-vision", desc: "What drives us toward quality service and transparency" },
+    { name: "Leadership Team", path: "/leadership-team", desc: "Meet our senior advisors, CFAs, and global partners" },
+    { name: "Why FinBridge", path: "/why-finbridge", desc: "Our commitment to quality service standards and compliance" }
   ];
 
   const industryLinks = [
-    { name: "Technology", path: "/digital-finance", icon: <Cpu className="w-4 h-4 text-[#D4AF37]" />, desc: "IP valuation and capital scaling for high-tech SaaS ventures" },
-    { name: "Healthcare", path: "/risk-compliance", icon: <HeartPulse className="w-4 h-4 text-[#D4AF37]" />, desc: "Compliance, risk controls, and valuations for clinics" },
-    { name: "Manufacturing", path: "/valuation-advisory", icon: <Factory className="w-4 h-4 text-[#D4AF37]" />, desc: "Capital restructuring and modeling for industrial firms" },
-    { name: "Retail", path: "/transaction-services", icon: <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />, desc: "Growth strategies and M&A for high-end consumer brands" },
-    { name: "Education", path: "/financial-transformation", icon: <GraduationCap className="w-4 h-4 text-[#D4AF37]" />, desc: "Capital budget planning and transformation for universities" },
-    { name: "Financial Services", path: "/corporate-finance", icon: <Landmark className="w-4 h-4 text-[#D4AF37]" />, desc: "Trust structures, capital advisory, and asset management" }
+    { name: "Technology", path: "/industry-technology", icon: <Cpu className="w-4 h-4 text-[#D4AF37]" />, desc: "IP valuation and capital scaling for high-tech SaaS ventures" },
+    { name: "Healthcare", path: "/industry-healthcare", icon: <HeartPulse className="w-4 h-4 text-[#D4AF37]" />, desc: "Compliance, risk controls, and valuations for clinics" },
+    { name: "Manufacturing", path: "/industry-manufacturing", icon: <Factory className="w-4 h-4 text-[#D4AF37]" />, desc: "Capital restructuring and modeling for industrial firms" },
+    { name: "Retail", path: "/industry-retail", icon: <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />, desc: "Growth strategies and M&A for high-end consumer brands" },
+    { name: "Education", path: "/industry-education", icon: <GraduationCap className="w-4 h-4 text-[#D4AF37]" />, desc: "Capital budget planning and improvement for universities" },
+    { name: "Financial Services", path: "/industry-financial-services", icon: <Landmark className="w-4 h-4 text-[#D4AF37]" />, desc: "Trust structures, capital advisory, and asset management" }
   ];
 
   const networkLinks = [
-    { name: "Partners", path: "/about#partners", icon: <Briefcase className="w-4 h-4" />, desc: "Global financial networks and joint venture partners" },
-    { name: "Business Ecosystem", path: "/about#ecosystem", icon: <Users className="w-4 h-4" />, desc: "Our collaborative group of financial advisors and legal experts" },
-    { name: "Investor Network", path: "/about#investors", icon: <DollarSign className="w-4 h-4" />, desc: "Introductions to VCs, angel networks, and family offices" }
+    { name: "Partners", path: "/network-partners", icon: <Briefcase className="w-4 h-4" />, desc: "Global financial networks and joint venture partners" },
+    { name: "Business Ecosystem", path: "/network-ecosystem", icon: <Users className="w-4 h-4" />, desc: "Our collaborative group of financial advisors and legal experts" },
+    { name: "Investor Network", path: "/network-investors", icon: <DollarSign className="w-4 h-4" />, desc: "Introductions to VCs, angel networks, and family offices" }
   ];
 
   const handleHover = (name, desc, path, tag) => {
@@ -156,7 +156,7 @@ const WhatWeAre = ({ closeMenu }) => {
             </AnimatePresence>
             
             <Link
-              to={activePreview.link}
+              to={activePreview.btnText === "Explore Now" ? "/client/login?register=true" : activePreview.link}
               onClick={closeMenu}
               className="mt-6 inline-flex items-center justify-center gap-2 border border-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] text-[#D4AF37] font-semibold text-xs tracking-wider uppercase py-3 px-5 transition-all duration-300 rounded-sm font-mono"
             >

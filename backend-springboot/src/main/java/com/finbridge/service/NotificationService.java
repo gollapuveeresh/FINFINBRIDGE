@@ -1,0 +1,51 @@
+package com.finbridge.service;
+
+import com.finbridge.entity.Notification;
+import com.finbridge.entity.User;
+import com.finbridge.exception.ResourceNotFoundException;
+import com.finbridge.repository.NotificationRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class NotificationService {
+    private final NotificationRepository notificationRepository;
+
+    public List<Notification> getByUser(UUID userId) {
+        return notificationRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId);
+    }
+
+    public long getUnreadCount(UUID userId) {
+        return notificationRepository.countUnreadByUserId(userId);
+    }
+
+    @Transactional
+    public Notification create(User user, String type, String title, String message) {
+        Notification n = new Notification();
+        n.setUser(user);
+        n.setType(type);
+        n.setTitle(title);
+        n.setMessage(message);
+        return notificationRepository.save(n);
+    }
+
+    @Transactional
+    public void markRead(UUID id) {
+        Notification n = notificationRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + id));
+        n.setRead(true);
+        notificationRepository.save(n);
+    }
+
+    @Transactional
+    public void markAllRead(UUID userId) {
+        notificationRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId)
+                .forEach(n -> { n.setRead(true); notificationRepository.save(n); });
+    }
+}

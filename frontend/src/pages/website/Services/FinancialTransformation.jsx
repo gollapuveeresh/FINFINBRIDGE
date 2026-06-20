@@ -13,7 +13,7 @@ const FinancialTransformation = () => {
     {
       icon: <RefreshCw className="w-8 h-8" />,
       title: "Process Optimization",
-      desc: "End-to-end finance function transformation"
+      desc: "End-to-end finance function improvement"
     },
     {
       icon: <Target className="w-8 h-8" />,
@@ -29,10 +29,10 @@ const FinancialTransformation = () => {
 
   const process = [
     { step: "01", title: "Diagnostic Assessment", desc: "Current state analysis and opportunity identification" },
-    { step: "02", title: "Transformation Roadmap", desc: "Prioritized initiatives with clear ROI projections" },
-    { step: "03", title: "Capability Building", desc: "People, process, and technology transformation" },
-    { step: "04", title: "Implementation", desc: "Agile execution with continuous value delivery" },
-    { step: "05", title: "Sustained Excellence", desc: "Performance tracking and continuous improvement" }
+    { step: "02", title: "Improvement Roadmap", desc: "Prioritised initiatives with clear ROI projections" },
+    { step: "03", title: "Capability Building", desc: "People, process, and technology improvements" },
+    { step: "04", title: "Implementation", desc: "Structured execution with continuous results delivery" },
+    { step: "05", title: "Ongoing Performance", desc: "Performance tracking and continuous improvement" }
   ];
 
   const caseStudies = [
@@ -46,7 +46,7 @@ const FinancialTransformation = () => {
       company: "VitaRetail Group",
       industry: "Retail",
       value: "$18M",
-      result: "Annual cost savings through transformation"
+      result: "Annual cost savings through improvement"
     }
   ];
 
@@ -63,14 +63,14 @@ const FinancialTransformation = () => {
             className="lg:col-span-7"
           >
             <div className="inline-flex items-center gap-2 bg-white/10 text-[#D4AF37] text-sm font-medium px-6 py-2 rounded-full mb-6 border border-[#D4AF37]/30">
-              FINANCIAL TRANSFORMATION
+              FINANCIAL IMPROVEMENT
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Reimagine Finance.<br />
-              <span className="text-[#D4AF37]">Drive Enterprise Value.</span>
+              Improve Financial Management<br />
+              <span className="text-[#D4AF37]">Increase Business Value</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              End-to-end financial transformation programs that modernize finance operations and unlock sustainable value creation.
+              End-to-end finance improvement programs that modernize operations and deliver lasting business results.
             </p>
           </motion.div>
 
@@ -116,12 +116,12 @@ const FinancialTransformation = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
             >
-              <h2 className="text-5xl font-semibold tracking-tight mb-8">Finance Function Reinvention</h2>
+              <h2 className="text-5xl font-semibold tracking-tight mb-8">Finance Function Improvement</h2>
               <div className="space-y-8 text-lg text-gray-300">
-                <p>We partner with CFOs to transform traditional finance organizations into strategic value drivers through digital innovation, process excellence, and talent development.</p>
+                <p>We partner with CFOs to improve finance teams into effective business partners through digital tools, process efficiency, and talent development</p>
                 <ul className="space-y-4">
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Finance Operating Model Design</li>
-                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Digital Finance Transformation</li>
+                  <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Digital Finance Upgrade</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> FP&A Evolution</li>
                   <li className="flex items-start gap-4"><span className="text-[#D4AF37] mt-1">•</span> Shared Services Optimization</li>
                 </ul>
@@ -129,7 +129,7 @@ const FinancialTransformation = () => {
             </motion.div>
             
             <div className="bg-white/5 border border-white/10 p-12 rounded-3xl">
-              <h3 className="text-3xl font-semibold mb-10">Transformation Outcomes</h3>
+              <h3 className="text-3xl font-semibold mb-10">Key Improvement Results</h3>
               <div className="space-y-10">
                 {benefits.map((benefit, i) => (
                   <motion.div 
@@ -156,8 +156,8 @@ const FinancialTransformation = () => {
       <section id="process-section" className="py-24 bg-black/40">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="text-center mb-16">
-            <h2 className="text-5xl font-semibold tracking-tight">Our Transformation Methodology</h2>
-            <p className="mt-4 text-gray-400 max-w-md mx-auto">Phased approach delivering measurable results at every stage</p>
+            <h2 className="text-5xl font-semibold tracking-tight">Our Improvement Process</h2>
+            <p className="mt-4 text-gray-400 max-w-md mx-auto">A phased approach that delivers measurable results at every stage</p>
           </div>
 
           <div className="max-w-4xl mx-auto">
@@ -189,8 +189,8 @@ const FinancialTransformation = () => {
       <section className="py-24">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="flex justify-between items-end mb-12">
-            <h2 className="text-5xl font-semibold tracking-tight">Transformation Success Stories</h2>
-            <Link to="/contact" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
+            <h2 className="text-5xl font-semibold tracking-tight">Client Success Stories</h2>
+            <Link to="/success-stories" className="text-[#D4AF37] flex items-center gap-2 hover:gap-3 transition-all group">
               See More Results <ArrowRight className="group-hover:translate-x-1" />
             </Link>
           </div>
@@ -202,7 +202,7 @@ const FinancialTransformation = () => {
                 whileHover={{ y: -10 }}
                 className="bg-white/5 border border-white/10 rounded-3xl p-10 group hover:border-[#D4AF37]/50 transition-all"
               >
-                <div className="text-[#D4AF37] text-sm font-medium tracking-widest mb-6">TRANSFORMATION CASE</div>
+                <div className="text-[#D4AF37] text-sm font-medium tracking-widest mb-6">IMPROVEMENT CASE</div>
                 <h3 className="text-3xl font-semibold mb-2">{study.company}</h3>
                 <p className="text-gray-400 mb-8">{study.industry}</p>
                 
@@ -219,8 +219,8 @@ const FinancialTransformation = () => {
       {/* CTA */}
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
-          <h2 className="text-5xl font-semibold tracking-tight mb-6">Transform your finance function</h2>
-          <p className="text-xl text-gray-400 mb-10">Create a future-ready finance organization that drives sustainable competitive advantage.</p>
+          <h2 className="text-5xl font-semibold tracking-tight mb-6">Improve your finance function</h2>
+          <p className="text-xl text-gray-400 mb-10">Build a well-prepared finance team that supports your business goals and long-term growth</p>
         </div>
       </section>
     </div>

@@ -7,8 +7,8 @@ const CorporateFinance = () => {
   const benefits = [
     {
       icon: <Building2 className="w-8 h-8" />,
-      title: "Capital Structure Optimization",
-      desc: "Strategic balance between debt and equity for maximum value"
+      title: "Capital Structure Planning",
+      desc: "Smart balance between debt and equity for better business returns"
     },
     {
       icon: <DollarSign className="w-8 h-8" />,
@@ -66,11 +66,11 @@ const CorporateFinance = () => {
               CORPORATE FINANCE
             </div>
             <h1 className="text-6xl md:text-7xl font-bold leading-tight tracking-tighter mb-8">
-              Strategic Capital.<br />
-              <span className="text-[#D4AF37]">Sustainable Growth.</span>
+              Strategic Capital<br />
+              <span className="text-[#D4AF37]">Sustainable Growth</span>
             </h1>
             <p className="text-xl text-gray-300 max-w-2xl">
-              Expert corporate finance advisory that optimizes capital structure, secures funding, and drives long-term enterprise value.
+              Expert corporate finance advisory that improves capital structure, secures funding, and supports long-term business growth
             </p>
           </motion.div>
 
@@ -129,7 +129,7 @@ const CorporateFinance = () => {
             </motion.div>
             
             <div className="bg-white/5 border border-white/10 p-12 rounded-3xl">
-              <h3 className="text-3xl font-semibold mb-10">Strategic Advantages</h3>
+              <h3 className="text-3xl font-semibold mb-10">Key Benefits</h3>
               <div className="space-y-10">
                 {benefits.map((benefit, i) => (
                   <motion.div 
@@ -220,7 +220,7 @@ const CorporateFinance = () => {
       <section className="py-24 bg-gradient-to-br from-[#0A192F] via-[#0A192F] to-black border-t border-[#D4AF37]/20">
         <div className="max-w-3xl mx-auto text-center px-6">
           <h2 className="text-5xl font-semibold tracking-tight mb-6">Optimize your corporate capital strategy</h2>
-          <p className="text-xl text-gray-400 mb-10">Access sophisticated financing solutions and strategic financial advisory from industry experts.</p>
+          <p className="text-xl text-gray-400 mb-10">Access practical financing solutions and professional financial advisory from experienced industry experts.</p>
         </div>
       </section>
     </div>

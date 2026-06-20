@@ -426,6 +426,42 @@ function ClientApproval({ lc, onRefresh }) {
     } finally { setAdvancing(false); }
   };
 
+  // Generate the advisory-fee invoice for this case and link it (default fee = 1% of the loan, min ₹5,000).
+  const [generating, setGenerating] = useState(false);
+  const defaultFee = Math.max(5000, Math.round((Number(lc.requestedAmount) || 0) * 0.01));
+  const [fee, setFee] = useState(defaultFee);
+  const generateInvoice = async () => {
+    const amount = Number(fee) || defaultFee;
+    try {
+      setGenerating(true);
+      const res = await api.post('/invoices', {
+        clientId: lc.clientId?._id || lc.clientId?.id,
+        consultantId: lc.consultantId?._id || lc.consultantId?.id,
+        department: 'loans',
+        serviceTitle: `Loan Advisory Fee · ${lc.caseId}`,
+        lineItems: [{ description: 'Loan advisory & processing fee', amount }],
+        taxPercent: 18,
+      });
+      const inv = res.data.invoice;
+      await api.patch(`/loan-cases/${lc._id}`, { invoiceId: inv._id || inv.id });
+      toast.success(`Invoice ${inv.invoiceNumber} generated & sent to client`);
+      onRefresh();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to generate invoice');
+    } finally { setGenerating(false); }
+  };
+
+  // Record an offline/manual settlement (the client can also pay from their own portal).
+  const markPaid = async () => {
+    try {
+      await api.patch(`/invoices/${lc.invoiceId}`, { status: 'paid' });
+      toast.success('Payment recorded');
+      onRefresh();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to record payment');
+    }
+  };
+
   return (
     <div className="space-y-gutter">
       <h2 className="text-xl font-bold text-accent">Client Approval</h2>
@@ -504,7 +540,7 @@ function ClientApproval({ lc, onRefresh }) {
                   {isPaid ? 'verified' : 'lock_clock'}
                 </span>
                 <p className={`font-bold text-sm ${isPaid ? 'text-green-400' : 'text-amber-400'}`}>
-                  {isPaid ? 'Payment received — service activated' : 'Awaiting client payment'}
+                  {isPaid ? 'Payment received — service activated' : !lc.invoiceId ? 'Generate the advisory invoice' : 'Awaiting client payment'}
                 </p>
               </div>
               {invoice && (
@@ -512,11 +548,39 @@ function ClientApproval({ lc, onRefresh }) {
                   Invoice {invoice.invoiceNumber} · ₹{invoice.totalAmount?.toLocaleString('en-IN')} · {invoice.status}
                 </p>
               )}
-              {!isPaid && (
-                <p className="text-xs text-text-muted mt-1">
-                  The client must pay the generated invoice before the loan can move to Bank Processing.
-                </p>
+
+              {/* No invoice yet → consultant generates the advisory-fee invoice */}
+              {!lc.invoiceId && (
+                <div className="mt-3 space-y-2">
+                  <p className="text-xs text-text-muted">
+                    Raise the advisory/processing fee invoice. Once the client pays it, the loan can proceed.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-text-muted">₹</span>
+                    <input type="number" value={fee} onChange={e => setFee(e.target.value)}
+                      className="flex-1 px-3 py-2 rounded-xl border border-border bg-bg text-sm"
+                      placeholder="Fee amount" />
+                  </div>
+                  <button onClick={generateInvoice} disabled={generating}
+                    className="btn-primary w-full py-2.5 disabled:opacity-40">
+                    {generating ? 'Generating…' : 'Generate Invoice'}
+                  </button>
+                </div>
               )}
+
+              {/* Invoice exists but unpaid → wait for client, or record an offline payment */}
+              {lc.invoiceId && !isPaid && (
+                <>
+                  <p className="text-xs text-text-muted mt-1">
+                    The client can pay from their portal. You may also record an offline payment:
+                  </p>
+                  <button onClick={markPaid}
+                    className="w-full mt-2 py-2.5 rounded-xl border border-green-500/40 bg-green-500/10 text-green-400 text-sm font-bold hover:bg-green-500/20 transition-colors">
+                    Mark Invoice as Paid
+                  </button>
+                </>
+              )}
+
               <button onClick={proceed} disabled={!isPaid || advancing}
                 className="btn-primary w-full mt-3 py-2.5 disabled:opacity-40">
                 {advancing ? 'Proceeding...' : 'Proceed to Bank Processing'}
@@ -870,11 +934,10 @@ export default function LoanWorkflow() {
     }
     try {
       setCreating(true);
-      const payload = { ...createForm };
-      // If a lead is selected, resolve its client or pass leadId
-      if (createForm.leadId && !createForm.clientId) {
-        payload.clientId = '';
-      }
+      const payload = { loanType: createForm.loanType, requestedAmount: createForm.requestedAmount };
+      // If a client is selected, pass clientId; if a lead is selected, pass leadId
+      if (createForm.clientId) payload.clientId = createForm.clientId;
+      if (createForm.leadId) payload.leadId = createForm.leadId;
       const res = await api.post('/loan-cases', payload);
       const newCase = res.data.loanCase;
       setCases(prev => [newCase, ...prev]);

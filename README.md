@@ -26,6 +26,8 @@
 | Portal | URL |
 |--------|-----|
 | Website / Lead Capture | http://localhost:5173/ |
+| **B2B Company Portal** | **http://localhost:5173/b2b/login** |
+| **B2B Register** | **http://localhost:5173/b2b/register** |
 | Client | http://localhost:5173/client/login |
 | Consultant | http://localhost:5173/consultant/login |
 | Department Admin | http://localhost:5173/department-admin/login |

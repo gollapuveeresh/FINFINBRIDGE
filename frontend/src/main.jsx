@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import './index.css';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext';
+import { B2BAuthProvider } from './context/B2BAuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 
 createRoot(document.getElementById('root')).render(
@@ -11,7 +12,9 @@ createRoot(document.getElementById('root')).render(
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <B2BAuthProvider>
+            <App />
+          </B2BAuthProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

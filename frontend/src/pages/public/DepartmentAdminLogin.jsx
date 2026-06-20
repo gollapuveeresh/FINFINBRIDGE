@@ -5,10 +5,10 @@ import { getDepartmentDashboardPath, getUserDepartment } from '../../utils/depar
 
 /**
  * DepartmentAdminLogin
- * Standalone, route-only entry point for department administrators.
- * - Reachable by typing /department-admin or /department-admin/login.
- * - No registration: accounts are provisioned server-side.
- * - Strict role enforcement: only department-admin users can authenticate here.
+ * Standalone, route-only entry point for department administrators
+ * - Reachable by typing /department-admin or /department-admin/login
+ * - No registration: accounts are provisioned server-side
+ * - Strict role enforcement: only department-admin users can authenticate here
  */
 export default function DepartmentAdminLogin() {
   const { login, logout, isAuthenticated, user } = useAuth();
@@ -70,7 +70,7 @@ export default function DepartmentAdminLogin() {
             <div className="text-center mb-6">
               <h2 className="text-headline-md font-bold text-accent">Department Sign In</h2>
               <p className="text-body-sm text-text-muted mt-1">
-                Restricted access to department operations.
+                Restricted access to department operations
               </p>
             </div>
 
@@ -157,7 +157,7 @@ export default function DepartmentAdminLogin() {
         </div>
 
         <p className="mt-8 text-center text-label-sm text-on-primary-container opacity-70">
-          Unauthorized access is prohibited and monitored.
+          Unauthorized access is prohibited and monitored
         </p>
       </main>
     </div>
