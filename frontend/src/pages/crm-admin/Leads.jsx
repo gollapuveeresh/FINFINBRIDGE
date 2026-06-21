@@ -3,7 +3,7 @@ import CRMAdminLayout from '../../layouts/CRMAdminLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-const STATUSES = ['new','contacted','interested','qualified','assigned','consultation','proposal','won','rejected','lost'];
+const STATUSES = ['new','contacted','interested','qualified','assigned','consultation','proposal','rejected','lost'];
 const DEPARTMENTS = ['loans','tax','investment','insurance','wealth'];
 const PRIORITY_COLORS = {
   hot: 'bg-red-500/20 text-red-400 border-red-500/30',
@@ -37,7 +37,7 @@ export default function CRMLeads() {
       setLoading(true);
       const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v));
       const res = await api.get('/leads', { params });
-      setLeads(res.data.leads || []);
+      setLeads((res.data.leads || []).filter(l => l.status !== 'won'));
     } catch { toast.error('Failed to load leads'); }
     finally { setLoading(false); }
   };

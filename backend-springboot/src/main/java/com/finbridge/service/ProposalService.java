@@ -34,6 +34,8 @@ public class ProposalService {
     private final OrganizationUserRepository orgUserRepository;
     private final OrganizationProposalRepository orgProposalRepository;
     private final DtoMapper mapper;
+    private final com.finbridge.repository.DeptCaseRepository deptCaseRepository;
+    private final com.finbridge.repository.LoanCaseRepository loanCaseRepository;
 
     /** Proposals relevant to the user (consultant/client/department-admin), optional department override. */
     @Transactional(readOnly = true)
@@ -114,17 +116,56 @@ public class ProposalService {
         if (feedback != null) p.setClientFeedback(feedback);
         ProposalResponse response = mapper.toProposalResponse(proposalRepository.save(p));
 
-        // When a proposal is sent, push it to the client's B2B portal (if the client is an org user).
-        if ("sent".equals(status)) syncToOrgProposal(p);
+        // Sync proposal changes to the client's B2B portal
+        syncToOrgProposal(p);
+
+        // Update the linked case decision status
+        propagateDecisionToCase(p, status, feedback);
 
         return response;
+    }
+
+    private void propagateDecisionToCase(Proposal p, String decision, String feedback) {
+        if (p.getCaseId() == null || p.getCaseModel() == null) {
+            return;
+        }
+        UUID caseId = p.getCaseId();
+        String caseModel = p.getCaseModel();
+        String mappedStatus = switch (decision) {
+            case "approved" -> "Approved";
+            case "changes_requested" -> "Changes Requested";
+            case "rejected" -> "Rejected";
+            default -> decision;
+        };
+
+        if ("DeptCase".equalsIgnoreCase(caseModel)) {
+            deptCaseRepository.findById(caseId).ifPresent(dc -> {
+                Map<String, Object> data = new HashMap<>(dc.getData() != null ? dc.getData() : new HashMap<>());
+                Map<String, Object> clientDecision = new HashMap<>();
+                clientDecision.put("status", mappedStatus);
+                clientDecision.put("feedback", feedback);
+                clientDecision.put("decidedAt", Instant.now().toString());
+                data.put("clientDecision", clientDecision);
+                dc.setData(data);
+                deptCaseRepository.save(dc);
+                log.info("Updated DeptCase {} client decision to {} based on CRM proposal decision", caseId, mappedStatus);
+            });
+        } else if ("LoanCase".equalsIgnoreCase(caseModel)) {
+            loanCaseRepository.findById(caseId).ifPresent(lc -> {
+                lc.setClientDecision(mappedStatus);
+                lc.setDecidedAt(Instant.now());
+                lc.setClientFeedback(feedback);
+                loanCaseRepository.save(lc);
+                log.info("Updated LoanCase {} client decision to {} based on CRM proposal decision", caseId, mappedStatus);
+            });
+        }
     }
 
     /**
      * If the proposal's client is also a B2B organization user, mirror it into the org's portal as an
      * OrganizationProposal. Idempotent: re-sending updates the existing mirror instead of duplicating it.
      */
-    private void syncToOrgProposal(Proposal p) {
+    public void syncToOrgProposal(Proposal p) {
         User client = p.getClient();
         if (client == null || client.getEmail() == null) return;
         orgUserRepository.findByEmailIgnoreCase(client.getEmail()).ifPresent(orgUser -> {
@@ -140,8 +181,18 @@ public class ProposalService {
             op.setDepartment(p.getDepartment());
             op.setTitle(p.getTitle());
             op.setSummary(p.getSummary());
-            op.setDetails(p.getDetails());
-            op.setStatus("sent");
+            
+            Map<String, Object> details = p.getDetails() != null ? new HashMap<>(p.getDetails()) : new HashMap<>();
+            details.put("proposalId", p.getId().toString());
+            if (p.getCaseId() != null) {
+                details.put("caseId", p.getCaseId().toString());
+            }
+            if (p.getCaseModel() != null) {
+                details.put("caseModel", p.getCaseModel());
+            }
+            op.setDetails(details);
+            
+            op.setStatus(p.getStatus());
             if (p.getValidUntil() != null) {
                 op.setValidUntil(p.getValidUntil().atZone(ZoneId.systemDefault()).toLocalDate());
             }

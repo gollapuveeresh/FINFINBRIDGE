@@ -28,8 +28,8 @@ public class NotificationController {
     }
 
     @PatchMapping("/{id}/read")
-    public ResponseEntity<Void> markRead(@PathVariable UUID id) {
-        notificationService.markRead(id);
+    public ResponseEntity<Void> markRead(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        notificationService.markRead(id, user);
         return ResponseEntity.noContent().build();
     }
 

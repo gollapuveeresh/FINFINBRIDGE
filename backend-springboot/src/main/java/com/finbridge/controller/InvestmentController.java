@@ -23,8 +23,8 @@ public class InvestmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Investment> getOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(investmentService.getById(id));
+    public ResponseEntity<Investment> getOne(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(investmentService.getById(id, user));
     }
 
     @PostMapping
@@ -34,13 +34,14 @@ public class InvestmentController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Investment> update(@PathVariable UUID id, @RequestBody Investment patch) {
-        return ResponseEntity.ok(investmentService.update(id, patch));
+    public ResponseEntity<Investment> update(@PathVariable UUID id, @RequestBody Investment patch,
+                                             @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(investmentService.update(id, patch, user));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        investmentService.softDelete(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        investmentService.softDelete(id, user);
         return ResponseEntity.noContent().build();
     }
 }

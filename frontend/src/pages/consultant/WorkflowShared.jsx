@@ -207,6 +207,43 @@ export function ClientDecisionPanel({ dept, lc, nextStage, onRefresh }) {
     } finally { setAdvancing(false); }
   };
 
+  const [generating, setGenerating] = useState(false);
+  const defaultFee = dept === 'tax' ? 2000 : dept === 'investment' ? 3000 : dept === 'insurance' ? 1500 : dept === 'wealth' ? 10000 : 2000;
+  const [fee, setFee] = useState(defaultFee);
+
+  const generateInvoice = async () => {
+    const amount = Number(fee) || defaultFee;
+    try {
+      setGenerating(true);
+      const res = await api.post('/invoices', {
+        clientId: lc.clientId?._id || lc.clientId?.id,
+        consultantId: lc.consultantId?._id || lc.consultantId?.id,
+        department: dept,
+        serviceTitle: `${dept.toUpperCase()} Advisory Fee · ${lc.caseId}`,
+        lineItems: [{ description: `${dept.toUpperCase()} advisory & processing fee`, amount }],
+        taxPercent: 18,
+      });
+      const inv = res.data.invoice;
+      await api.patch(`/dept-cases/${dept}/${lc._id}`, { invoiceId: inv._id || inv.id });
+      toast.success(`Invoice ${inv.invoiceNumber} generated & sent to client`);
+      onRefresh();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to generate invoice');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  const markPaid = async () => {
+    try {
+      await api.patch(`/invoices/${lc.invoiceId}`, { status: 'paid' });
+      toast.success('Payment recorded');
+      onRefresh();
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Failed to record payment');
+    }
+  };
+
   return (
     <div className="card p-6 space-y-4">
       <h3 className="font-bold text-accent">Client Decision</h3>
@@ -248,7 +285,7 @@ export function ClientDecisionPanel({ dept, lc, nextStage, onRefresh }) {
               {isPaid ? 'verified' : 'lock_clock'}
             </span>
             <p className={`font-bold text-sm ${isPaid ? 'text-green-400' : 'text-amber-400'}`}>
-              {isPaid ? 'Payment received — service activated' : 'Awaiting client payment'}
+              {isPaid ? 'Payment received — service activated' : !lc.invoiceId ? 'Generate the advisory invoice' : 'Awaiting client payment'}
             </p>
           </div>
           {invoice && (
@@ -256,11 +293,39 @@ export function ClientDecisionPanel({ dept, lc, nextStage, onRefresh }) {
               Invoice {invoice.invoiceNumber} · ₹{invoice.totalAmount?.toLocaleString('en-IN')} · {invoice.status}
             </p>
           )}
-          {!isPaid && (
-            <p className="text-xs text-text-muted mt-1">
-              The client must pay the generated invoice before you can proceed to the next stage.
-            </p>
+
+          {/* No invoice yet → consultant generates the advisory-fee invoice */}
+          {!lc.invoiceId && (
+            <div className="mt-3 space-y-2">
+              <p className="text-xs text-text-muted">
+                Raise the advisory/processing fee invoice. Once the client pays it, the workflow can proceed.
+              </p>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-text-muted">₹</span>
+                <input type="number" value={fee} onChange={e => setFee(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl border border-border bg-bg text-sm"
+                  placeholder="Fee amount" />
+              </div>
+              <button onClick={generateInvoice} disabled={generating}
+                className="btn-primary w-full py-2.5 disabled:opacity-40">
+                {generating ? 'Generating…' : 'Generate Invoice'}
+              </button>
+            </div>
           )}
+
+          {/* Invoice exists but unpaid → wait for client, or record an offline payment */}
+          {lc.invoiceId && !isPaid && (
+            <>
+              <p className="text-xs text-text-muted mt-1">
+                The client can pay from their portal. You may also record an offline payment:
+              </p>
+              <button onClick={markPaid}
+                className="w-full mt-2 py-2.5 rounded-xl border border-green-500/40 bg-green-500/10 text-green-400 text-sm font-bold hover:bg-green-500/20 transition-colors">
+                Mark Invoice as Paid
+              </button>
+            </>
+          )}
+
           <button onClick={proceed} disabled={!isPaid || advancing}
             className="btn-primary w-full mt-3 py-2.5 disabled:opacity-40">
             {advancing ? 'Proceeding...' : 'Proceed to Next Stage'}

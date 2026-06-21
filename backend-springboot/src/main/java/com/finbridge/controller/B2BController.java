@@ -6,6 +6,7 @@ import com.finbridge.security.B2BAccessGuard;
 import com.finbridge.service.B2BService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,13 +27,13 @@ public class B2BController {
     // ─── Auth ────────────────────────────────────────────────────────────────
     @PostMapping("/register")
     @Operation(summary = "Register a new organization")
-    public ResponseEntity<OrgLoginResponse> register(@RequestBody OrgRegisterRequest req) {
+    public ResponseEntity<OrgLoginResponse> register(@Valid @RequestBody OrgRegisterRequest req) {
         return ResponseEntity.ok(b2bService.register(req));
     }
 
     @PostMapping("/login")
     @Operation(summary = "Login as organization user")
-    public ResponseEntity<OrgLoginResponse> login(@RequestBody OrgLoginRequest req) {
+    public ResponseEntity<OrgLoginResponse> login(@Valid @RequestBody OrgLoginRequest req) {
         return ResponseEntity.ok(b2bService.login(req));
     }
 
@@ -44,10 +45,25 @@ public class B2BController {
         return ResponseEntity.ok(b2bService.getOrgStats(orgId));
     }
 
+    @GetMapping("/organizations/{orgId}")
+    public ResponseEntity<Map<String, Object>> getOrganization(@PathVariable UUID orgId,
+                                                               @AuthenticationPrincipal Object principal) {
+        B2BAccessGuard.assertOrgAccess(principal, orgId);
+        Organization org = b2bService.getOrg(orgId);
+        Map<String, Object> out = new java.util.LinkedHashMap<>();
+        out.put("organizationId", org.getId());
+        out.put("companyName", org.getCompanyName());
+        out.put("industry", org.getIndustry());
+        out.put("gstin", org.getGstin());
+        out.put("status", org.getStatus());
+        out.put("kycVerified", org.isKycVerified());
+        return ResponseEntity.ok(out);
+    }
+
     // ─── Service Requests ────────────────────────────────────────────────────
     @PostMapping("/organizations/{orgId}/service-requests")
     public ResponseEntity<ServiceRequestResponse> createRequest(
-            @PathVariable UUID orgId, @RequestBody ServiceRequestRequest req,
+            @PathVariable UUID orgId, @Valid @RequestBody ServiceRequestRequest req,
             @AuthenticationPrincipal Object principal) {
         B2BAccessGuard.assertOrgAccess(principal, orgId);
         return ResponseEntity.ok(b2bService.createServiceRequest(orgId, req));
@@ -68,7 +84,9 @@ public class B2BController {
     }
 
     @GetMapping("/departments/{deptId}/service-requests")
-    public ResponseEntity<List<ServiceRequestResponse>> getDeptRequests(@PathVariable String deptId) {
+    public ResponseEntity<List<ServiceRequestResponse>> getDeptRequests(@PathVariable String deptId,
+                                                                        @AuthenticationPrincipal Object principal) {
+        B2BAccessGuard.assertStaff(principal);
         return ResponseEntity.ok(b2bService.getDeptServiceRequests(deptId));
     }
 
@@ -129,11 +147,11 @@ public class B2BController {
 
     @PostMapping("/organizations/{orgId}/team")
     public ResponseEntity<OrganizationUser> addTeamMember(
-            @PathVariable UUID orgId, @RequestBody Map<String, String> body,
+            @PathVariable UUID orgId, @Valid @RequestBody TeamMemberRequest req,
             @AuthenticationPrincipal Object principal) {
         B2BAccessGuard.assertOrgAccess(principal, orgId);
         return ResponseEntity.ok(b2bService.addTeamMember(
-                orgId, body.get("name"), body.get("email"), body.get("role"), body.get("password")));
+                orgId, req.name(), req.email(), req.role(), req.password()));
     }
 
     // ─── Support ─────────────────────────────────────────────────────────────
@@ -146,12 +164,11 @@ public class B2BController {
 
     @PostMapping("/organizations/{orgId}/support")
     public ResponseEntity<SupportTicket> createTicket(
-            @PathVariable UUID orgId, @RequestBody Map<String, String> body,
+            @PathVariable UUID orgId, @Valid @RequestBody SupportTicketRequest req,
             @AuthenticationPrincipal Object principal) {
         B2BAccessGuard.assertOrgAccess(principal, orgId);
         return ResponseEntity.ok(b2bService.createTicket(
-                orgId, body.get("subject"), body.get("description"),
-                body.get("category"), body.get("priority")));
+                orgId, req.subject(), req.description(), req.category(), req.priority()));
     }
 
     // ─── Documents ───────────────────────────────────────────────────────────
@@ -160,5 +177,27 @@ public class B2BController {
                                                                    @AuthenticationPrincipal Object principal) {
         B2BAccessGuard.assertOrgAccess(principal, orgId);
         return ResponseEntity.ok(b2bService.getOrgDocuments(orgId));
+    }
+
+    /** Upload (or replace) a KYC document. Content is a base64 data URI (PDF/JPG/PNG, ≤6 MB). */
+    @PostMapping("/organizations/{orgId}/documents")
+    public ResponseEntity<OrganizationDocument> uploadDocument(@PathVariable UUID orgId,
+                                                               @jakarta.validation.Valid @RequestBody com.finbridge.dto.DocumentUploadRequest req,
+                                                               @AuthenticationPrincipal Object principal) {
+        B2BAccessGuard.assertOrgAccess(principal, orgId);
+        return ResponseEntity.ok(b2bService.uploadDocument(orgId,
+                req.documentType(), req.fileName(), req.content(), principal));
+    }
+
+    /** Download a stored document's content. */
+    @GetMapping("/organizations/{orgId}/documents/{docId}/file")
+    public ResponseEntity<Map<String, String>> downloadDocument(@PathVariable UUID orgId, @PathVariable UUID docId,
+                                                                @AuthenticationPrincipal Object principal) {
+        B2BAccessGuard.assertOrgAccess(principal, orgId);
+        OrganizationDocument d = b2bService.getDocument(docId, orgId);
+        Map<String, String> out = new java.util.LinkedHashMap<>();
+        out.put("fileName", d.getFileName());
+        out.put("content", d.getFileUrl());   // base64 data URI
+        return ResponseEntity.ok(out);
     }
 }

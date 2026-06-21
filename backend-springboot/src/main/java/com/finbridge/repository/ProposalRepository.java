@@ -17,4 +17,6 @@ public interface ProposalRepository extends JpaRepository<Proposal, UUID> {
     List<Proposal> findByConsultantIdAndActiveTrueOrderByCreatedAtDesc(UUID consultantId);
     List<Proposal> findByDepartmentAndActiveTrueOrderByCreatedAtDesc(String department);
     List<Proposal> findByActiveTrueOrderByCreatedAtDesc();
+
+    List<Proposal> findByCaseIdAndCaseModelAndActiveTrue(UUID caseId, String caseModel);
 }

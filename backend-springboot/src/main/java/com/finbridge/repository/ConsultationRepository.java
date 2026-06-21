@@ -10,4 +10,5 @@ public interface ConsultationRepository extends JpaRepository<Consultation, UUID
     List<Consultation> findByConsultantIdOrderByCreatedAtDesc(UUID consultantId);
     List<Consultation> findByDepartmentOrderByCreatedAtDesc(String department);
     List<Consultation> findAllByOrderByCreatedAtDesc();
+    List<Consultation> findByClientEmailInOrderByCreatedAtDesc(List<String> emails);
 }

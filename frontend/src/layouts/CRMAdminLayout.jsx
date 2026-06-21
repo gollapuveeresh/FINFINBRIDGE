@@ -6,8 +6,8 @@ import { motion } from 'framer-motion';
 const crmMenuItems = [
   { icon: 'dashboard', label: 'CRM Dashboard', path: '/crm-admin/dashboard' },
   { icon: 'contacts', label: 'All Leads', path: '/crm-admin/leads' },
+  { icon: 'group', label: 'All Clients', path: '/crm-admin/clients' },
   { icon: 'leaderboard', label: 'Pipeline', path: '/crm-admin/pipeline' },
-  { icon: 'analytics', label: 'Analytics', path: '/crm-admin/analytics' },
 ];
 
 export default function CRMAdminLayout({ children }) {

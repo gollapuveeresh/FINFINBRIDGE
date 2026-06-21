@@ -1,6 +1,7 @@
 import ConsultantLayout from '../../layouts/ConsultantLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { clientPortfolio } from './ClientList';
+import api from '../../services/api';
 
 // Change 7: Target client dropdown matches clientPortfolio (Change 5 compliance)
 const clientOptions = clientPortfolio.map(c => c.contact);
@@ -28,14 +29,61 @@ function downloadMockPDF(filename, docType, clientName) {
 }
 
 export default function ConsultantReports() {
-  const [vaultDocs, setVaultDocs] = useState(initialVaultDocs);
+  const [vaultDocs, setVaultDocs] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // Builder Form States
-  const [targetClient, setTargetClient] = useState(clientOptions[0] || '');
+  const [targetClient, setTargetClient] = useState('');
   const [reportTitle, setReportTitle] = useState('Quarterly Performance Statement');
   const [highlights, setHighlights] = useState('');
   const [generating, setGenerating] = useState(false);
   const [success, setSuccess] = useState('');
+
+  useEffect(() => {
+    // 1. Fetch clients
+    api.get('/auth/consultant/clients')
+      .then(r => {
+        const list = (r.data.clients || []).map(c => c.name);
+        const allClientNames = Array.from(new Set([
+          ...list,
+          ...clientPortfolio.map(c => c.contact || c.name)
+        ]));
+        setClients(allClientNames);
+        if (allClientNames.length > 0) {
+          setTargetClient(allClientNames[0]);
+        }
+      })
+      .catch(() => {
+        const mockNames = clientPortfolio.map(c => c.contact || c.name);
+        setClients(mockNames);
+        if (mockNames.length > 0) {
+          setTargetClient(mockNames[0]);
+        }
+      });
+
+    // 2. Fetch documents
+    setLoading(true);
+    api.get('/documents/consultant')
+      .then(r => {
+        const docs = (r.data.documents || []).map(d => ({
+          id: d.id || d._id,
+          client: d.clientId ? d.clientId.name : 'Organization',
+          type: d.type || 'Document',
+          date: d.createdAt ? new Date(d.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+          uploadedBy: d.status === 'Signed' ? 'Advisor (You)' : 'Client',
+          size: d.size || '1.5 MB',
+          filename: d.name || `${d.type}.pdf`,
+        }));
+        setVaultDocs(docs);
+      })
+      .catch(() => {
+        setVaultDocs(initialVaultDocs);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, []);
 
   const handleGenerateReport = (e) => {
     e.preventDefault();
@@ -99,7 +147,7 @@ export default function ConsultantReports() {
                 onChange={(e) => setTargetClient(e.target.value)}
                 className="form-input"
               >
-                {clientOptions.map(name => (
+                {clients.map(name => (
                   <option key={name} value={name}>{name}</option>
                 ))}
               </select>
@@ -157,40 +205,46 @@ export default function ConsultantReports() {
             </div>
 
             <div className="divide-y divide-outline-variant/35 overflow-y-auto max-h-[440px]">
-              {vaultDocs.map((doc) => (
-                <div key={doc.id} className="px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-surface/20 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="p-2 bg-surface-hover rounded-lg">
-                      <span className="material-symbols-outlined text-accent">
-                        {doc.type.includes('Report') || doc.type.includes('Statement') ? 'picture_as_pdf' : 'description'}
-                      </span>
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-accent text-body-md">{doc.type}</h4>
-                      <p className="text-xs text-text-muted">Client: <strong>{doc.client}</strong> • Uploaded by {doc.uploadedBy} • {doc.date}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-6 self-end sm:self-auto">
-                    <span className="text-xs font-bold text-text-muted">{doc.size}</span>
-                    <div className="flex gap-2">
-                      {/* Change 7: Download button is now functional */}
-                      <button
-                        onClick={() => downloadMockPDF(doc.filename, doc.type, doc.client)}
-                        title="Download"
-                        className="text-secondary hover:text-accent transition-colors flex items-center gap-1"
-                      >
-                        <span className="material-symbols-outlined text-base">download</span>
-                      </button>
-                      <button onClick={() => handleDeleteDoc(doc.id)} className="text-error hover:underline transition-colors" title="Delete">
-                        <span className="material-symbols-outlined text-base">delete</span>
-                      </button>
-                    </div>
-                  </div>
+              {loading ? (
+                <div className="py-16 text-center text-text-muted text-body-md">
+                  <div className="w-8 h-8 border-4 border-secondary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  Loading documents...
                 </div>
-              ))}
-              {vaultDocs.length === 0 && (
-                <div className="py-16 text-center text-text-muted text-body-md">Vault is empty.</div>
+              ) : vaultDocs.length === 0 ? (
+                <div className="py-16 text-center text-text-muted text-body-md">No documents are submitted.</div>
+              ) : (
+                vaultDocs.map((doc) => (
+                  <div key={doc.id} className="px-8 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 hover:bg-surface/20 transition-colors">
+                    <div className="flex items-start gap-4">
+                      <div className="p-2 bg-surface-hover rounded-lg">
+                        <span className="material-symbols-outlined text-accent">
+                          {doc.type.includes('Report') || doc.type.includes('Statement') ? 'picture_as_pdf' : 'description'}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-accent text-body-md">{doc.type}</h4>
+                        <p className="text-xs text-text-muted">Client: <strong>{doc.client}</strong> • Uploaded by {doc.uploadedBy} • {doc.date}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-6 self-end sm:self-auto">
+                      <span className="text-xs font-bold text-text-muted">{doc.size}</span>
+                      <div className="flex gap-2">
+                        {/* Change 7: Download button is now functional */}
+                        <button
+                          onClick={() => downloadMockPDF(doc.filename, doc.type, doc.client)}
+                          title="Download"
+                          className="text-secondary hover:text-accent transition-colors flex items-center gap-1"
+                        >
+                          <span className="material-symbols-outlined text-base">download</span>
+                        </button>
+                        <button onClick={() => handleDeleteDoc(doc.id)} className="text-error hover:underline transition-colors" title="Delete">
+                          <span className="material-symbols-outlined text-base">delete</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           </div>

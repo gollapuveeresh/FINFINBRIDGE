@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useB2BAuth } from '../context/B2BAuthContext';
@@ -16,9 +17,13 @@ const MENU = [
 ];
 
 export default function B2BLayout({ children }) {
-  const { company, logout } = useB2BAuth();
+  const { company, logout, refreshProfile } = useB2BAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (refreshProfile) refreshProfile();
+  }, [location.pathname]);
 
   const handleLogout = () => { logout(); toast.success('Logged out'); navigate('/b2b/login'); };
 

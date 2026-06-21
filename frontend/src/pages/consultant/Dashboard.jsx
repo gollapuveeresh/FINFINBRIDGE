@@ -112,7 +112,7 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
       {/* Static dept clients snapshot */}
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
-          <h3 className="font-bold text-accent">{deptData.name} Client Queue</h3>
+          <h3 className="font-bold text-accent">{deptData.name} Consultation Request</h3>
         </div>
         <div className="divide-y divide-border">
           {deptData.clients.map((c, i) => (

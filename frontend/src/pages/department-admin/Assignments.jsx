@@ -10,6 +10,7 @@ export default function DeptAssignments() {
 
   const [consultants, setConsultants] = useState([]);
   const [leads, setLeads]             = useState([]);
+  const [consultations, setConsultations] = useState([]);
   const [loading, setLoading]         = useState(true);
 
   useEffect(() => { fetchData(); }, [dept]);
@@ -17,19 +18,35 @@ export default function DeptAssignments() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [cRes, lRes] = await Promise.all([
+      const [cRes, lRes, conRes] = await Promise.all([
         api.get('/auth/consultants', { params: { department: dept } }),
         api.get('/leads', { params: { department: dept } }),
+        api.get('/consultations').catch(() => ({ data: { data: [] } })),
       ]);
       setConsultants(cRes.data.consultants || []);
       setLeads(lRes.data.leads || []);
+      const conList = Array.isArray(conRes.data) ? conRes.data : (conRes.data?.data || []);
+      setConsultations(conList);
     } catch { toast.error('Failed to load data'); }
     finally { setLoading(false); }
   };
 
-  // Count assigned leads per consultant
-  const getLoad = (consultantId) =>
-    leads.filter(l => l.assignedConsultant?._id === consultantId || l.assignedConsultant === consultantId).length;
+  // Count assigned clients per consultant
+  const getAssignedCount = (cId) =>
+    leads.filter(l => 
+      l.assignedConsultantId === cId ||
+      l.assignedConsultant?._id === cId ||
+      l.assignedConsultant?.id === cId ||
+      l.assignedConsultant === cId
+    ).length;
+
+  // Count active consultations per consultant
+  const getConsultationsCount = (cId) =>
+    consultations.filter(con => 
+      (con.consultant?.id === cId || con.consultant === cId) &&
+      con.status !== 'completed' && 
+      con.status !== 'rejected'
+    ).length;
 
   return (
     <DepartmentAdminLayout>
@@ -47,8 +64,13 @@ export default function DeptAssignments() {
       <div className="grid grid-cols-3 gap-gutter">
         {[
           { label: 'Total Consultants', value: consultants.length, color: 'text-accent', bg: 'bg-accent/10' },
-          { label: 'Active', value: consultants.filter(c => c.isActive).length, color: 'text-green-400', bg: 'bg-green-500/10' },
-          { label: 'Total Assigned Leads', value: leads.filter(l => l.assignedConsultant).length, color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: 'Active Consultants', value: consultants.filter(c => c.isActive).length, color: 'text-green-400', bg: 'bg-green-500/10' },
+          { 
+            label: 'Total Assigned Clients', 
+            value: leads.filter(l => l.assignedConsultantId || l.assignedConsultant?._id || l.assignedConsultant?.id || l.assignedConsultant).length, 
+            color: 'text-blue-400', 
+            bg: 'bg-blue-500/10' 
+          },
         ].map((k, i) => (
           <div key={i} className="card p-5">
             <p className="text-text-muted text-xs font-semibold">{k.label}</p>
@@ -77,11 +99,13 @@ export default function DeptAssignments() {
               </thead>
               <tbody className="divide-y divide-border">
                 {consultants.map(c => {
-                  const load = getLoad(c._id);
+                  const cId = c.id || c._id;
+                  const assignedCount = getAssignedCount(cId);
+                  const activeConsultations = getConsultationsCount(cId);
                   const MAX = 10;
-                  const pct = Math.min(Math.round((load / MAX) * 100), 100);
+                  const pct = Math.min(Math.round((assignedCount / MAX) * 100), 100);
                   return (
-                    <tr key={c._id} className="hover:bg-surface/50">
+                    <tr key={cId} className="hover:bg-surface/50">
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
@@ -97,7 +121,7 @@ export default function DeptAssignments() {
                           {c.isActive ? 'Active' : 'Inactive'}
                         </span>
                       </td>
-                      <td className="px-5 py-4 font-bold text-accent">{load}</td>
+                      <td className="px-5 py-4 font-bold text-accent">{assignedCount} assigned</td>
                       <td className="px-5 py-4 min-w-[140px]">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-2 bg-surface rounded-full overflow-hidden">

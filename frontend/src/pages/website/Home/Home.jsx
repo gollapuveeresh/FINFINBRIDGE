@@ -1751,11 +1751,48 @@ const Home = () => {
         <ContactCanvasBackground />
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid lg:grid-cols-12 gap-12">
-            {/* Contact Form — now captures real leads */}
+            {/* Get In Touch Redirect & Office Info */}
             <div className="lg:col-span-7">
-              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12">
-                <h2 className="text-4xl font-semibold mb-10">Request a Free Consultation</h2>
-                <LeadCaptureForm />
+              <div className="bg-white/5 border border-white/10 rounded-3xl p-8 md:p-12 flex flex-col justify-between h-full relative overflow-hidden group">
+                <div className="absolute top-[-100px] right-[-100px] w-[300px] h-[300px] bg-accent/5 rounded-full blur-[80px] pointer-events-none" />
+                <div className="relative z-10 space-y-8">
+                  <div>
+                    <span className="text-[#D4AF37] text-xs font-mono tracking-[0.2em] font-semibold uppercase block mb-3">
+                      Start Your Journey
+                    </span>
+                    <h2 className="text-4xl md:text-5xl font-semibold tracking-tight leading-tight text-white mb-6">
+                      Get in Contact with Our Advisory Team
+                    </h2>
+                    <p className="text-gray-400 text-lg leading-relaxed font-light mb-8">
+                      Register your organization today on the FinBridge B2B Portal. Gain access to dedicated consultants, customize advisory service requests, track proposals, and coordinate meetings securely in one place.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Link
+                      to="/b2b/register"
+                      className="inline-flex items-center gap-4 bg-[#D4AF37] hover:bg-white text-[#0A192F] hover:text-[#0A192F] font-bold text-lg tracking-wider uppercase py-5 px-10 rounded-2xl transition-all duration-300 shadow-lg group cursor-pointer"
+                    >
+                      GET IN CONTACT
+                      <ArrowRight className="w-5 h-5 transform group-hover:translate-x-1.5 transition-transform" />
+                    </Link>
+                  </div>
+                </div>
+
+                <div className="border-t border-white/10 mt-12 pt-8 relative z-10">
+                  <div className="flex flex-col md:flex-row gap-6 justify-between text-sm text-gray-400">
+                    <div>
+                      <div className="text-white font-semibold text-base mb-1">Corporate Headquarters</div>
+                      <div className="font-light">FinBridge Tower, Agrabad Commercial Area</div>
+                      <div className="font-light">Chittagong, Bangladesh</div>
+                    </div>
+                    <div className="flex flex-col gap-1 justify-end md:items-end">
+                      <div className="text-white font-semibold">Contact Info</div>
+                      <a href="tel:+8801719765432" className="hover:text-[#D4AF37] transition-colors">+880 1719 765432</a>
+                      <a href="mailto:contact@finbridge.com" className="hover:text-[#D4AF37] transition-colors">contact@finbridge.com</a>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

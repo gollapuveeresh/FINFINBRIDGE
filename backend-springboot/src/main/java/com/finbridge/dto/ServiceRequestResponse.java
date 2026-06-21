@@ -23,4 +23,8 @@ public class ServiceRequestResponse {
     private String notes;
     private Instant createdAt;
     private Instant updatedAt;
+    private String meetingStatus;
+    private String meetingDate;
+    private String meetingTime;
+    private String meetingLink;
 }

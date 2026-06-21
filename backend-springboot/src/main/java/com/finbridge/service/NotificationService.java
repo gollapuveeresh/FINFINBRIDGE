@@ -4,6 +4,7 @@ import com.finbridge.entity.Notification;
 import com.finbridge.entity.User;
 import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.NotificationRepository;
+import com.finbridge.security.OwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,9 +37,10 @@ public class NotificationService {
     }
 
     @Transactional
-    public void markRead(UUID id) {
+    public void markRead(UUID id, User actor) {
         Notification n = notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + id));
+        OwnershipGuard.assertOwnerOrAdmin(actor, n.getUser(), "notification");
         n.setRead(true);
         notificationRepository.save(n);
     }

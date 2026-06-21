@@ -7,6 +7,8 @@ import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.DeptCaseRepository;
 import com.finbridge.repository.LeadRepository;
 import com.finbridge.repository.UserRepository;
+import com.finbridge.repository.ProposalRepository;
+import com.finbridge.entity.Proposal;
 import com.finbridge.security.OwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +38,8 @@ public class DeptCaseService {
     private final UserRepository userRepository;
     private final LeadRepository leadRepository;
     private final SequenceGenerator sequenceGenerator;
+    private final ProposalRepository proposalRepository;
+    private final ProposalService proposalService;
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getByDepartment(String department) {
@@ -88,13 +92,64 @@ public class DeptCaseService {
     public Map<String, Object> patch(UUID id, Map<String, Object> body, User actor) {
         DeptCase c = loadOwned(id, actor);
         Map<String, Object> data = new HashMap<>(c.getData() != null ? c.getData() : new HashMap<>());
+        
+        boolean transitioningToApproval = false;
+        if (body.containsKey("stage")) {
+            String newStage = body.get("stage") != null ? body.get("stage").toString() : null;
+            if ("client_approval".equals(newStage) && !"client_approval".equals(c.getStage())) {
+                transitioningToApproval = true;
+            }
+        }
+
         body.forEach((k, v) -> {
             if ("stage".equals(k)) c.setStage(v == null ? null : v.toString());
             else if ("invoiceId".equals(k) && v != null) c.setInvoiceId(UUID.fromString(v.toString()));
             else if (!RESERVED.contains(k)) data.put(k, v);
         });
+
+        if (transitioningToApproval) {
+            createProposalForCase(c, data);
+        }
+
         c.setData(data);
         return toResponse(deptCaseRepository.save(c));
+    }
+
+    private void createProposalForCase(DeptCase c, Map<String, Object> data) {
+        // Double check if a proposal already exists for this case
+        List<Proposal> existing = proposalRepository.findByCaseIdAndCaseModelAndActiveTrue(c.getId(), "DeptCase");
+        if (!existing.isEmpty()) {
+            return;
+        }
+
+        Proposal p = new Proposal();
+        p.setClient(c.getClient());
+        p.setConsultant(c.getConsultant());
+        p.setDepartment(c.getDepartment());
+        p.setCaseId(c.getId());
+        p.setCaseModel("DeptCase");
+        p.setTitle(c.getDepartment().toUpperCase() + " Recommendations Plan - " + c.getCaseId());
+        p.setSummary("Advisory plan and recommendations generated for your " + c.getDepartment() + " case.");
+
+        Map<String, Object> details = new HashMap<>();
+        if (data.get("recommendations") != null) {
+            details.put("recommendations", data.get("recommendations"));
+        } else if (data.get("recommendation") != null) {
+            details.put("recommendation", data.get("recommendation"));
+        } else if (data.get("assetAllocation") != null) {
+            details.put("assetAllocation", data.get("assetAllocation"));
+        } else if (data.get("portfolio") != null) {
+            details.put("portfolio", data.get("portfolio"));
+        }
+        p.setDetails(details);
+        p.setStatus("sent");
+
+        Proposal saved = proposalRepository.save(p);
+        data.put("proposalId", saved.getId().toString());
+
+        // Sync proposal to organization B2B portal
+        proposalService.syncToOrgProposal(saved);
+        log.info("Automatically generated CRM proposal {} for DeptCase {}", saved.getId(), c.getCaseId());
     }
 
     @Transactional

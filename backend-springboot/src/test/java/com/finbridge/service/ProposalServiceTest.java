@@ -30,6 +30,8 @@ class ProposalServiceTest {
     @Mock LeadRepository leadRepository;
     @Mock OrganizationUserRepository orgUserRepository;
     @Mock OrganizationProposalRepository orgProposalRepository;
+    @Mock com.finbridge.repository.DeptCaseRepository deptCaseRepository;
+    @Mock com.finbridge.repository.LoanCaseRepository loanCaseRepository;
     ProposalService proposalService;
 
     private Proposal proposal;
@@ -37,7 +39,7 @@ class ProposalServiceTest {
     @BeforeEach
     void setUp() {
         // Use a real DtoMapper so we can assert on the mapped response.
-        proposalService = new ProposalService(proposalRepository, userRepository, leadRepository, orgUserRepository, orgProposalRepository, new DtoMapper());
+        proposalService = new ProposalService(proposalRepository, userRepository, leadRepository, orgUserRepository, orgProposalRepository, new DtoMapper(), deptCaseRepository, loanCaseRepository);
         proposal = new Proposal();
         proposal.setId(UUID.randomUUID());
         proposal.setTitle("Home Loan Proposal");

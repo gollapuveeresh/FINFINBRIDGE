@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite *)",
+      "Bash(grep -v \"digital-transformation-guide\\\\|client-transformations\\\\|financial-transformation\\\\|//.*path\")",
+      "Bash(mvn -q -DskipTests compile)",
+      "Bash(mvn test *)"
+    ]
+  }
+}

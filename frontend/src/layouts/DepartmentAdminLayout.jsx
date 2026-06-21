@@ -21,7 +21,7 @@ export default function DepartmentAdminLayout({ children }) {
         <p>© 2026 FinBridge Solutions. All rights reserved.</p>
         <div className="flex gap-8 mt-3 md:mt-0">
           <Link to="/department-admin/dashboard" className="hover:underline decoration-secondary transition-opacity">Department Overview</Link>
-          <Link to="/department-admin/clients" className="hover:underline decoration-secondary transition-opacity">Client Queue</Link>
+          <Link to="/department-admin/clients" className="hover:underline decoration-secondary transition-opacity">Consultation Request</Link>
         </div>
       </footer>
     </div>

@@ -6,6 +6,7 @@ import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext';
 import { B2BAuthProvider } from './context/B2BAuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -14,6 +15,7 @@ createRoot(document.getElementById('root')).render(
         <AuthProvider>
           <B2BAuthProvider>
             <App />
+            <Toaster position="top-right" toastOptions={{ duration: 4000 }} />
           </B2BAuthProvider>
         </AuthProvider>
       </BrowserRouter>

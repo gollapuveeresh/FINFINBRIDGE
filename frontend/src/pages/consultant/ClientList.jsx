@@ -115,9 +115,6 @@ export default function MyClients() {
           <h1 className="text-headline-lg font-bold text-accent">My Clients</h1>
           <p className="text-body-md text-text-muted mt-1">Manage your full client portfolio and relationships.</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="btn-primary flex items-center gap-2">
-          <span className="material-symbols-outlined">person_add</span>Add Client
-        </button>
       </div>
 
       {/* Stats */}
@@ -221,7 +218,7 @@ export default function MyClients() {
               ) : (
                 filtered.map((client, i) => {
                   const parts = client.contact.trim().split(' ');
-                  const clientKey = client.status === 'Lead' ? client._id : (parts[1] || parts[0] || 'client').toLowerCase();
+                  const clientKey = client._id || (parts[1] || parts[0] || 'client').toLowerCase();
                   return (
                     <tr key={i} className="hover:bg-surface/50 transition-colors">
                       <td className="px-6 py-4">

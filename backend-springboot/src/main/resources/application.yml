@@ -29,7 +29,10 @@ spring:
       ddl-auto: validate
     # SQL logging is OFF by default (perf + avoids PII in logs). Enable in the 'dev' profile only.
     show-sql: false
-    open-in-view: false
+    # Keep open-session-in-view ON: several read endpoints build their DTOs outside an explicit
+    # transaction and touch lazy associations during mapping. Disabling it caused
+    # LazyInitializationException (e.g. service-request listing). Spring's default is true.
+    open-in-view: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect

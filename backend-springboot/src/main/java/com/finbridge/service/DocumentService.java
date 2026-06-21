@@ -3,9 +3,11 @@ package com.finbridge.service;
 import com.finbridge.entity.DeptCase;
 import com.finbridge.entity.LoanCase;
 import com.finbridge.entity.LoanCaseDocument;
+import com.finbridge.entity.OrganizationDocument;
 import com.finbridge.entity.User;
 import com.finbridge.repository.DeptCaseRepository;
 import com.finbridge.repository.LoanCaseRepository;
+import com.finbridge.repository.OrganizationDocumentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,17 +29,19 @@ public class DocumentService {
 
     private final LoanCaseRepository loanCaseRepository;
     private final DeptCaseRepository deptCaseRepository;
+    private final OrganizationDocumentRepository organizationDocumentRepository;
 
-    /** Documents across the loan cases the consultant owns. */
+    /** Documents across the loan cases the consultant owns, plus B2B client (org) KYC documents. */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> forConsultant(User consultant) {
         List<Map<String, Object>> out = new ArrayList<>();
         for (LoanCase lc : loanCaseRepository.findByConsultantIdAndActiveTrueOrderByCreatedAtDesc(consultant.getId()))
             addLoanDocs(out, lc);
+        addOrgDocs(out);
         return out;
     }
 
-    /** Documents across the department's cases (loans → loan cases; other depts → dept cases). */
+    /** Documents across the department's cases plus B2B client (org) KYC documents. */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> forDepartment(User admin) {
         List<Map<String, Object>> out = new ArrayList<>();
@@ -49,7 +53,32 @@ public class DocumentService {
             for (DeptCase dc : deptCaseRepository.findByDepartmentAndActiveTrueOrderByCreatedAtDesc(dept))
                 addDeptDocs(out, dc);
         }
+        addOrgDocs(out);
         return out;
+    }
+
+    /** B2B organisation KYC documents — surfaced to staff so client uploads are visible. */
+    private void addOrgDocs(List<Map<String, Object>> out) {
+        for (OrganizationDocument d : organizationDocumentRepository.findAll()) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("_id", d.getId());
+            m.put("id", d.getId());
+            m.put("name", d.getFileName() != null ? d.getFileName() : d.getDocumentType());
+            m.put("type", d.getDocumentType());
+            m.put("size", null);
+            // OrganizationDocument uses pending/verified/rejected; map onto the page's labels.
+            m.put("status", switch (d.getStatus() == null ? "" : d.getStatus()) {
+                case "verified" -> "Signed";
+                case "rejected" -> "Pending Sign";
+                default -> "Uploaded";
+            });
+            m.put("createdAt", d.getCreatedAt());
+            Map<String, Object> client = new LinkedHashMap<>();
+            client.put("name", d.getOrganization() != null ? d.getOrganization().getCompanyName() : "Organization");
+            client.put("email", null);
+            m.put("clientId", client);
+            out.add(m);
+        }
     }
 
     private void addLoanDocs(List<Map<String, Object>> out, LoanCase lc) {

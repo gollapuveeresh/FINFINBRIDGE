@@ -3,6 +3,16 @@ import api from '../services/api';
 
 const AuthContext = createContext(null);
 
+// Prefer a server field-level validation message over the generic one.
+const authErrMsg = (err, fallback) => {
+  const errs = err?.response?.data?.errors;
+  if (errs && typeof errs === 'object') {
+    const first = Object.values(errs)[0];
+    if (first) return first;
+  }
+  return err?.response?.data?.message || err?.message || fallback;
+};
+
 // sessionStorage is tab-isolated — each tab keeps its own token independently.
 // localStorage is also written on login so the user can open a fresh tab and
 // still be "remembered" (they can log in to a different portal in that new tab).
@@ -101,7 +111,7 @@ export function AuthProvider({ children }) {
       await checkProfile(user);
       return user;
     } catch (err) {
-      throw new Error(err.response?.data?.message || err.message || 'Login failed');
+      throw new Error(authErrMsg(err, 'Login failed'));
     }
   };
 
@@ -118,7 +128,7 @@ export function AuthProvider({ children }) {
       if (data.status === 'error') throw new Error(data.message || 'Registration failed');
       return data;
     } catch (err) {
-      throw new Error(err.response?.data?.message || err.message || 'Registration failed');
+      throw new Error(authErrMsg(err, 'Registration failed'));
     }
   };
 

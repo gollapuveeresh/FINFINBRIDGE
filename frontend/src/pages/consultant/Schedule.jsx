@@ -25,9 +25,8 @@ export default function ConsultantSchedule() {
       setLoading(true);
       setError('');
       const res = await api.get('/consultations');
-      if (res.data && res.data.status === 'success') {
-        setMeetings(res.data.data);
-      }
+      const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+      setMeetings(list);
     } catch (err) {
       console.error('Failed to fetch consultations:', err);
       setError(err.response?.data?.message || 'Failed to load scheduling pipeline.');
@@ -39,6 +38,20 @@ export default function ConsultantSchedule() {
   const handleConfirmSchedule = async (id) => {
     if (!inputDate || !inputTime) {
       alert('Please select/enter both Date and Time.');
+      return;
+    }
+    // Validation: No past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(inputDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      alert('Cannot schedule a meeting for a past date.');
+      return;
+    }
+    // Validation: Between 10:00 AM and 10:00 PM
+    if (inputTime < '10:00' || inputTime > '22:00') {
+      alert('Meetings can only be scheduled between 10:00 AM and 10:00 PM.');
       return;
     }
     try {
@@ -126,7 +139,7 @@ export default function ConsultantSchedule() {
               <AnimatePresence>
                 {meetings.map((meet, index) => (
                   <motion.div 
-                    key={meet._id} 
+                    key={meet.id || meet._id} 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -165,10 +178,10 @@ export default function ConsultantSchedule() {
                         </span>
                         <div className="flex gap-2">
                           {meet.status === 'pending' ? (
-                            schedulingId !== meet._id && (
+                            schedulingId !== (meet.id || meet._id) && (
                               <button 
                                 onClick={() => {
-                                  setSchedulingId(meet._id);
+                                  setSchedulingId(meet.id || meet._id);
                                   setInputDate('');
                                   setInputTime('');
                                 }}
@@ -191,7 +204,7 @@ export default function ConsultantSchedule() {
                     </div>
 
                     {/* Inline Scheduling Form */}
-                    {schedulingId === meet._id && (
+                    {schedulingId === (meet.id || meet._id) && (
                       <motion.div 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
@@ -203,16 +216,43 @@ export default function ConsultantSchedule() {
                             <label className="text-xs font-bold text-text-muted block mb-1">Meeting Date</label>
                             <input 
                               type="date"
+                              min={(() => {
+                                const today = new Date();
+                                const year = today.getFullYear();
+                                const month = String(today.getMonth() + 1).padStart(2, '0');
+                                const day = String(today.getDate()).padStart(2, '0');
+                                return `${year}-${month}-${day}`;
+                              })()}
                               value={inputDate}
-                              onChange={(e) => setInputDate(e.target.value)}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                if (!val) {
+                                  setInputDate('');
+                                  return;
+                                }
+                                const today = new Date();
+                                today.setHours(0,0,0,0);
+                                const selected = new Date(val);
+                                selected.setHours(0,0,0,0);
+                                if (selected < today) {
+                                  alert('Cannot select a past date.');
+                                  const year = today.getFullYear();
+                                  const month = String(today.getMonth() + 1).padStart(2, '0');
+                                  const day = String(today.getDate()).padStart(2, '0');
+                                  setInputDate(`${year}-${month}-${day}`);
+                                } else {
+                                  setInputDate(val);
+                                }
+                              }}
                               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-bold text-text-muted block mb-1">Meeting Time Slot</label>
+                            <label className="text-xs font-bold text-text-muted block mb-1">Meeting Time Slot (10:00 AM - 10:00 PM)</label>
                             <input 
-                              type="text"
-                              placeholder="e.g. 11:30 AM - 12:15 PM EST"
+                              type="time"
+                              min="10:00"
+                              max="22:00"
                               value={inputTime}
                               onChange={(e) => setInputTime(e.target.value)}
                               className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
@@ -227,7 +267,7 @@ export default function ConsultantSchedule() {
                             Cancel
                           </button>
                           <button 
-                            onClick={() => handleConfirmSchedule(meet._id)}
+                            onClick={() => handleConfirmSchedule(meet.id || meet._id)}
                             disabled={submitting}
                             className="btn-primary py-1.5 px-4 text-xs font-bold cursor-pointer font-sans"
                           >

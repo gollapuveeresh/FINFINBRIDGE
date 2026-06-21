@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useB2BAuth } from '../../context/B2BAuthContext';
+import { isEmail, isPincode, isMobile, minLen, required, firstError, apiErrorMessage } from '../../utils/validators';
 
 const INDUSTRIES = ['Technology','Healthcare','Manufacturing','Retail','Education','Construction','Finance','Logistics','Real Estate','Other'];
 const SERVICES   = ['Loans','Tax','Investment','Insurance','Wealth Management'];
@@ -39,13 +40,72 @@ export default function B2BRegister() {
   const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
   const toggleService = (s) => setForm(p => ({
     ...p,
-    services: p.services.includes(s) ? p.services.filter(x => x !== s) : [...p.services, s],
+    services: p.services.includes(s) ? [] : [s],
   }));
+
+  const validateStep1 = () => {
+    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9A-Z]{3}$/;
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+
+    if (!required(form.companyName)) {
+      toast.error('Company name is required');
+      return false;
+    }
+    if (!required(form.industry)) {
+      toast.error('Select an industry');
+      return false;
+    }
+    if (!required(form.gstin)) {
+      toast.error('GSTIN is required');
+      return false;
+    } else if (!gstinRegex.test(form.gstin.trim().toUpperCase())) {
+      toast.error('Enter a valid 15-character GSTIN (e.g., 27AABCT1234A1Z5)');
+      return false;
+    }
+    if (form.pan && !panRegex.test(form.pan.trim().toUpperCase())) {
+      toast.error('Enter a valid 10-character PAN (e.g., AABCT1234A)');
+      return false;
+    }
+    if (form.annualTurnover && (isNaN(form.annualTurnover) || Number(form.annualTurnover) <= 0)) {
+      toast.error('Annual Turnover must be a positive number');
+      return false;
+    }
+    if (form.employeeCount && (isNaN(form.employeeCount) || Number(form.employeeCount) < 0 || !Number.isInteger(Number(form.employeeCount)))) {
+      toast.error('Number of Employees must be a non-negative integer');
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    const err = firstError({
+      name:     required(form.adminName)     ? null : 'Contact name is required',
+      email:    isEmail(form.adminEmail)     ? null : 'Enter a valid business email',
+      phone:    required(form.adminPhone)    ? (isMobile(form.adminPhone) ? null : 'Enter a valid 10-digit mobile number') : 'Phone number is required',
+      password: minLen(form.adminPassword, 8) ? null : 'Password must be at least 8 characters',
+      match:    form.adminPassword === form.confirmPassword ? null : 'Passwords do not match',
+      address:  required(form.address)       ? null : 'Registered address is required',
+      city:     required(form.city)          ? null : 'City is required',
+      state:    required(form.state)         ? null : 'State is required',
+      pincode:  required(form.pincode)       ? (isPincode(form.pincode) ? null : 'Enter a valid 6-digit PIN code') : 'PIN Code is required',
+    });
+    if (err) { toast.error(err); return false; }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+    setStep(s => s + 1);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.adminPassword !== form.confirmPassword) { toast.error('Passwords do not match'); return; }
-    if (!form.services.length) { toast.error('Select at least one service'); return; }
+    if (!validateStep1() || !validateStep2()) return;
+    const err = firstError({
+      services: form.services.length ? null : 'Select a service',
+    });
+    if (err) { toast.error(err); return; }
     setLoading(true);
     try {
       await register({
@@ -56,7 +116,7 @@ export default function B2BRegister() {
       toast.success('Registration submitted! Our compliance team will review within 24 hours.');
       navigate('/b2b/login');
     } catch (err) {
-      toast.error(err.message || 'Registration failed');
+      toast.error(apiErrorMessage(err, 'Registration failed'));
     } finally {
       setLoading(false);
     }
@@ -145,7 +205,7 @@ export default function B2BRegister() {
             {step === 3 && (
               <>
                 <h3 className="font-bold text-accent">Financial Services Required</h3>
-                <p className="text-text-muted text-sm">Select all services your company needs:</p>
+                <p className="text-text-muted text-sm">Select the service your company needs:</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                   {SERVICES.map(s => {
                     const active = form.services.includes(s);
@@ -175,7 +235,7 @@ export default function B2BRegister() {
                 <button type="button" onClick={() => setStep(s => s-1)} className="flex-1 btn-ghost py-3">← Back</button>
               )}
               {step < 3 ? (
-                <button type="button" onClick={() => setStep(s => s+1)} className="flex-1 btn-primary py-3">Next →</button>
+                <button type="button" onClick={handleNext} className="flex-1 btn-primary py-3">Next →</button>
               ) : (
                 <button type="submit" disabled={loading} className="flex-1 btn-primary py-3 disabled:opacity-60">
                   {loading ? 'Submitting...' : 'Submit Registration'}

@@ -38,17 +38,64 @@ function ConsultationRow({ c, onAccept }) {
         <div className="grid grid-cols-2 gap-3 p-4 bg-bg rounded-2xl border border-border">
           <div>
             <label className="text-xs text-text-muted block mb-1">Meeting Date</label>
-            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            <input type="date" 
+              min={(() => {
+                const today = new Date();
+                const year = today.getFullYear();
+                const month = String(today.getMonth() + 1).padStart(2, '0');
+                const day = String(today.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+              })()}
+              value={date} 
+              onChange={e => {
+                const val = e.target.value;
+                if (!val) {
+                  setDate('');
+                  return;
+                }
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const selected = new Date(val);
+                selected.setHours(0,0,0,0);
+                if (selected < today) {
+                  toast.error('Cannot select a past date.');
+                  const year = today.getFullYear();
+                  const month = String(today.getMonth() + 1).padStart(2, '0');
+                  const day = String(today.getDate()).padStart(2, '0');
+                  setDate(`${year}-${month}-${day}`);
+                } else {
+                  setDate(val);
+                }
+              }}
               className="w-full p-2 rounded-xl border border-border bg-surface text-sm" />
           </div>
           <div>
-            <label className="text-xs text-text-muted block mb-1">Time Slot</label>
-            <input value={time} onChange={e => setTime(e.target.value)}
-              placeholder="e.g. 11:00 AM – 11:45 AM"
+            <label className="text-xs text-text-muted block mb-1">Time Slot (10:00 AM - 10:00 PM)</label>
+            <input type="time"
+              min="10:00"
+              max="22:00"
+              value={time} 
+              onChange={e => setTime(e.target.value)}
               className="w-full p-2 rounded-xl border border-border bg-surface text-sm" />
           </div>
           <div className="col-span-2">
-            <button onClick={() => { if (date && time) onAccept(c._id, date, time); }}
+            <button onClick={() => { 
+                if (date && time) {
+                  const today = new Date();
+                  today.setHours(0,0,0,0);
+                  const selectedDate = new Date(date);
+                  selectedDate.setHours(0,0,0,0);
+                  if (selectedDate < today) {
+                    toast.error('Cannot schedule a meeting for a past date.');
+                    return;
+                  }
+                  if (time < '10:00' || time > '22:00') {
+                    toast.error('Meetings can only be scheduled between 10:00 AM and 10:00 PM.');
+                    return;
+                  }
+                  onAccept(c._id, date, time); 
+                }
+              }}
               disabled={!date || !time}
               className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-semibold text-sm disabled:opacity-50">
               Confirm & Send Zoom Link to Client

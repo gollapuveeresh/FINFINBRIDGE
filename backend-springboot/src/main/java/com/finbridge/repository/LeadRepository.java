@@ -13,6 +13,7 @@ public interface LeadRepository extends JpaRepository<Lead, UUID> {
     List<Lead> findByActiveTrueOrderByCreatedAtDesc();
     List<Lead> findByDepartmentAndActiveTrue(String department);
     Optional<Lead> findByLeadId(String leadId);
+    List<Lead> findByEmailIgnoreCase(String email);
 
     Page<Lead> findByActiveTrue(Pageable pageable);
     Page<Lead> findByDepartmentAndActiveTrue(String department, Pageable pageable);

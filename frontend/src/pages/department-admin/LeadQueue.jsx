@@ -28,9 +28,9 @@ export default function DeptLeadQueue() {
         api.get('/leads', { params: { department: dept } }),
         api.get('/auth/consultants', { params: { department: dept } }),
       ]);
-      // Only show leads routed by CRM (status: qualified or beyond, but not yet won/lost/rejected)
+      // Only show leads routed by CRM that do not have a consultant assigned yet
       const all = lRes.data.leads || [];
-      setLeads(all.filter(l => !['new','contacted','interested'].includes(l.status)));
+      setLeads(all.filter(l => !['new','contacted','interested','assigned','won','lost','rejected'].includes(l.status) && !l.assignedConsultant));
       setConsultants((cRes.data.consultants || []).filter(c => c.isActive));
     } catch { toast.error('Failed to load leads'); }
     finally { setLoading(false); }
@@ -61,12 +61,10 @@ export default function DeptLeadQueue() {
         </button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-3 gap-gutter">
+      <div className="grid grid-cols-2 gap-gutter">
         {[
-          { label: 'Total Leads', value: leads.length, color: 'text-accent', bg: 'bg-accent/10' },
-          { label: 'Unassigned', value: leads.filter(l => !l.assignedConsultant).length, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Assigned', value: leads.filter(l => l.assignedConsultant).length, color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: 'Unassigned Leads', value: leads.length, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+          { label: 'Active Consultants', value: consultants.length, color: 'text-accent', bg: 'bg-accent/10' },
         ].map((k, i) => (
           <div key={i} className="card p-5">
             <p className="text-text-muted text-xs font-semibold">{k.label}</p>

@@ -57,6 +57,8 @@ import B2BSettings from '../pages/b2b/Settings';
 import CRMAdminLogin from '../pages/public/CRMAdminLogin';
 import CRMDashboard from '../pages/crm-admin/Dashboard';
 import CRMLeads from '../pages/crm-admin/Leads';
+import CRMClients from '../pages/crm-admin/Clients';
+import CRMAdminPipeline from '../pages/crm-admin/Pipeline';
 
 // Internal Admin
 import AdminLogin from '../pages/public/AdminLogin';
@@ -80,9 +82,13 @@ import DepartmentAdminDashboard from '../pages/department-admin/Dashboard';
 import DepartmentAdminClients from '../pages/department-admin/Clients';
 import DepartmentLeadReview from '../pages/department-admin/LeadReview';
 import DeptLeadQueue from '../pages/department-admin/LeadQueue';
+import DeptAssignedClients from '../pages/department-admin/AssignedClients';
 import DeptConsultationQueue from '../pages/department-admin/ConsultationQueue';
 import DeptAssignments from '../pages/department-admin/Assignments';
 import DeptAdminClientDocuments from '../pages/department-admin/ClientDocuments';
+import KycReview from '../pages/department-admin/KycReview';
+import CompletedMeetings from '../pages/department-admin/CompletedMeetings';
+import DepartmentAdminPayments from '../pages/department-admin/Payments';
 
 // Consultants
 import ConsultantLogin from '../pages/public/ConsultantLogin';
@@ -99,6 +105,7 @@ import InvestmentWorkflow from '../pages/consultant/InvestmentWorkflow';
 import InsuranceWorkflow from '../pages/consultant/InsuranceWorkflow';
 import WealthWorkflow from '../pages/consultant/WealthWorkflow';
 import ConsultantProposals from '../pages/consultant/Proposals';
+import ConsultantPayments from '../pages/consultant/Payments';
 
 // Workflow pages
 import WorkflowOverview from '../pages/workflow/WorkflowOverview';
@@ -290,8 +297,8 @@ export default function AppRoutes() {
           {/* ============================================ */}
           <Route path="/crm-admin/dashboard" element={<CRMAdminRoute><CRMDashboard /></CRMAdminRoute>} />
           <Route path="/crm-admin/leads" element={<CRMAdminRoute><CRMLeads /></CRMAdminRoute>} />
-          <Route path="/crm-admin/pipeline" element={<CRMAdminRoute><CRMLeads /></CRMAdminRoute>} />
-          <Route path="/crm-admin/analytics" element={<CRMAdminRoute><CRMDashboard /></CRMAdminRoute>} />
+          <Route path="/crm-admin/clients" element={<CRMAdminRoute><CRMClients /></CRMAdminRoute>} />
+          <Route path="/crm-admin/pipeline" element={<CRMAdminRoute><CRMAdminPipeline /></CRMAdminRoute>} />
           <Route path="/crm-admin" element={<Navigate to="/crm-admin/dashboard" replace />} />
 
           {/* ============================================ */}
@@ -310,6 +317,7 @@ export default function AppRoutes() {
           <Route path="/admin/settings" element={<AdminRoute><SystemSettings /></AdminRoute>} />
           <Route path="/admin/audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
           <Route path="/admin/revenue" element={<AdminRoute><RevenueAnalytics /></AdminRoute>} />
+          <Route path="/admin/kyc" element={<AdminRoute><KycReview /></AdminRoute>} />
           <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
 
           {/* ============================================ */}
@@ -324,9 +332,12 @@ export default function AppRoutes() {
           <Route path="/department-admin/clients" element={<DepartmentAdminRoute><DepartmentAdminClients /></DepartmentAdminRoute>} />
           <Route path="/department-admin/leads" element={<DepartmentAdminRoute><DepartmentLeadReview /></DepartmentAdminRoute>} />
           <Route path="/department-admin/lead-queue" element={<DepartmentAdminRoute><DeptLeadQueue /></DepartmentAdminRoute>} />
-          <Route path="/department-admin/consultations" element={<DepartmentAdminRoute><DeptConsultationQueue /></DepartmentAdminRoute>} />
+          <Route path="/department-admin/assigned-clients" element={<DepartmentAdminRoute><DeptAssignedClients /></DepartmentAdminRoute>} />
           <Route path="/department-admin/assignments" element={<DepartmentAdminRoute><DeptAssignments /></DepartmentAdminRoute>} />
           <Route path="/department-admin/documents" element={<DepartmentAdminRoute><DeptAdminClientDocuments /></DepartmentAdminRoute>} />
+          <Route path="/department-admin/kyc" element={<DepartmentAdminRoute><KycReview /></DepartmentAdminRoute>} />
+          <Route path="/department-admin/completed-meetings" element={<DepartmentAdminRoute><CompletedMeetings /></DepartmentAdminRoute>} />
+          <Route path="/department-admin/payments" element={<DepartmentAdminRoute><DepartmentAdminPayments /></DepartmentAdminRoute>} />
           <Route path="/department-admin" element={<Navigate to="/department-admin/dashboard" replace />} />
 
           {/* ============================================ */}
@@ -350,6 +361,8 @@ export default function AppRoutes() {
           <Route path="/consultant/insurance-workflow" element={<ConsultantRoute><InsuranceWorkflow /></ConsultantRoute>} />
           <Route path="/consultant/wealth-workflow" element={<ConsultantRoute><WealthWorkflow /></ConsultantRoute>} />
           <Route path="/consultant/proposals" element={<ConsultantRoute><ConsultantProposals /></ConsultantRoute>} />
+          <Route path="/consultant/kyc" element={<ConsultantRoute><KycReview /></ConsultantRoute>} />
+          <Route path="/consultant/payments" element={<ConsultantRoute><ConsultantPayments /></ConsultantRoute>} />
           <Route path="/consultant" element={<Navigate to="/consultant/login" replace />} />
           <Route path="/department-consultant" element={<Navigate to="/department-consultant/loans/dashboard" replace />} />
 

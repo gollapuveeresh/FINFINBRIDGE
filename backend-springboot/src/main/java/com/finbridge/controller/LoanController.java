@@ -23,8 +23,8 @@ public class LoanController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Loan> getOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(loanService.getById(id));
+    public ResponseEntity<Loan> getOne(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(loanService.getById(id, user));
     }
 
     @PostMapping
@@ -34,13 +34,14 @@ public class LoanController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Loan> update(@PathVariable UUID id, @RequestBody Loan patch) {
-        return ResponseEntity.ok(loanService.update(id, patch));
+    public ResponseEntity<Loan> update(@PathVariable UUID id, @RequestBody Loan patch,
+                                       @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(loanService.update(id, patch, user));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        loanService.softDelete(id);
+    public ResponseEntity<Void> delete(@PathVariable UUID id, @AuthenticationPrincipal User user) {
+        loanService.softDelete(id, user);
         return ResponseEntity.noContent().build();
     }
 }

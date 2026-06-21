@@ -10,142 +10,6 @@ const PRIORITY_COLOR = {
   cold: 'bg-secondary/15 text-secondary',
 };
 
-// Fallback profile view for leads from the pipeline that haven't been converted to clients yet.
-function LeadDetail({ id }) {
-  const [lead, setLead] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [note, setNote] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  const fetchLead = () => {
-    api.get(`/leads/${id}`).then(r => setLead(r.data.lead)).catch(() => {}).finally(() => setLoading(false));
-  };
-
-  useEffect(() => { fetchLead(); }, [id]);
-
-  const addNote = async () => {
-    if (!note.trim()) return;
-    try {
-      setSaving(true);
-      await api.post(`/leads/${id}/note`, { text: note });
-      setNote('');
-      fetchLead();
-    } catch { toast.error('Failed to add note'); }
-    finally { setSaving(false); }
-  };
-
-  if (loading) {
-    return <ConsultantLayout><div className="py-24 text-center text-text-muted">Loading lead...</div></ConsultantLayout>;
-  }
-  if (!lead) {
-    return <ConsultantLayout><div className="py-24 text-center text-text-muted">Lead not found.</div></ConsultantLayout>;
-  }
-
-  return (
-    <ConsultantLayout>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-label-lg text-text-muted">
-            <Link to="/consultant/clients" className="hover:text-accent transition-colors">My Clients</Link>
-            <span className="material-symbols-outlined text-[16px]">chevron_right</span>
-            <span className="text-accent font-bold">Lead Profile</span>
-          </div>
-          <h1 className="text-headline-lg font-bold text-accent mt-2">{lead.name}</h1>
-          <p className="text-body-md text-text-muted mt-1 capitalize">{lead.serviceType || lead.department || 'General Inquiry'} • Lead #{lead.leadId}</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 gap-gutter">
-        <div className="col-span-12 lg:col-span-4 space-y-gutter">
-          <div className="card p-8 flex flex-col items-center text-center">
-            <div className="w-24 h-24 rounded-full bg-accent-container flex items-center justify-center text-on-primary font-black text-4xl shadow-md border-4 border-surface mb-4">
-              {lead.name[0]}
-            </div>
-            <h2 className="text-headline-md font-bold text-accent">{lead.name}</h2>
-            <span className={`status-badge mt-3 capitalize ${PRIORITY_COLOR[lead.priority] || 'status-info'}`}>{lead.priority} priority</span>
-
-            <div className="w-full mt-6 pt-6 border-t border-border/40 space-y-3 text-left">
-              <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                <span className="material-symbols-outlined text-text-faint text-base">mail</span>
-                <span>{lead.email}</span>
-              </div>
-              <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                <span className="material-symbols-outlined text-text-faint text-base">call</span>
-                <span>{lead.phone || '—'}</span>
-              </div>
-              <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                <span className="material-symbols-outlined text-text-faint text-base">category</span>
-                <span>Service: <strong className="capitalize">{lead.serviceType || lead.department || '—'}</strong></span>
-              </div>
-              <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                <span className="material-symbols-outlined text-text-faint text-base">payments</span>
-                <span>Budget: <strong>{lead.budget ? `₹${Number(lead.budget).toLocaleString('en-IN')}` : '—'}</strong></span>
-              </div>
-              <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                <span className="material-symbols-outlined text-text-faint text-base">flag</span>
-                <span>Status: <strong className="capitalize">{lead.status}</strong></span>
-              </div>
-              {lead.assignedConsultant && (
-                <div className="flex items-center gap-3 text-body-sm text-text-muted">
-                  <span className="material-symbols-outlined text-text-faint text-base">support_agent</span>
-                  <span>Advisor: <strong>{lead.assignedConsultant.name}</strong></span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="card p-8 flex flex-col items-center">
-            <h3 className="text-label-lg font-bold text-text-muted uppercase tracking-wider mb-6">Lead Score</h3>
-            <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
-              <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                <circle cx="18" cy="18" fill="none" r="15.915" stroke="#e6e8ec" strokeWidth="4" />
-                <circle
-                  cx="18"
-                  cy="18"
-                  fill="none"
-                  r="15.915"
-                  stroke={lead.score >= 65 ? '#1F9D6B' : '#785a02'}
-                  strokeDasharray={`${lead.score} ${100 - lead.score}`}
-                  strokeWidth="4"
-                />
-              </svg>
-              <div className="absolute inset-3 bg-surface rounded-full flex flex-col items-center justify-center shadow-inner">
-                <span className="text-4xl font-black text-accent">{lead.score}</span>
-                <span className="text-label-xs text-text-muted font-bold uppercase mt-1">Score</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-span-12 lg:col-span-8 space-y-gutter">
-          <div className="card p-8 space-y-4">
-            <h3 className="text-headline-md font-bold text-accent">Requirement</h3>
-            <p className="text-body-md text-text-muted">{lead.requirement || 'No requirement details provided.'}</p>
-          </div>
-
-          <div className="card p-8 space-y-4">
-            <h3 className="text-headline-md font-bold text-accent">Notes</h3>
-            <div className="divide-y divide-outline-variant/30">
-              {(lead.notes || []).length === 0 && <p className="text-body-sm text-text-muted">No notes yet.</p>}
-              {(lead.notes || []).map((n, i) => (
-                <div key={i} className="py-3">
-                  <p className="text-body-sm text-text">{n.text}</p>
-                  <p className="text-xs text-text-muted mt-1">— {n.addedBy} · {new Date(n.addedAt).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <input value={note} onChange={e => setNote(e.target.value)} onKeyDown={e => e.key === 'Enter' && addNote()}
-                placeholder="Add a note..." className="form-input flex-1" />
-              <button onClick={addNote} disabled={saving} className="btn-primary px-4">Add</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </ConsultantLayout>
-  );
-}
-
 const clientsMockData = {
   vance: {
     name: 'Alexander Vance',
@@ -161,13 +25,9 @@ const clientsMockData = {
     loans: [
       { id: 'LN-20241001', type: 'Business Term Loan', amount: '$250,000', balance: '$182,500', rate: '7.5%', due: 'Nov 01, 2024', status: 'Active', statusClass: 'status-success' },
       { id: 'LN-20240815', type: 'Commercial Mortgage', amount: '$1,200,000', balance: '$1,080,000', rate: '6.2%', due: 'Nov 15, 2024', status: 'Active', statusClass: 'status-success' },
-      { id: 'LN-20231201', type: 'Equipment Financing', amount: '$85,000', balance: '$12,400', rate: '8.1%', due: 'Jan 01, 2025', status: 'Closing Soon', statusClass: 'status-warning' },
     ],
     assets: [
       { label: 'US Equities', val: '$665,600', pct: 52 },
-      { label: 'Intl. Equities', val: '$192,000', pct: 15 },
-      { label: 'Fixed Income Bonds', val: '$230,400', pct: 18 },
-      { label: 'Cash Alternatives', val: '$192,000', pct: 15 },
     ],
     taxes: {
       grossIncome: '$514,200',
@@ -178,8 +38,6 @@ const clientsMockData = {
     },
     meetings: [
       { name: 'Tax Strategy Session', advisor: 'Sarah Jenkins', date: 'Oct 24, 2024', status: 'Completed', statusClass: 'status-success' },
-      { name: 'Portfolio Diversification', advisor: 'Michael Aris', date: 'Oct 12, 2024', status: 'Upcoming', statusClass: 'status-warning' },
-      { name: 'Quarterly Loan Review', advisor: 'Elena Rossi', date: 'Oct 08, 2024', status: 'Completed', statusClass: 'status-success' },
     ]
   },
   harrington: {
@@ -196,12 +54,7 @@ const clientsMockData = {
     loans: [
       { id: 'LN-20230510', type: 'Commercial Real Estate', amount: '$2,500,000', balance: '$1,950,000', rate: '5.8%', due: 'Dec 10, 2024', status: 'Active', statusClass: 'status-success' },
     ],
-    assets: [
-      { label: 'US Equities', val: '$2,520,000', pct: 60 },
-      { label: 'Intl. Equities', val: '$840,000', pct: 20 },
-      { label: 'Fixed Income Bonds', val: '$420,000', pct: 10 },
-      { label: 'Cash Alternatives', val: '$420,000', pct: 10 },
-    ],
+    assets: [],
     taxes: {
       grossIncome: '$1,450,000',
       deductions: '$280,000',
@@ -209,10 +62,7 @@ const clientsMockData = {
       liability: '$390,000',
       effectiveRate: '33.3%',
     },
-    meetings: [
-      { name: 'Advisory Review H2', advisor: 'Michael Aris', date: 'Nov 12, 2024', status: 'Upcoming', statusClass: 'status-warning' },
-      { name: 'Tax Compliance Review', advisor: 'Sarah Jenkins', date: 'Sep 02, 2024', status: 'Completed', statusClass: 'status-success' },
-    ]
+    meetings: []
   },
   mitchell: {
     name: 'Sarah Mitchell',
@@ -226,12 +76,7 @@ const clientsMockData = {
     riskProfile: 'Conservative-Moderate',
     notes: 'Focus on municipal bond allocations. Sarah desires tax-free income streams. Keep cash reserves high to support potential real estate acquisitions. Reviewing S-Corp tax structure in Q3 filings.',
     loans: [],
-    assets: [
-      { label: 'US Equities', val: '$3,480,000', pct: 40 },
-      { label: 'Intl. Equities', val: '$1,740,000', pct: 20 },
-      { label: 'Fixed Income Bonds', val: '$2,610,000', pct: 30 },
-      { label: 'Cash Alternatives', val: '$870,000', pct: 10 },
-    ],
+    assets: [],
     taxes: {
       grossIncome: '$2,200,000',
       deductions: '$480,000',
@@ -239,38 +84,244 @@ const clientsMockData = {
       liability: '$550,400',
       effectiveRate: '32.0%',
     },
-    meetings: [
-      { name: 'Estates & Trusts Briefing', advisor: 'James Vance', date: 'Dec 05, 2024', status: 'Upcoming', statusClass: 'status-warning' },
-      { name: 'Advisory Review H1', advisor: 'Michael Aris', date: 'Jul 15, 2024', status: 'Completed', statusClass: 'status-success' },
-    ]
+    meetings: []
   }
 };
 
 export default function ClientDetail() {
   const { id } = useParams();
 
-  // Mongo ObjectIds (leads / real clients) get their own profile view
   const isMockClient = id && !!clientsMockData[id.toLowerCase()];
-  if (id && !isMockClient && /^[a-f0-9]{24}$/i.test(id)) {
-    return <LeadDetail id={id} />;
+  const [client, setClient] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [newNote, setNewNote] = useState('');
+  const [savingNote, setSavingNote] = useState(false);
+
+  const fetchLead = () => {
+    if (isMockClient) {
+      setClient(clientsMockData[id.toLowerCase()]);
+      setLoading(false);
+    } else {
+      setLoading(true);
+      api.get(`/leads/${id}`)
+        .then(r => {
+          const lead = r.data;
+          if (lead) {
+            const budgetVal = lead.budget || 0;
+            const tierName = budgetVal >= 5000000 ? 'Platinum' : budgetVal >= 2000000 ? 'Gold' : 'Standard';
+            setClient({
+              id: lead.id || lead._id,
+              name: lead.name,
+              company: lead.name,
+              email: lead.email,
+              tel: lead.phone || '—',
+              tier: tierName,
+              since: new Date(lead.createdAt).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' }),
+              aum: budgetVal ? `₹${Number(budgetVal).toLocaleString('en-IN')}` : '—',
+              healthScore: lead.score || 70,
+              riskProfile: lead.priority === 'hot' ? 'Aggressive' : lead.priority === 'warm' ? 'Moderate' : 'Conservative',
+              notes: lead.requirement || 'No requirement details provided.',
+              loans: [],
+              assets: [],
+              taxes: {
+                grossIncome: lead.income ? `₹${Number(lead.income).toLocaleString('en-IN')}` : '—',
+                deductions: lead.income ? `₹${Number(lead.income * 0.2).toLocaleString('en-IN')}` : '—',
+                effectiveRate: lead.priority === 'hot' ? '25.0%' : '15.0%',
+              },
+              isDbClient: true,
+              leadSource: lead.source,
+              leadStatus: lead.status,
+              dbNotes: lead.notes || [],
+              convertedClientId: lead.convertedClientId,
+              department: lead.department
+            });
+          }
+        })
+        .catch(() => {
+          toast.error('Failed to load client profile');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
+    }
+  };
+
+  const [activeConsultation, setActiveConsultation] = useState(null);
+  const [loadingConsultation, setLoadingConsultation] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [inputDate, setInputDate] = useState('');
+  const [inputTime, setInputTime] = useState('');
+  const [inputLink, setInputLink] = useState('');
+  const [submittingSchedule, setSubmittingSchedule] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState(false);
+
+  const fetchConsultation = (clientId, dept) => {
+    if (!clientId) return;
+    setLoadingConsultation(true);
+    api.get('/consultations')
+      .then(res => {
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        const found = list.find(c => 
+          c.clientId && 
+          c.clientId.id === clientId && 
+          c.department?.toLowerCase() === dept?.toLowerCase()
+        );
+        setActiveConsultation(found || null);
+        if (found) {
+          setInputDate(found.confirmedDate || '');
+          setInputTime(found.confirmedTime || '');
+          setInputLink(found.meetingLink || '');
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load consultation for client detail page:', err);
+      })
+      .finally(() => {
+        setLoadingConsultation(false);
+      });
+  };
+
+  useEffect(() => {
+    if (client?.isDbClient && client?.convertedClientId) {
+      fetchConsultation(client.convertedClientId, client.department);
+    }
+  }, [client?.convertedClientId, client?.department]);
+
+  const handleScheduleSubmit = async (e) => {
+    e.preventDefault();
+    if (!activeConsultation) return;
+    if (!inputDate || !inputTime) {
+      toast.error('Date and Time are required');
+      return;
+    }
+    // Validation: No past dates
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(inputDate);
+    selectedDate.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      toast.error('Cannot schedule a meeting for a past date.');
+      return;
+    }
+    // Validation: Between 10:00 AM and 10:00 PM
+    if (inputTime < '10:00' || inputTime > '22:00') {
+      toast.error('Meetings can only be scheduled between 10:00 AM and 10:00 PM.');
+      return;
+    }
+    setSubmittingSchedule(true);
+    try {
+      await api.patch(`/consultations/${activeConsultation.id}/schedule`, {
+        confirmedDate: inputDate,
+        confirmedTime: inputTime,
+        meetingLink: inputLink || undefined
+      });
+      toast.success('Consultation scheduled successfully!');
+      setShowScheduleModal(false);
+      fetchConsultation(client.convertedClientId, client.department);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to schedule consultation');
+    } finally {
+      setSubmittingSchedule(false);
+    }
+  };
+
+  const handleSendToClient = async () => {
+    if (!activeConsultation) return;
+    setSubmittingAction(true);
+    try {
+      await api.patch(`/consultations/${activeConsultation.id}/send-to-client`);
+      toast.success('Consultation details sent to client!');
+      fetchConsultation(client.convertedClientId, client.department);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send details to client');
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  const handleMarkCompleted = async () => {
+    if (!activeConsultation) return;
+    setSubmittingAction(true);
+    try {
+      await api.patch(`/consultations/${activeConsultation.id}/complete`);
+      toast.success('Consultation marked as completed!');
+      fetchConsultation(client.convertedClientId, client.department);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to complete consultation');
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  const handleInitializeConsultation = async () => {
+    if (!client?.convertedClientId) return;
+    setSubmittingAction(true);
+    try {
+      await api.post('/consultations', {
+        client: { id: client.convertedClientId },
+        department: client.department,
+        category: (client.department || 'loans').toUpperCase() + ' Consultation',
+        status: 'pending'
+      });
+      toast.success('Consultation started successfully!');
+      fetchConsultation(client.convertedClientId, client.department);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to start consultation');
+    } finally {
+      setSubmittingAction(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLead();
+  }, [id, isMockClient]);
+
+  const handleAddNote = async () => {
+    if (!newNote.trim()) return;
+    setSavingNote(true);
+    try {
+      if (client.isDbClient) {
+        await api.post(`/leads/${id}/note`, { text: newNote });
+        setNewNote('');
+        toast.success('Note added successfully');
+        // Refresh notes list dynamically
+        const r = await api.get(`/leads/${id}`);
+        const lead = r.data;
+        if (lead) {
+          setClient(prev => ({
+            ...prev,
+            dbNotes: lead.notes || []
+          }));
+        }
+      } else {
+        toast.success('Mock notes updated');
+        setNewNote('');
+      }
+    } catch {
+      toast.error('Failed to add note');
+    } finally {
+      setSavingNote(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <ConsultantLayout>
+        <div className="min-h-[60vh] flex flex-col items-center justify-center">
+          <div className="w-12 h-12 border-4 border-secondary border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-body-md text-text-muted mt-4 font-semibold">Loading client profile...</p>
+        </div>
+      </ConsultantLayout>
+    );
   }
 
-  // Default to vance if param is not matched
-  const clientKey = isMockClient ? id.toLowerCase() : 'vance';
-  const client = clientsMockData[clientKey];
-
-  const [activeTab, setActiveTab] = useState('overview');
-  const [notesText, setNotesText] = useState(client.notes);
-  const [saveStatus, setSaveStatus] = useState('Save Changes');
-
-  const handleSaveNotes = () => {
-    setSaveStatus('Saving...');
-    setTimeout(() => {
-      client.notes = notesText;
-      setSaveStatus('Changes Saved!');
-      setTimeout(() => setSaveStatus('Save Changes'), 1500);
-    }, 1000);
-  };
+  if (!client) {
+    return (
+      <ConsultantLayout>
+        <div className="py-24 text-center text-text-muted">Client profile not found.</div>
+      </ConsultantLayout>
+    );
+  }
 
   return (
     <ConsultantLayout>
@@ -285,16 +336,87 @@ export default function ClientDetail() {
           <h1 className="text-headline-lg font-bold text-accent mt-2">{client.name}</h1>
           <p className="text-body-md text-text-muted mt-1">{client.company} • Joined {client.since}</p>
         </div>
-        <div className="flex gap-3">
-          <button className="btn-primary flex items-center gap-2">
-            <span className="material-symbols-outlined text-base">video_call</span>
-            Start Consultation
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {loadingConsultation ? (
+            <p className="text-body-sm text-text-muted">Loading consultation...</p>
+          ) : activeConsultation ? (
+            <>
+              {/* If pending or scheduled */}
+              {(activeConsultation.status === 'pending' || activeConsultation.status === 'scheduled') && (
+                <button 
+                  onClick={() => {
+                    if (!inputLink) {
+                      setInputLink(activeConsultation.meetingLink || `https://zoom.us/j/${Math.floor(1000000000 + Math.random() * 9000000000)}`);
+                    }
+                    setShowScheduleModal(true);
+                  }}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">calendar_today</span>
+                  {activeConsultation.status === 'scheduled' ? 'Reschedule Meeting' : 'Schedule Meeting'}
+                </button>
+              )}
+
+              {/* If scheduled but not sent yet, show Send to Client */}
+              {activeConsultation.status === 'scheduled' && (
+                <button
+                  onClick={handleSendToClient}
+                  disabled={submittingAction}
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <span className="material-symbols-outlined text-base">send</span>
+                  {submittingAction ? 'Sending...' : 'Send to Client'}
+                </button>
+              )}
+
+              {/* If accepted (sent to client) but not completed */}
+              {activeConsultation.status === 'accepted' && (
+                <button
+                  onClick={handleMarkCompleted}
+                  disabled={submittingAction}
+                  className="btn-primary flex items-center gap-2 bg-success text-white"
+                  style={{ backgroundColor: 'var(--color-status-success)' }}
+                >
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  {submittingAction ? 'Completing...' : 'Mark as Completed'}
+                </button>
+              )}
+
+              {/* If completed_by_consultant */}
+              {activeConsultation.status === 'completed_by_consultant' && (
+                <span className="status-badge status-warning flex items-center gap-1">
+                  <span className="material-symbols-outlined text-base">hourglass_empty</span>
+                  Awaiting Verification
+                </span>
+              )}
+
+              {/* If completed */}
+              {activeConsultation.status === 'completed' && (
+                <span className="status-badge status-success flex items-center gap-1">
+                  <span className="material-symbols-outlined text-base">check_circle</span>
+                  Completed & Verified
+                </span>
+              )}
+            </>
+          ) : client?.isDbClient && client?.convertedClientId ? (
+            <button
+              onClick={handleInitializeConsultation}
+              disabled={submittingAction}
+              className="btn-primary flex items-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">video_call</span>
+              {submittingAction ? 'Starting...' : 'Start Consultation'}
+            </button>
+          ) : (
+            <span className="text-body-sm text-text-muted italic bg-surface-hover/30 px-3 py-1.5 rounded-lg border border-border">
+              Convert lead to client to enable consultation
+            </span>
+          )}
         </div>
       </div>
 
       {/* Main Grid Layout */}
-      <div className="grid grid-cols-12 gap-gutter">
+      <div className="grid grid-cols-12 gap-gutter mt-6">
         {/* Left Column: Client Summary & Health Ring */}
         <div className="col-span-12 lg:col-span-4 space-y-gutter">
           {/* Profile Card */}
@@ -326,6 +448,69 @@ export default function ClientDetail() {
             </div>
           </div>
 
+          {/* Consultation Details Card */}
+          {activeConsultation && (
+            <div className="card p-8 space-y-4">
+              <h3 className="text-label-lg font-bold text-text-muted uppercase tracking-wider">Consultation Details</h3>
+              <div className="space-y-4">
+                <div className="flex items-start gap-3">
+                  <span className="material-symbols-outlined text-accent mt-0.5">calendar_month</span>
+                  <div>
+                    <h4 className="text-body-sm font-bold text-accent">Date & Time</h4>
+                    <p className="text-body-sm text-text mt-0.5">
+                      {activeConsultation.confirmedDate && activeConsultation.confirmedTime ? (
+                        `${activeConsultation.confirmedDate} @ ${activeConsultation.confirmedTime}`
+                      ) : (
+                        <span className="text-text-muted italic">Not scheduled yet</span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 border-t border-border/40 pt-3">
+                  <span className="material-symbols-outlined text-accent mt-0.5">video_call</span>
+                  <div>
+                    <h4 className="text-body-sm font-bold text-accent">Zoom Link</h4>
+                    {activeConsultation.meetingLink ? (
+                      <a 
+                        href={activeConsultation.meetingLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-body-sm text-secondary hover:underline break-all block mt-0.5"
+                      >
+                        {activeConsultation.meetingLink}
+                      </a>
+                    ) : (
+                      <p className="text-body-sm text-text-muted italic mt-0.5">Not available yet</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 border-t border-border/40 pt-3">
+                  <span className="material-symbols-outlined text-accent mt-0.5">info</span>
+                  <div>
+                    <h4 className="text-body-sm font-bold text-accent">Status</h4>
+                    <div className="mt-1">
+                      <span className={`status-badge ${
+                        activeConsultation.status === 'pending' ? 'status-warning' :
+                        activeConsultation.status === 'scheduled' ? 'status-info' :
+                        activeConsultation.status === 'accepted' ? 'status-success' :
+                        activeConsultation.status === 'completed_by_consultant' ? 'status-warning' :
+                        'status-success'
+                      }`}>
+                        {activeConsultation.status === 'pending' && 'Pending Schedule'}
+                        {activeConsultation.status === 'scheduled' && 'Scheduled (Draft)'}
+                        {activeConsultation.status === 'accepted' && 'Confirmed (Sent)'}
+                        {activeConsultation.status === 'completed_by_consultant' && 'Completed (Awaiting Admin)'}
+                        {activeConsultation.status === 'completed' && 'Completed & Verified'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Health Score Card */}
           <div className="card p-8 flex flex-col items-center">
             <h3 className="text-label-lg font-bold text-text-muted uppercase tracking-wider mb-6">Financial Health Score</h3>
@@ -355,204 +540,202 @@ export default function ClientDetail() {
           </div>
         </div>
 
-        {/* Right Column: Tabbed Workspace */}
+        {/* Right Column: Overview Workspace */}
         <div className="col-span-12 lg:col-span-8 space-y-gutter">
-          {/* Tabs Navigation */}
-          <div className="card overflow-hidden">
-            <div className="flex border-b border-border/40 overflow-x-auto bg-surface-hover-lowest">
-              {[
-                { id: 'overview', label: 'Overview', icon: 'visibility' },
-                { id: 'loans', label: 'Loans & Credit', icon: 'payments' },
-                { id: 'investments', label: 'Investments', icon: 'trending_up' },
-                { id: 'taxes', label: 'Tax Position', icon: 'receipt_long' },
-                { id: 'notes', label: 'Advisor Notes & History', icon: 'sticky_note_2' },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`px-6 py-4 text-label-lg font-semibold flex items-center gap-2 border-b-2 transition-all whitespace-nowrap ${
-                    activeTab === tab.id
-                      ? 'border-secondary text-accent font-bold bg-surface'
-                      : 'border-transparent text-text-muted hover:text-accent'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-sm">{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
+          <div className="card p-8 space-y-6">
+            <h3 className="text-headline-md font-bold text-accent">Relationship Financial Summary</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="p-5 rounded-xl border border-border/40 space-y-4">
+                <h4 className="font-bold text-accent">Balance Sheet Overview</h4>
+                <div className="flex justify-between items-center text-body-sm">
+                  <span className="text-text-muted">Asset Class Valuation</span>
+                  <span className="font-semibold text-accent">{client.aum}</span>
+                </div>
+                <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
+                  <span className="text-text-muted">Active Loans Outstanding</span>
+                  <span className="font-semibold text-accent">
+                    {client.isDbClient ? '—' : `$${client.loans.reduce((sum, item) => sum + parseInt(item.balance.replace(/[^0-9]/g, '')), 0).toLocaleString()}`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
+                  <span className="text-text-muted">Risk Suitability Rank</span>
+                  <span className="font-bold text-secondary">{client.riskProfile}</span>
+                </div>
+              </div>
+
+              <div className="p-5 rounded-xl border border-border/40 space-y-4">
+                <h4 className="font-bold text-accent">Tax Position Summary</h4>
+                <div className="flex justify-between items-center text-body-sm">
+                  <span className="text-text-muted">Gross Income Estimate</span>
+                  <span className="font-semibold text-accent">{client.taxes.grossIncome}</span>
+                </div>
+                <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
+                  <span className="text-text-muted">Applied Write-offs (Est.)</span>
+                  <span className="font-semibold text-accent">{client.taxes.deductions}</span>
+                </div>
+                <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
+                  <span className="text-text-muted">Effective Tax Rate (Est.)</span>
+                  <span className="font-bold text-error">{client.taxes.effectiveRate}</span>
+                </div>
+              </div>
             </div>
 
-            <div className="p-8">
-              {/* TAB: Overview */}
-              {activeTab === 'overview' && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-headline-md font-bold text-accent">Relationship Financial Summary</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="p-5 rounded-xl border border-border/40 space-y-4">
-                      <h4 className="font-bold text-accent">Balance Sheet Overview</h4>
-                      <div className="flex justify-between items-center text-body-sm">
-                        <span className="text-text-muted">Asset Class Valuation</span>
-                        <span className="font-semibold text-accent">{client.aum}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
-                        <span className="text-text-muted">Active Loans Outstanding</span>
-                        <span className="font-semibold text-accent">
-                          ${client.loans.reduce((sum, item) => sum + parseInt(item.balance.replace(/[^0-9]/g, '')), 0).toLocaleString()}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
-                        <span className="text-text-muted">Risk Suitability Rank</span>
-                        <span className="font-bold text-secondary">{client.riskProfile}</span>
-                      </div>
+            <div className="p-6 rounded-xl border border-primary/20 bg-accent/5">
+              <h4 className="font-bold text-accent mb-2">Private Advisor Digest (Requirement)</h4>
+              <p className="text-body-sm text-accent-container leading-relaxed">{client.notes}</p>
+            </div>
+          </div>
+
+          {/* Notes Section */}
+          <div className="card p-8 space-y-6">
+            <h3 className="text-headline-md font-bold text-accent">Advisor Notes & Timeline</h3>
+            
+            {/* Add Note Form */}
+            <div className="space-y-3">
+              <textarea
+                value={newNote}
+                onChange={(e) => setNewNote(e.target.value)}
+                rows={3}
+                className="w-full p-3 rounded-xl border border-border bg-bg text-sm resize-none focus:outline-none focus:border-secondary"
+                placeholder="Type a new advisor note or update timeline details..."
+              />
+              <div className="flex justify-end">
+                <button 
+                  onClick={handleAddNote}
+                  disabled={savingNote}
+                  className="btn-primary px-5 py-2.5 text-xs font-bold"
+                >
+                  {savingNote ? 'Adding...' : 'Add Note'}
+                </button>
+              </div>
+            </div>
+
+            {/* Past Notes List */}
+            <div className="divide-y divide-border/40 pt-4 border-t border-border/40">
+              {client.isDbClient ? (
+                client.dbNotes.length === 0 ? (
+                  <p className="text-body-sm text-text-muted py-2">No notes added to this client yet.</p>
+                ) : (
+                  client.dbNotes.map((n, i) => (
+                    <div key={i} className="py-4">
+                      <p className="text-body-sm text-text font-medium">{n.text}</p>
+                      <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-[14px]">person</span>
+                        {n.addedBy} · {new Date(n.addedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })}
+                      </p>
                     </div>
-
-                    <div className="p-5 rounded-xl border border-border/40 space-y-4">
-                      <h4 className="font-bold text-accent">Tax Position Summary</h4>
-                      <div className="flex justify-between items-center text-body-sm">
-                        <span className="text-text-muted">Gross Income Estimate</span>
-                        <span className="font-semibold text-accent">{client.taxes.grossIncome}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
-                        <span className="text-text-muted">Applied Write-offs</span>
-                        <span className="font-semibold text-accent">{client.taxes.deductions}</span>
-                      </div>
-                      <div className="flex justify-between items-center text-body-sm border-t border-border pt-2">
-                        <span className="text-text-muted">Effective Tax Rate</span>
-                        <span className="font-bold text-error">{client.taxes.effectiveRate}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="p-6 rounded-xl border border-primary/20 bg-accent/5">
-                    <h4 className="font-bold text-accent mb-2">Private Advisor Digest</h4>
-                    <p className="text-body-sm text-accent-container leading-relaxed">{notesText}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Loans */}
-              {activeTab === 'loans' && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-headline-md font-bold text-accent">Active Debt & Liabilities</h3>
-                  {client.loans.length === 0 ? (
-                    <p className="text-body-md text-text-muted">Client has no active loan accounts on the platform.</p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full">
-                        <thead>
-                          <tr className="bg-surface text-label-lg text-text-muted uppercase tracking-wider">
-                            <th className="px-4 py-3 text-left">Loan ID</th>
-                            <th className="px-4 py-3 text-left">Category</th>
-                            <th className="px-4 py-3 text-right">Principal</th>
-                            <th className="px-4 py-3 text-right">Balance</th>
-                            <th className="px-4 py-3 text-right">Rate</th>
-                            <th className="px-4 py-3 text-left">Status</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-outline-variant/35 text-body-sm text-text">
-                          {client.loans.map((loan) => (
-                            <tr key={loan.id} className="hover:bg-surface/20 transition-colors">
-                              <td className="px-4 py-3 font-mono font-bold text-accent">{loan.id}</td>
-                              <td className="px-4 py-3">{loan.type}</td>
-                              <td className="px-4 py-3 text-right font-semibold">{loan.amount}</td>
-                              <td className="px-4 py-3 text-right">{loan.balance}</td>
-                              <td className="px-4 py-3 text-right">{loan.rate}</td>
-                              <td className="px-4 py-3">
-                                <span className={`status-badge ${loan.statusClass}`}>{loan.status}</span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* TAB: Investments */}
-              {activeTab === 'investments' && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-headline-md font-bold text-accent">Asset Allocation & Weights</h3>
-                  <div className="space-y-4">
-                    {client.assets.map((ast) => (
-                      <div key={ast.label}>
-                        <div className="flex justify-between items-center text-body-sm mb-1">
-                          <span className="font-semibold text-accent">{ast.label}</span>
-                          <span className="font-bold text-accent">{ast.val} <span className="text-xs text-text-muted font-normal">({ast.pct}%)</span></span>
-                        </div>
-                        <div className="h-2 bg-surface-hover-high rounded-full overflow-hidden">
-                          <div className="h-full bg-accent rounded-full" style={{ width: `${ast.pct}%` }}></div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Taxes */}
-              {activeTab === 'taxes' && (
-                <div className="space-y-6 fade-in">
-                  <h3 className="text-headline-md font-bold text-accent">Tax Position Breakdown</h3>
-                  <div className="space-y-4 bg-surface p-6 rounded-xl border border-border/40">
-                    {[
-                      { label: 'Gross Annual Earnings', val: client.taxes.grossIncome },
-                      { label: 'Deductions Applied', val: client.taxes.deductions },
-                      { label: 'Net Taxable Income', val: client.taxes.taxableIncome },
-                      { label: 'Estimated Tax Liability', val: client.taxes.liability },
-                      { label: 'Effective Rate', val: client.taxes.effectiveRate },
-                    ].map((row, i) => (
-                      <div key={i} className="flex justify-between items-center text-body-md py-2 border-b border-border last:border-0 last:pb-0">
-                        <span className="text-text-muted font-medium">{row.label}</span>
-                        <span className="font-bold text-accent">{row.val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TAB: Notes & History */}
-              {activeTab === 'notes' && (
-                <div className="space-y-6 fade-in">
-                  {/* Private Notes Editor */}
-                  <div className="space-y-3">
-                    <label className="text-label-lg font-bold text-accent block">Private Case Notes</label>
-                    <textarea
-                      value={notesText}
-                      onChange={(e) => setNotesText(e.target.value)}
-                      className="form-input min-h-[150px] resize-none leading-relaxed text-body-md text-accent font-medium"
-                      placeholder="Enter specific advisor notes, targets, actions..."
-                    />
-                    <div className="flex justify-end">
-                      <button 
-                        onClick={handleSaveNotes}
-                        className="btn-primary"
-                      >
-                        {saveStatus}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Consultation History */}
-                  <div className="space-y-4 pt-6 border-t border-border/40">
-                    <label className="text-label-lg font-bold text-accent block">Consultation History Log</label>
-                    <div className="divide-y divide-outline-variant/30">
-                      {client.meetings.map((meeting, i) => (
-                        <div key={i} className="py-3.5 flex justify-between items-center">
-                          <div>
-                            <h4 className="font-bold text-accent text-body-md">{meeting.name}</h4>
-                            <p className="text-xs text-text-muted">with {meeting.advisor} • {meeting.date}</p>
-                          </div>
-                          <span className={`status-badge ${meeting.statusClass}`}>{meeting.status}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  ))
+                )
+              ) : (
+                <div className="py-2">
+                  <p className="text-body-sm text-text font-medium">{client.notes}</p>
+                  <p className="text-xs text-text-muted mt-1.5 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[14px]">person</span>
+                    Sarah Jenkins · Joined {client.since}
+                  </p>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+      {/* Schedule Modal */}
+      {showScheduleModal && activeConsultation && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
+          <div className="card w-full max-w-md p-8 bg-surface border border-border rounded-xl space-y-4 shadow-soft">
+            <div className="flex justify-between items-center pb-2 border-b border-border">
+              <h4 className="text-headline-md font-bold text-accent">Schedule Consultation</h4>
+              <button 
+                onClick={() => setShowScheduleModal(false)} 
+                className="text-text-muted hover:text-text cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleScheduleSubmit} className="space-y-4 pt-2">
+              <div>
+                <label className="text-xs font-bold text-text-muted block mb-1">Meeting Date</label>
+                <input 
+                  type="date"
+                  min={(() => {
+                    const today = new Date();
+                    const year = today.getFullYear();
+                    const month = String(today.getMonth() + 1).padStart(2, '0');
+                    const day = String(today.getDate()).padStart(2, '0');
+                    return `${year}-${month}-${day}`;
+                  })()}
+                  value={inputDate}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) {
+                      setInputDate('');
+                      return;
+                    }
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    const selected = new Date(val);
+                    selected.setHours(0,0,0,0);
+                    if (selected < today) {
+                      toast.error('Cannot select a past date.');
+                      const year = today.getFullYear();
+                      const month = String(today.getMonth() + 1).padStart(2, '0');
+                      const day = String(today.getDate()).padStart(2, '0');
+                      setInputDate(`${year}-${month}-${day}`);
+                    } else {
+                      setInputDate(val);
+                    }
+                  }}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-text-muted block mb-1">Time Slot (10:00 AM - 10:00 PM)</label>
+                <input 
+                  type="time"
+                  min="10:00"
+                  max="22:00"
+                  value={inputTime}
+                  onChange={(e) => setInputTime(e.target.value)}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-text-muted block mb-1">Zoom Meeting Link</label>
+                <input 
+                  type="url"
+                  placeholder="e.g. https://zoom.us/j/1234567890"
+                  value={inputLink}
+                  onChange={(e) => setInputLink(e.target.value)}
+                  className="form-input"
+                />
+                <p className="text-[11px] text-text-faint mt-1">Leave empty to auto-generate a random Zoom link on save.</p>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                <button 
+                  type="button"
+                  onClick={() => setShowScheduleModal(false)}
+                  className="btn-ghost py-2 px-4 text-xs font-bold"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={submittingSchedule}
+                  className="btn-primary py-2 px-5 text-xs font-bold"
+                >
+                  {submittingSchedule ? 'Saving...' : 'Save & Schedule'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </ConsultantLayout>
   );
 }

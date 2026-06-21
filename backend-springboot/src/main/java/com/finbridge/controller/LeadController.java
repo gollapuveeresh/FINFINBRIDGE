@@ -99,6 +99,15 @@ public class LeadController {
         return ResponseEntity.ok(Map.of("lead", mapper.toLeadResponse(lead)));
     }
 
+    @PostMapping("/{id}/send-fee-proposal")
+    @Operation(summary = "Send a consultation fee proposal to the client")
+    public ResponseEntity<Map<String, Object>> sendFeeProposal(@PathVariable UUID id,
+                                                               @AuthenticationPrincipal User user) {
+        log.info("Sending fee proposal for lead {} by admin {}", id, user != null ? user.getEmail() : "anonymous");
+        Lead lead = leadService.sendFeeProposal(id, user);
+        return ResponseEntity.ok(Map.of("lead", mapper.toLeadResponse(lead)));
+    }
+
     @PostMapping("/{id}/convert")
     @Operation(summary = "Convert lead to client")
     public ResponseEntity<Map<String, Object>> convert(@PathVariable UUID id) {

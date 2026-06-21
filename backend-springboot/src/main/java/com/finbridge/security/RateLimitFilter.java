@@ -4,6 +4,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.annotation.Order;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
@@ -36,6 +37,17 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
 
+    /**
+     * Whether to trust the X-Forwarded-For header for the client IP. OFF by default: a client
+     * can spoof XFF to rotate the rate-limit key and defeat the throttle. Enable ONLY when the
+     * app sits behind a trusted reverse proxy that sets XFF (set app.ratelimit.trust-forwarded-header=true).
+     */
+    private final boolean trustForwardedHeader;
+
+    public RateLimitFilter(@Value("${app.ratelimit.trust-forwarded-header:false}") boolean trustForwardedHeader) {
+        this.trustForwardedHeader = trustForwardedHeader;
+    }
+
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,
                                     @NonNull HttpServletResponse response,
@@ -57,7 +69,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
 
     private boolean allow(String key) {
         long now = System.currentTimeMillis();
-        if (windows.size() > MAX_TRACKED_KEYS) windows.clear();   // crude bound on memory
+        // Bound memory by evicting only already-expired windows — never flush live counters,
+        // which would otherwise hand every IP a fresh quota the moment the map fills up.
+        if (windows.size() > MAX_TRACKED_KEYS) windows.values().removeIf(w -> now >= w.resetAt);
         Window w = windows.compute(key, (k, v) -> {
             if (v == null || now >= v.resetAt) return new Window(now + WINDOW_MS);
             v.count++;
@@ -67,8 +81,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private String clientIp(HttpServletRequest req) {
-        String xff = req.getHeader("X-Forwarded-For");
-        if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+        if (trustForwardedHeader) {
+            String xff = req.getHeader("X-Forwarded-For");
+            if (xff != null && !xff.isBlank()) return xff.split(",")[0].trim();
+        }
         return req.getRemoteAddr();
     }
 

@@ -30,4 +30,14 @@ public final class B2BAccessGuard {
         }
         throw new AccessDeniedException("You do not have access to this organization");
     }
+
+    /**
+     * Verify the caller is internal CRM admin-tier staff. Used by cross-organization views
+     * (e.g. a department admin listing every org's service requests for their department),
+     * which must never be reachable by an organization user.
+     */
+    public static void assertStaff(Object principal) {
+        if (principal instanceof User u && OwnershipGuard.isAdminTier(u)) return;
+        throw new AccessDeniedException("Staff access required");
+    }
 }

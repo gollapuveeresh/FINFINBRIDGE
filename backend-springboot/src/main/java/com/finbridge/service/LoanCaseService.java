@@ -6,6 +6,7 @@ import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.LeadRepository;
 import com.finbridge.repository.LoanCaseRepository;
 import com.finbridge.repository.UserRepository;
+import com.finbridge.repository.ProposalRepository;
 import com.finbridge.security.OwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -31,6 +33,8 @@ public class LoanCaseService {
     private final UserRepository userRepository;
     private final LeadRepository leadRepository;
     private final SequenceGenerator sequenceGenerator;
+    private final ProposalRepository proposalRepository;
+    private final ProposalService proposalService;
 
     @Transactional(readOnly = true)
     public List<LoanCaseResponse> getForUser(User user) {
@@ -77,8 +81,15 @@ public class LoanCaseService {
     @Transactional
     public LoanCaseResponse patch(UUID id, Map<String, Object> body, User actor) {
         LoanCase lc = loadOwned(id, actor);
-        if (body.get("stage") != null) lc.setStage(str(body.get("stage")));
-
+        boolean transitioningToApproval = false;
+        if (body.get("stage") != null) {
+            String newStage = str(body.get("stage"));
+            if ("client_approval".equals(newStage) && !"client_approval".equals(lc.getStage())) {
+                transitioningToApproval = true;
+            }
+            lc.setStage(newStage);
+        }
+ 
         Map<String, Object> elig = asMap(body.get("eligibility"));
         if (elig != null) {
             lc.setCreditScore(in(elig.get("creditScore")));
@@ -87,7 +98,7 @@ public class LoanCaseService {
             lc.setEligible(bool(elig.get("eligible")));
             if (elig.get("analystNote") != null) lc.setAnalystNote(str(elig.get("analystNote")));
         }
-
+ 
         Map<String, Object> rec = asMap(body.get("recommendation"));
         if (rec != null) {
             if (rec.get("recommendedBank") != null) lc.setRecommendedBank(str(rec.get("recommendedBank")));
@@ -97,14 +108,14 @@ public class LoanCaseService {
             if (rec.get("note") != null) lc.setRecommendationNote(str(rec.get("note")));
             if (rec.get("sentToClient") != null) lc.setSentToClient(bool(rec.get("sentToClient")));
         }
-
+ 
         Map<String, Object> dec = asMap(body.get("clientDecision"));
         if (dec != null) {
             if (dec.get("status") != null) lc.setClientDecision(str(dec.get("status")));
             if (dec.get("decidedAt") != null) lc.setDecidedAt(inst(dec.get("decidedAt")));
             if (dec.get("feedback") != null) lc.setClientFeedback(str(dec.get("feedback")));
         }
-
+ 
         Map<String, Object> bank = asMap(body.get("bankProcessing"));
         if (bank != null) {
             if (bank.get("applicationRef") != null) lc.setApplicationRef(str(bank.get("applicationRef")));
@@ -113,9 +124,45 @@ public class LoanCaseService {
             if (bank.get("status") != null) lc.setBankStatus(str(bank.get("status")));
             if (bank.get("remarks") != null) lc.setBankRemarks(str(bank.get("remarks")));
         }
-
+ 
         if (body.get("invoiceId") != null) lc.setInvoiceId(UUID.fromString(body.get("invoiceId").toString()));
+
+        if (transitioningToApproval) {
+            createProposalForLoanCase(lc);
+        }
+
         return toResponse(loanCaseRepository.save(lc));
+    }
+
+    private void createProposalForLoanCase(LoanCase lc) {
+        List<Proposal> existing = proposalRepository.findByCaseIdAndCaseModelAndActiveTrue(lc.getId(), "LoanCase");
+        if (!existing.isEmpty()) {
+            return;
+        }
+
+        Proposal p = new Proposal();
+        p.setClient(lc.getClient());
+        p.setConsultant(lc.getConsultant());
+        p.setDepartment("loans");
+        p.setCaseId(lc.getId());
+        p.setCaseModel("LoanCase");
+        p.setTitle("LOAN Proposal Terms - " + lc.getCaseId());
+        p.setSummary("Recommended loan terms and interest rate options.");
+
+        Map<String, Object> details = new HashMap<>();
+        details.put("recommendedBank", lc.getRecommendedBank());
+        details.put("recommendedRate", lc.getRecommendedRate());
+        details.put("recommendedTenure", lc.getRecommendedTenure());
+        details.put("recommendedEMI", lc.getRecommendedEmi());
+        details.put("requestedAmount", lc.getRequestedAmount());
+        p.setDetails(details);
+        p.setStatus("sent");
+
+        Proposal saved = proposalRepository.save(p);
+
+        // Sync proposal to organization B2B portal
+        proposalService.syncToOrgProposal(saved);
+        log.info("Automatically generated CRM proposal {} for LoanCase {}", saved.getId(), lc.getCaseId());
     }
 
     @Transactional

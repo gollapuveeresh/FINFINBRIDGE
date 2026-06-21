@@ -26,33 +26,97 @@ public class ConsultationController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ConsultationResponse> getOne(@PathVariable UUID id) {
-        return ResponseEntity.ok(consultationService.getOne(id));
+    public ResponseEntity<ConsultationResponse> getOne(@PathVariable UUID id,
+                                                       @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.getOne(id, user));
     }
 
     @PostMapping
     public ResponseEntity<ConsultationResponse> create(@RequestBody Consultation consultation,
                                                 @AuthenticationPrincipal User user) {
-        consultation.setClient(user);
+        if (consultation.getClient() == null || (!"consultant".equalsIgnoreCase(user.getRole()) &&
+                !"department-admin".equalsIgnoreCase(user.getRole()) &&
+                !"admin".equalsIgnoreCase(user.getRole()) &&
+                !"crm-admin".equalsIgnoreCase(user.getRole()) &&
+                !"super-admin".equalsIgnoreCase(user.getRole()))) {
+            consultation.setClient(user);
+        }
+        if (consultation.getConsultant() == null && "consultant".equalsIgnoreCase(user.getRole())) {
+            consultation.setConsultant(user);
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(consultationService.create(consultation));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<ConsultationResponse> update(@PathVariable UUID id, @RequestBody Consultation patch) {
-        return ResponseEntity.ok(consultationService.update(id, patch));
+    public ResponseEntity<ConsultationResponse> update(@PathVariable UUID id, @RequestBody Consultation patch,
+                                                       @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.update(id, patch, user));
     }
 
     @PatchMapping("/{id}/accept")
     public ResponseEntity<Map<String, Object>> accept(@PathVariable UUID id,
-                                                       @RequestBody Map<String, String> body) {
-        ConsultationResponse c = consultationService.accept(id, body.get("confirmedDate"), body.get("confirmedTime"));
+                                                       @RequestBody Map<String, String> body,
+                                                       @AuthenticationPrincipal User user) {
+        ConsultationResponse c = consultationService.accept(id, body.get("confirmedDate"), body.get("confirmedTime"), user);
         return ResponseEntity.ok(Map.of("status", "success", "consultation", c));
     }
 
     @PatchMapping("/{id}/assign")
     public ResponseEntity<Map<String, Object>> assign(@PathVariable UUID id,
-                                                      @RequestBody Map<String, String> body) {
-        ConsultationResponse c = consultationService.assign(id, UUID.fromString(body.get("consultantId")));
+                                                      @RequestBody Map<String, String> body,
+                                                      @AuthenticationPrincipal User user) {
+        ConsultationResponse c = consultationService.assign(id, parseConsultantId(body.get("consultantId")), user);
         return ResponseEntity.ok(Map.of("consultation", c));
+    }
+
+    @PatchMapping("/{id}/schedule")
+    public ResponseEntity<ConsultationResponse> schedule(@PathVariable UUID id,
+                                                         @RequestBody Map<String, String> body,
+                                                         @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.schedule(id, body.get("confirmedDate"), body.get("confirmedTime"), body.get("meetingLink"), user));
+    }
+
+    @PatchMapping("/{id}/send-to-client")
+    public ResponseEntity<ConsultationResponse> sendToClient(@PathVariable UUID id,
+                                                             @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.sendToClient(id, user));
+    }
+
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<ConsultationResponse> complete(@PathVariable UUID id,
+                                                         @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.complete(id, user));
+    }
+
+    @PostMapping("/{id}/verify-complete")
+    public ResponseEntity<ConsultationResponse> verifyComplete(@PathVariable UUID id,
+                                                               @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.verifyComplete(id, user));
+    }
+
+    @GetMapping("/completed-list")
+    public ResponseEntity<List<ConsultationResponse>> completedList(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.getCompletedByConsultantForAdmin(user));
+    }
+
+    @GetMapping("/payments")
+    public ResponseEntity<List<Map<String, Object>>> payments(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.getPaymentsForConsultant(user));
+    }
+
+    @GetMapping("/payments/admin")
+    public ResponseEntity<List<Map<String, Object>>> paymentsForAdmin(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(consultationService.getPaymentsForAdmin(user));
+    }
+
+    /** Parse the consultantId, turning malformed input into a clean 400 instead of a 500. */
+    private static UUID parseConsultantId(String raw) {
+        if (raw == null || raw.isBlank())
+            throw new com.finbridge.exception.BadRequestException("consultantId is required");
+        try {
+            return UUID.fromString(raw.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new com.finbridge.exception.BadRequestException("consultantId is not a valid id");
+        }
     }
 }

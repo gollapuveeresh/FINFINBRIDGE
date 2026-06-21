@@ -41,6 +41,9 @@ public class FinancialProfileController {
             existing.setYearsInBusiness(profile.getYearsInBusiness());
             return ResponseEntity.ok(profileRepository.save(existing));
         }).orElseGet(() -> {
+            // Never trust a client-supplied id here: leaving it set would make save() overwrite
+            // an existing (possibly another user's) row. Force an insert owned by this user.
+            profile.setId(null);
             profile.setUser(user);
             return ResponseEntity.status(HttpStatus.CREATED).body(profileRepository.save(profile));
         });

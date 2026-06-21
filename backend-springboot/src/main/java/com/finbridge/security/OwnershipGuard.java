@@ -40,4 +40,32 @@ public final class OwnershipGuard {
         }
         throw new AccessDeniedException("You do not have access to this " + what);
     }
+
+    /** True when both users are non-null and share the same id. */
+    private static boolean sameUser(User a, User b) {
+        return a != null && a.getId() != null && b != null && a.getId().equals(b.getId());
+    }
+
+    /**
+     * Record-scoped check for client-owned data (investments, loans, notifications, profiles).
+     * The owning user may act on their own record; admin-tier staff retain cross-cutting access.
+     * Everyone else is denied — closing the IDOR where any authenticated user could read or
+     * mutate another user's record by guessing its id.
+     */
+    public static void assertOwnerOrAdmin(User actor, User owner, String what) {
+        if (isAdminTier(actor)) return;
+        if (sameUser(actor, owner)) return;
+        throw new AccessDeniedException("You do not have access to this " + what);
+    }
+
+    /**
+     * Access to a consultation: the client who booked it, the assigned consultant, or
+     * admin-tier staff. Any other authenticated user is denied.
+     */
+    public static void assertConsultationAccess(User actor, User client, User consultant, String what) {
+        if (isAdminTier(actor)) return;
+        if (sameUser(actor, client)) return;
+        if (sameUser(actor, consultant)) return;
+        throw new AccessDeniedException("You do not have access to this " + what);
+    }
 }

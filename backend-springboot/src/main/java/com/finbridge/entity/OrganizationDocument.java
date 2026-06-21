@@ -30,6 +30,9 @@ public class OrganizationDocument {
     @Column(name = "file_name")
     private String fileName;
 
+    // Stored as a base64 data URI. @JsonIgnore so the (potentially large) content is never shipped
+    // in list responses — it is served only via the dedicated download endpoint.
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 

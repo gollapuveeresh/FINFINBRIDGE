@@ -11,13 +11,11 @@ const STAGE_COLORS = {
 
 export default function CRMDashboard() {
   const [stats,          setStats]          = useState(null);
-  const [recentLeads,    setRecentLeads]    = useState([]);
   const [clients,        setClients]        = useState([]);
   const [loadingClients, setLoadingClients] = useState(true);
 
   useEffect(() => {
     api.get('/leads/stats').then(r => setStats(r.data)).catch(() => {});
-    api.get('/leads').then(r => setRecentLeads((r.data.leads || []).slice(0, 8))).catch(() => {});
     api.get('/auth/clients')
       .then(r => setClients((r.data.clients || []).slice(0, 6)))
       .catch(() => {})
@@ -170,45 +168,7 @@ export default function CRMDashboard() {
         )}
       </div>
 
-      {/* Recent Leads */}
-      <div className="card overflow-hidden">
-        <div className="px-6 py-4 border-b border-border flex justify-between items-center">
-          <h3 className="font-bold text-accent">Recent Leads</h3>
-          <Link to="/crm-admin/leads" className="text-sm text-purple-400 hover:underline font-semibold">
-            View All →
-          </Link>
-        </div>
-        <div className="divide-y divide-border">
-          {recentLeads.length === 0 ? (
-            <div className="py-10 text-center text-text-muted text-sm">
-              No leads yet. Leads appear here when clients register or submit inquiries.
-            </div>
-          ) : recentLeads.map(lead => (
-            <div key={lead._id} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
-              <div>
-                <p className="font-semibold text-text">{lead.name}</p>
-                <p className="text-xs text-text-muted">
-                  {lead.email} · {lead.serviceType || 'No service selected'}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className={`text-xs font-semibold capitalize px-2 py-0.5 rounded-full ${
-                  lead.priority === 'hot'  ? 'bg-red-500/20 text-red-400' :
-                  lead.priority === 'warm' ? 'bg-amber-500/20 text-amber-400' :
-                                            'bg-blue-500/20 text-blue-400'
-                }`}>{lead.priority}</span>
-                <span className={`text-xs font-semibold capitalize ${STAGE_COLORS[lead.status]}`}>
-                  {lead.status}
-                </span>
-                <span className="text-xs text-text-muted">{lead.department || 'Unrouted'}</span>
-                <span className="text-xs text-text-muted">
-                  {new Date(lead.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Recently Registered Clients Card */}
     </CRMAdminLayout>
   );
 }

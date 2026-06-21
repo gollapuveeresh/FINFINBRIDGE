@@ -32,14 +32,17 @@ const consultantItems = [
   { icon: 'description',      label: 'Proposals',            path: '/consultant/proposals' },
   { icon: 'people',           label: 'My Clients',           path: '/consultant/clients' },
   { icon: 'folder_open',      label: 'Client Documents',     path: '/consultant/reports' },
+  { icon: 'verified_user',    label: 'KYC Review',           path: '/consultant/kyc' },
   { icon: 'calendar_month',   label: 'Meetings Schedule',    path: '/consultant/schedule' },
   { icon: 'receipt',           label: 'Invoices',             path: '/consultant/invoices' },
+  { icon: 'payments',         label: 'Payments',             path: '/consultant/payments' },
 ];
 
 const adminItems = [
   { icon: 'admin_panel_settings', label: 'Admin Dashboard', path: '/admin/dashboard' },
   { icon: 'contacts', label: 'Lead Management', path: '/admin/leads' },
   { icon: 'leaderboard', label: 'CRM Pipeline', path: '/admin/crm' },
+  { icon: 'verified_user', label: 'KYC Review', path: '/admin/kyc' },
   { icon: 'support_agent', label: 'CRM Management', path: '/admin/crm-management' },
   { icon: 'corporate_fare', label: 'Department Management', path: '/admin/departments' },
   { icon: 'manage_accounts', label: 'User Management', path: '/admin/users' },
@@ -58,11 +61,13 @@ const departmentAdminItems = [
   { icon: 'trending_up', label: 'Investments Dashboard', path: '/department-admin/investments/dashboard' },
   { icon: 'calculate', label: 'Tax Dashboard', path: '/department-admin/tax/dashboard' },
   { icon: 'account_balance', label: 'Wealth Dashboard', path: '/department-admin/wealth/dashboard' },
-  { icon: 'inbox', label: 'Lead Queue', path: '/department-admin/lead-queue' },
-  { icon: 'support_agent', label: 'Consultation Requests', path: '/department-admin/consultations' },
-  { icon: 'groups', label: 'Client Queue', path: '/department-admin/clients' },
+  { icon: 'assignment_turned_in', label: 'Assigned Clients', path: '/department-admin/assigned-clients' },
+  { icon: 'groups', label: 'Consultation Request', path: '/department-admin/clients' },
   { icon: 'assignment_ind', label: 'Assignments', path: '/department-admin/assignments' },
   { icon: 'folder_open', label: 'Client Documents', path: '/department-admin/documents' },
+  { icon: 'verified_user', label: 'KYC Review', path: '/department-admin/kyc' },
+  { icon: 'verified', label: 'Completed Meetings', path: '/department-admin/completed-meetings' },
+  { icon: 'currency_rupee', label: 'Payments', path: '/department-admin/payments' },
 ];
 
 export default function Sidebar({ role }) {
@@ -90,7 +95,7 @@ export default function Sidebar({ role }) {
   } else if (activeRole === 'department-admin') {
     menuItems = departmentAdminItems.filter((item) => {
       if (!item.path.startsWith('/department-admin/') ||
-        ['/department-admin/clients', '/department-admin/lead-queue', '/department-admin/consultations', '/department-admin/assignments', '/department-admin/documents'].includes(item.path)
+        ['/department-admin/clients', '/department-admin/assigned-clients', '/department-admin/assignments', '/department-admin/documents', '/department-admin/kyc', '/department-admin/completed-meetings', '/department-admin/payments'].includes(item.path)
       ) return true;
       return activeDepartment && item.path.includes(`/department-admin/${activeDepartment}/`);
     });

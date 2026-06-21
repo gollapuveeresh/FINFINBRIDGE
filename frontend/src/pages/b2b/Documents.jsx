@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import B2BLayout from '../../layouts/B2BLayout';
 import { useB2BAuth } from '../../context/B2BAuthContext';
 import b2bApi from '../../services/b2bApi';
@@ -23,11 +24,50 @@ export default function B2BDocuments() {
   const { company } = useB2BAuth();
   const orgId = company?.organizationId;
   const [docs, setDocs] = useState([]);
+  const [uploading, setUploading] = useState(null);   // documentType currently uploading
 
-  useEffect(() => {
-    if (!orgId) return;
-    b2bApi.get(`/b2b/organizations/${orgId}/documents`).then(r => setDocs(r.data)).catch(() => {});
+  const fetchDocs = useCallback(() => {
+    if (!orgId) {
+      console.warn("fetchDocs: orgId is missing!");
+      return;
+    }
+    b2bApi.get(`/b2b/organizations/${orgId}/documents`)
+      .then(r => {
+        console.log("fetchDocs: successfully fetched documents:", r.data);
+        setDocs(r.data);
+      })
+      .catch(e => {
+        console.error("fetchDocs: failed to fetch documents:", e);
+        toast.error("Failed to load documents list.");
+      });
   }, [orgId]);
+
+  useEffect(() => { fetchDocs(); }, [fetchDocs]);
+
+  const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
+  const handleUpload = (documentType, file) => {
+    if (!file) return;
+    if (file.type && !ALLOWED_TYPES.includes(file.type)) {
+      toast.error('Only PDF, JPG, or PNG files are allowed.'); return;
+    }
+    if (file.size > 6 * 1024 * 1024) { toast.error('File too large. Maximum size is 6 MB.'); return; }
+    setUploading(documentType);
+    const reader = new FileReader();
+    reader.onload = async () => {
+      try {
+        await b2bApi.post(`/b2b/organizations/${orgId}/documents`, {
+          documentType, fileName: file.name, content: reader.result,   // base64 data URI
+        });
+        toast.success(`${file.name} uploaded`);
+        fetchDocs();
+      } catch {
+        toast.error('Upload failed. Please try again.');
+      } finally { setUploading(null); }
+    };
+    reader.onerror = () => { toast.error('Could not read the file.'); setUploading(null); };
+    reader.readAsDataURL(file);
+  };
 
   const getDocStatus = (key) => {
     const d = docs.find(d => d.documentType === key);
@@ -99,9 +139,10 @@ export default function B2BDocuments() {
                   ${status === 'verified' ? 'border-green-500/30 text-green-400 hover:bg-green-500/10'
                     : 'border-border text-text-muted hover:border-accent/50 hover:text-accent'}`}>
                   <span className="material-symbols-outlined text-base">upload</span>
-                  {status ? 'Re-upload' : 'Upload'}
+                  {uploading === dt.key ? 'Uploading…' : status ? 'Re-upload' : 'Upload'}
                   <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png"
-                    onChange={() => {/* integrate Supabase Storage upload here */}} />
+                    disabled={uploading === dt.key}
+                    onChange={e => handleUpload(dt.key, e.target.files[0])} />
                 </label>
               </div>
             </div>

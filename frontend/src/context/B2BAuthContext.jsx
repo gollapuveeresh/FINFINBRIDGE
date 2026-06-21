@@ -8,6 +8,16 @@ export function B2BAuthProvider({ children }) {
   const raw = sessionStorage.getItem('b2b_company');
   const [company, setCompany] = useState(raw ? JSON.parse(raw) : null);
 
+  // Prefer a server field-level validation message over the generic one.
+  const errMsg = (err, fallback) => {
+    const errs = err.response?.data?.errors;
+    if (errs && typeof errs === 'object') {
+      const first = Object.values(errs)[0];
+      if (first) return first;
+    }
+    return err.response?.data?.message || err.response?.data?.error || err.message || fallback;
+  };
+
   const login = async (email, password) => {
     try {
       const res = await b2bApi.post('/b2b/login', { email, password });
@@ -17,8 +27,7 @@ export function B2BAuthProvider({ children }) {
       setCompany(data);
       return data;
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Login failed';
-      throw new Error(msg);
+      throw new Error(errMsg(err, 'Login failed'));
     }
   };
 
@@ -27,8 +36,20 @@ export function B2BAuthProvider({ children }) {
       const res = await b2bApi.post('/b2b/register', payload);
       return res.data;
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || err.message || 'Registration failed';
-      throw new Error(msg);
+      throw new Error(errMsg(err, 'Registration failed'));
+    }
+  };
+
+  const refreshProfile = async () => {
+    if (!company?.organizationId) return;
+    try {
+      const res = await b2bApi.get(`/b2b/organizations/${company.organizationId}`);
+      const updated = { ...company, ...res.data };
+      sessionStorage.setItem('b2b_company', JSON.stringify(updated));
+      setCompany(updated);
+      return updated;
+    } catch (err) {
+      console.error("Failed to refresh profile:", err);
     }
   };
 
@@ -39,7 +60,7 @@ export function B2BAuthProvider({ children }) {
   };
 
   return (
-    <B2BAuthContext.Provider value={{ company, login, register, logout }}>
+    <B2BAuthContext.Provider value={{ company, login, register, logout, refreshProfile }}>
       {children}
     </B2BAuthContext.Provider>
   );

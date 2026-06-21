@@ -33,17 +33,21 @@ export default function B2BDashboard() {
 
   useEffect(() => {
     if (!orgId) return;
-    Promise.all([
-      b2bApi.get(`/b2b/organizations/${orgId}/stats`),
-      b2bApi.get(`/b2b/organizations/${orgId}/service-requests`),
-      b2bApi.get(`/b2b/organizations/${orgId}/proposals`),
-      b2bApi.get(`/b2b/organizations/${orgId}/meetings`),
-    ]).then(([s, r, p, m]) => {
-      setStats(s.data);
-      setReqs(r.data.slice(0, 5));
-      setProps(p.data.slice(0, 3));
-      setMeets(m.data.slice(0, 3));
-    }).catch(() => {});
+    b2bApi.get(`/b2b/organizations/${orgId}/stats`)
+      .then(r => setStats(r.data))
+      .catch(e => console.error('Failed to load stats:', e));
+
+    b2bApi.get(`/b2b/organizations/${orgId}/service-requests`)
+      .then(r => setReqs(r.data.slice(0, 5)))
+      .catch(e => console.error('Failed to load service requests:', e));
+
+    b2bApi.get(`/b2b/organizations/${orgId}/proposals`)
+      .then(r => setProps(r.data.slice(0, 3)))
+      .catch(e => console.error('Failed to load proposals:', e));
+
+    b2bApi.get(`/b2b/organizations/${orgId}/meetings`)
+      .then(r => setMeets(r.data.slice(0, 3)))
+      .catch(e => console.error('Failed to load meetings:', e));
   }, [orgId]);
 
   return (
@@ -165,7 +169,7 @@ export default function B2BDashboard() {
       </div>
 
       {/* Pending KYC banner */}
-      {!company?.kycVerified && (
+      {!company?.kycVerified && !stats?.allRequiredUploaded && (
         <motion.div initial={{ opacity:0 }} animate={{ opacity:1 }}
           className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-4">
           <span className="material-symbols-outlined text-amber-400 text-2xl mt-0.5">warning</span>
