@@ -160,7 +160,7 @@ export default function DepartmentAdminClients() {
                         </span>
                       </td>
                       <td className="px-5 py-4">
-                        {(!lead.status || lead.status === 'qualified' || lead.status === 'new') ? (
+                        {(!lead.status || lead.status === 'qualified' || lead.status === 'new' || lead.status === 'won') ? (
                           <button
                             onClick={() => handleSendFeeProposal(lead._id)}
                             disabled={assigningId === lead._id}
