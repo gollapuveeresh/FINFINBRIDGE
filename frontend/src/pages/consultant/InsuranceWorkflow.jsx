@@ -228,6 +228,7 @@ export default function InsuranceWorkflow() {
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ clientId:'', insuranceType:'Term Life', coverageNeeded:'' });
   const [creating, setCreating] = useState(false);
+  const [mobileShowList, setMobileShowList] = useState(true);
 
   const createCase = async () => {
     if (!form.clientId) { toast.error('Client required'); return; }
@@ -271,18 +272,24 @@ export default function InsuranceWorkflow() {
       {loading ? <div className="py-24 text-center text-text-muted">Loading cases...</div>
       : cases.length===0 ? (<div className="card py-20 text-center"><span className="material-symbols-outlined text-5xl text-text-muted">health_and_safety</span><p className="font-bold text-accent mt-4 text-xl">No insurance cases yet</p><button onClick={()=>setShowCreate(true)} className="btn-primary mt-6 px-8 py-3">Create Insurance Case</button></div>)
       : (<div className="grid grid-cols-12 gap-gutter">
-          <div className="col-span-12 md:col-span-3 space-y-2">
+          <div className={`col-span-12 md:col-span-3 space-y-2 ${mobileShowList ? 'block' : 'hidden md:block'}`}>
             <div className="flex justify-between items-center"><p className="text-xs font-bold text-text-muted uppercase tracking-wider">Cases ({cases.length})</p><button onClick={fetchCases} className="text-text-muted hover:text-accent"><span className="material-symbols-outlined text-base">refresh</span></button></div>
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
-              {cases.map(c=>(<button key={c._id} onClick={()=>setActiveCaseId(c._id)} className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${activeCaseId===c._id?'border-accent bg-accent/5':'border-border bg-surface hover:border-accent/40'}`}>
+              {cases.map(c=>(<button key={c._id} onClick={()=>{setActiveCaseId(c._id); setMobileShowList(false);}} className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${activeCaseId===c._id?'border-accent bg-accent/5':'border-border bg-surface hover:border-accent/40'}`}>
                 <p className="font-bold text-accent text-sm truncate">{c.clientId?.name||'Client'}</p>
                 <p className="text-xs text-text-muted">{c.caseId} · {c.insuranceType}</p>
                 <p className="text-xs font-semibold text-secondary mt-1 capitalize">{c.stage?.replace(/_/g,' ')}</p>
               </button>))}
             </div>
           </div>
-          <div className="col-span-12 md:col-span-9 space-y-gutter">
+          <div className={`col-span-12 md:col-span-9 space-y-gutter ${!mobileShowList ? 'block' : 'hidden md:block'}`}>
             {activeCase&&(<>
+              {/* Mobile Back Button */}
+              <div className="md:hidden">
+                <button type="button" onClick={() => setMobileShowList(true)} className="btn-ghost flex items-center gap-1.5 py-2 px-3 text-xs mb-3">
+                  <span className="material-symbols-outlined text-base">arrow_back</span> Back to Case List
+                </button>
+              </div>
               <div className="card p-5 flex flex-wrap items-center justify-between gap-3">
                 <div><p className="text-xs text-text-muted font-mono">{activeCase.caseId}</p><h2 className="text-lg font-bold text-accent">{activeCase.clientId?.name}</h2><p className="text-text-muted text-xs">{activeCase.insuranceType}</p></div>
                 <span className="text-xs px-3 py-1 rounded-full bg-accent/10 text-accent font-bold capitalize">{activeCase.stage?.replace(/_/g,' ')}</span>

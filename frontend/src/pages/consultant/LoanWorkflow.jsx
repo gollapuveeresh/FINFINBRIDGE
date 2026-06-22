@@ -893,6 +893,7 @@ export default function LoanWorkflow() {
   const [leads,        setLeads]        = useState([]);
   const [createForm,   setCreateForm]   = useState({ clientId: '', leadId: '', loanType: 'Home Loan', requestedAmount: '' });
   const [creating,     setCreating]     = useState(false);
+  const [mobileShowList, setMobileShowList] = useState(true);
 
   const activeCase = cases.find(c => c._id === activeCaseId);
 
@@ -1006,7 +1007,7 @@ export default function LoanWorkflow() {
       ) : (
         <div className="grid grid-cols-12 gap-gutter">
           {/* Case List sidebar */}
-          <div className="col-span-12 md:col-span-3 space-y-2">
+          <div className={`col-span-12 md:col-span-3 space-y-2 ${mobileShowList ? 'block' : 'hidden md:block'}`}>
             <div className="flex justify-between items-center">
               <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Cases ({cases.length})</p>
               <button onClick={fetchCases} className="text-text-muted hover:text-accent">
@@ -1017,7 +1018,7 @@ export default function LoanWorkflow() {
               {cases.map(c => {
                 const stageInfo = STAGES.find(s => s.key === c.stage);
                 return (
-                  <button key={c._id} onClick={() => setActiveCaseId(c._id)}
+                  <button key={c._id} onClick={() => { setActiveCaseId(c._id); setMobileShowList(false); }}
                     className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
                       activeCaseId === c._id ? 'border-accent bg-accent/5' : 'border-border bg-surface hover:border-accent/40'
                     }`}>
@@ -1032,9 +1033,15 @@ export default function LoanWorkflow() {
           </div>
 
           {/* Main content */}
-          <div className="col-span-12 md:col-span-9 space-y-gutter">
+          <div className={`col-span-12 md:col-span-9 space-y-gutter ${!mobileShowList ? 'block' : 'hidden md:block'}`}>
             {activeCase && (
               <>
+                {/* Mobile Back Button */}
+                <div className="md:hidden">
+                  <button type="button" onClick={() => setMobileShowList(true)} className="btn-ghost flex items-center gap-1.5 py-2 px-3 text-xs mb-3">
+                    <span className="material-symbols-outlined text-base">arrow_back</span> Back to Case List
+                  </button>
+                </div>
                 {/* Case header */}
                 <div className="card p-5 flex flex-wrap items-center justify-between gap-3">
                   <div>
