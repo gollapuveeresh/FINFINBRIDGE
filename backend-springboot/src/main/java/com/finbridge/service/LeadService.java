@@ -124,8 +124,12 @@ public class LeadService {
             lead.setSource(patch.source());
         if (patch.serviceType() != null)
             lead.setServiceType(patch.serviceType());
-        if (patch.status() != null)
+        if (patch.status() != null) {
             lead.setStatus(patch.status());
+            if ("qualified".equals(patch.status()) || "new".equals(patch.status()) || "pending_fee".equals(patch.status())) {
+                lead.setAssignedConsultant(null);
+            }
+        }
         if (patch.department() != null)
             lead.setDepartment(patch.department());
         if (patch.priority() != null)
