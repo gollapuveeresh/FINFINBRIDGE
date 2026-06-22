@@ -24,6 +24,49 @@ const Field = ({ label, value, onChange, type = 'text', placeholder, required })
   </div>
 );
 
+const PasswordField = ({ label, value, onChange, placeholder, required }) => {
+  const [show, setShow] = useState(false);
+  return (
+    <div>
+      <label className="text-xs text-text-muted block mb-1">{label}{required && ' *'}</label>
+      <div className="relative">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={onChange}
+          className="w-full p-2.5 pr-10 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary"
+          placeholder={placeholder}
+          required={required}
+        />
+        <button
+          type="button"
+          onClick={() => setShow(!show)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 hover:opacity-80 focus:outline-none flex items-center justify-center bg-transparent border-0 cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-white text-[20px] select-none">
+            {show ? 'visibility' : 'visibility_off'}
+          </span>
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const isStrongPassword = (v) => {
+  const strongRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return strongRegex.test(String(v || ''));
+};
+
+const validatePhone = (code, phone) => {
+  const cleanPhone = String(phone || '').replace(/[\s-]/g, '');
+  if (!cleanPhone) return 'Phone number is required';
+  if (code === '+91') {
+    return /^[6-9][0-9]{9}$/.test(cleanPhone) ? null : 'Enter a valid 10-digit mobile number';
+  } else {
+    return /^[0-9]{7,12}$/.test(cleanPhone) ? null : 'Enter a valid phone number (7-12 digits)';
+  }
+};
+
 export default function B2BRegister() {
   const { register } = useB2BAuth();
   const navigate = useNavigate();
@@ -33,7 +76,7 @@ export default function B2BRegister() {
     companyName:'', industry:'', gstin:'', cin:'', pan:'',
     annualTurnover:'', employeeCount:'',
     address:'', city:'', state:'', pincode:'', website:'',
-    adminName:'', adminEmail:'', adminPhone:'', adminPassword:'', confirmPassword:'',
+    adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+91', adminPassword:'', confirmPassword:'',
     services:[],
   });
 
@@ -80,9 +123,15 @@ export default function B2BRegister() {
   const validateStep2 = () => {
     const err = firstError({
       name:     required(form.adminName)     ? null : 'Contact name is required',
-      email:    isEmail(form.adminEmail)     ? null : 'Enter a valid business email',
-      phone:    required(form.adminPhone)    ? (isMobile(form.adminPhone) ? null : 'Enter a valid 10-digit mobile number') : 'Phone number is required',
-      password: minLen(form.adminPassword, 8) ? null : 'Password must be at least 8 characters',
+      email:    required(form.adminEmail)
+                  ? (form.adminEmail.includes('@')
+                      ? (isEmail(form.adminEmail) ? null : 'Enter a valid business email')
+                      : 'Email must contain "@"')
+                  : 'Business email is required',
+      phone:    validatePhone(form.countryCode, form.adminPhoneOnly),
+      password: isStrongPassword(form.adminPassword)
+                  ? null
+                  : 'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (e.g., @$!%*?&)',
       match:    form.adminPassword === form.confirmPassword ? null : 'Passwords do not match',
       address:  required(form.address)       ? null : 'Registered address is required',
       city:     required(form.city)          ? null : 'City is required',
@@ -108,8 +157,10 @@ export default function B2BRegister() {
     if (err) { toast.error(err); return; }
     setLoading(true);
     try {
+      const { adminPhoneOnly, countryCode, ...rest } = form;
       await register({
-        ...form,
+        ...rest,
+        adminPhone: `${countryCode} ${adminPhoneOnly}`,
         annualTurnover: form.annualTurnover ? Number(form.annualTurnover) : null,
         employeeCount:  form.employeeCount  ? Number(form.employeeCount)  : null,
       });
@@ -188,9 +239,33 @@ export default function B2BRegister() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Field label="Admin Name"        value={form.adminName}       onChange={set('adminName')}       placeholder="John Smith"           required />
                   <Field label="Business Email"    value={form.adminEmail}      onChange={set('adminEmail')}      placeholder="admin@company.com"    required type="email" />
-                  <Field label="Phone"             value={form.adminPhone}      onChange={set('adminPhone')}      placeholder="+91 9876543210"       required type="tel" />
-                  <Field label="Password"          value={form.adminPassword}   onChange={set('adminPassword')}   placeholder="••••••••"             required type="password" />
-                  <Field label="Confirm Password"  value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••"             required type="password" />
+                  <div>
+                    <label className="text-xs text-text-muted block mb-1">Phone *</label>
+                    <div className="flex gap-2">
+                      <select
+                        value={form.countryCode}
+                        onChange={(e) => setForm(p => ({ ...p, countryCode: e.target.value }))}
+                        className="p-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary text-white w-28 cursor-pointer"
+                      >
+                        <option value="+91">+91 (IN)</option>
+                        <option value="+1">+1 (US)</option>
+                        <option value="+44">+44 (UK)</option>
+                        <option value="+880">+880 (BD)</option>
+                        <option value="+65">+65 (SG)</option>
+                        <option value="+971">+971 (AE)</option>
+                      </select>
+                      <input
+                        type="tel"
+                        value={form.adminPhoneOnly}
+                        onChange={set('adminPhoneOnly')}
+                        className="flex-1 p-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary"
+                        placeholder="9876543210"
+                        required
+                      />
+                    </div>
+                  </div>
+                  <PasswordField label="Password"          value={form.adminPassword}   onChange={set('adminPassword')}   placeholder="••••••••"             required />
+                  <PasswordField label="Confirm Password"  value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••"             required />
                   <div className="md:col-span-2">
                     <Field label="Registered Address" value={form.address} onChange={set('address')} placeholder="123, Business Park, MG Road" required />
                   </div>
