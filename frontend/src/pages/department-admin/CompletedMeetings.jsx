@@ -11,6 +11,7 @@ export default function CompletedMeetings() {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [verifyingId, setVerifyingId] = useState(null);
+  const [activeVideoUrl, setActiveVideoUrl] = useState(null);
 
   useEffect(() => {
     fetchCompletedMeetings();
@@ -124,6 +125,7 @@ export default function CompletedMeetings() {
                   <th className="px-6 py-4">Consultant</th>
                   <th className="px-6 py-4">Service Category</th>
                   <th className="px-6 py-4">Meeting Slot</th>
+                  <th className="px-6 py-4">Recording</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Action</th>
                 </tr>
@@ -132,12 +134,12 @@ export default function CompletedMeetings() {
                 {meetings.map(c => (
                   <tr key={c.id} className="hover:bg-surface/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-text">{c.client?.name || '—'}</p>
-                      <p className="text-text-muted text-xs">{c.client?.email || '—'}</p>
+                      <p className="font-semibold text-text">{c.clientId?.name || '—'}</p>
+                      <p className="text-text-muted text-xs">{c.clientId?.email || '—'}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-text">{c.consultant?.name || '—'}</p>
-                      <p className="text-text-muted text-xs">{c.consultant?.email || '—'}</p>
+                      <p className="font-semibold text-text">{c.consultantId?.name || '—'}</p>
+                      <p className="text-text-muted text-xs">{c.consultantId?.email || '—'}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs bg-accent/10 text-accent font-semibold px-2.5 py-1 rounded-full">
@@ -147,6 +149,19 @@ export default function CompletedMeetings() {
                     <td className="px-6 py-4">
                       <p className="text-xs text-text-muted font-semibold">{c.confirmedDate || '—'}</p>
                       <p className="text-xs text-text-faint">{c.confirmedTime || '—'}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      {c.recordingEnabled && c.videoUrl ? (
+                        <button
+                          onClick={() => setActiveVideoUrl(c.videoUrl)}
+                          className="btn-ghost py-1 px-2.5 text-xs flex items-center gap-1 cursor-pointer border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] transition-all rounded-xl"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">play_circle</span>
+                          View Video
+                        </button>
+                      ) : (
+                        <span className="text-xs text-text-muted italic">No Recording</span>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <span className="status-badge status-warning flex items-center gap-1 w-max">
@@ -172,6 +187,34 @@ export default function CompletedMeetings() {
           </div>
         )}
       </div>
+
+      {/* Video Recording Modal */}
+      {activeVideoUrl && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center px-4">
+          <div className="bg-surface rounded-3xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto border border-border shadow-soft">
+            <div className="flex justify-between items-center mb-4 pb-2 border-b border-border">
+              <h3 className="text-lg font-bold text-accent">Meeting Recording</h3>
+              <button 
+                onClick={() => setActiveVideoUrl(null)} 
+                className="p-1 rounded-lg hover:bg-surface-hover text-text-muted cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base">close</span>
+              </button>
+            </div>
+            <div className="aspect-video w-full rounded-2xl overflow-hidden border border-border bg-black">
+              <video src={activeVideoUrl} controls autoPlay className="w-full h-full" />
+            </div>
+            <div className="flex justify-end mt-4">
+              <button 
+                onClick={() => setActiveVideoUrl(null)} 
+                className="btn-ghost px-4 py-2 text-xs font-bold cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DepartmentAdminLayout>
   );
 }

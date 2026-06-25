@@ -36,6 +36,8 @@ public class ProposalService {
     private final DtoMapper mapper;
     private final com.finbridge.repository.DeptCaseRepository deptCaseRepository;
     private final com.finbridge.repository.LoanCaseRepository loanCaseRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     /** Proposals relevant to the user (consultant/client/department-admin), optional department override. */
     @Transactional(readOnly = true)
@@ -95,6 +97,13 @@ public class ProposalService {
         ProposalResponse response = mapper.toProposalResponse(proposalRepository.save(p));
         // NOTE: a draft is NOT pushed to the B2B portal — the org should only see a proposal
         // once it is actually sent. The sync happens in updateStatus() on status="sent".
+
+        // Email the client about the new proposal
+        if (client != null && client.getEmail() != null) {
+            emailService.sendProposalCreated(client.getEmail(), client.getName(),
+                    r.title(), r.department(), p.getId());
+        }
+
         return response;
     }
 
@@ -121,6 +130,42 @@ public class ProposalService {
 
         // Update the linked case decision status
         propagateDecisionToCase(p, status, feedback);
+
+        // Email the client about approval/rejection
+        if (("approved".equals(status) || "rejected".equals(status)) && p.getClient() != null && p.getClient().getEmail() != null) {
+            emailService.sendProposalDecision(p.getClient().getEmail(), p.getClient().getName(),
+                    p.getTitle(), status, p.getId());
+        }
+
+        // Create dashboard & email notifications for staff when client acts on proposal
+        try {
+            if (("approved".equals(status) || "rejected".equals(status) || "changes_requested".equals(status)) 
+                    && p.getClient() != null) {
+                String action = "approved".equals(status) ? "approved" : 
+                                "rejected".equals(status) ? "rejected" : "requested changes on";
+                
+                String capitalizedStatus = status.substring(0, 1).toUpperCase() + status.substring(1);
+                String title = "Proposal " + capitalizedStatus;
+                String message = "Client " + p.getClient().getName() + " has " + action + " the proposal \"" + p.getTitle() + "\".";
+                
+                // 1. Notify the assigned consultant
+                if (p.getConsultant() != null) {
+                    notificationService.create(p.getConsultant(), "proposal", title, message);
+                }
+                
+                // 2. Notify department admins
+                for (User admin : userRepository.findByRoleAndDepartmentAndActiveTrue("department-admin", p.getDepartment())) {
+                    notificationService.create(admin, "proposal", title, message + " (Dept: " + p.getDepartment() + ")");
+                }
+                
+                // 3. Notify CRM admins
+                for (User crmAdmin : userRepository.findByRoleAndActiveTrue("crm-admin")) {
+                    notificationService.create(crmAdmin, "proposal", title, message);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to send staff notifications for proposal decision: {}", e.getMessage());
+        }
 
         return response;
     }

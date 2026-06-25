@@ -29,6 +29,12 @@ class LeadServiceTest {
     @Mock PasswordEncoder passwordEncoder;
     @Mock NotificationService notificationService;
     @Mock SequenceGenerator sequenceGenerator;
+    @Mock com.finbridge.repository.OrganizationRepository organizationRepository;
+    @Mock com.finbridge.repository.OrganizationUserRepository organizationUserRepository;
+    @Mock com.finbridge.repository.ServiceRequestRepository serviceRequestRepository;
+    @Mock com.finbridge.repository.OrganizationProposalRepository organizationProposalRepository;
+    @Mock com.finbridge.repository.ConsultationRepository consultationRepository;
+    @Mock EmailService emailService;
     @InjectMocks LeadService leadService;
 
     private Lead lead;

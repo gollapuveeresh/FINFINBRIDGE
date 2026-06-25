@@ -17,6 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationService {
     private final NotificationRepository notificationRepository;
+    private final EmailService emailService;
 
     public List<Notification> getByUser(UUID userId) {
         return notificationRepository.findByUserIdAndActiveTrueOrderByCreatedAtDesc(userId);
@@ -33,7 +34,24 @@ public class NotificationService {
         n.setType(type);
         n.setTitle(title);
         n.setMessage(message);
-        return notificationRepository.save(n);
+        Notification saved = notificationRepository.save(n);
+
+        try {
+            if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                emailService.sendNotificationEmail(
+                        user.getEmail(),
+                        user.getName(),
+                        title,
+                        message,
+                        type,
+                        saved.getId()
+                );
+            }
+        } catch (Exception e) {
+            log.error("Failed to send email notification to {}: {}", user.getEmail(), e.getMessage());
+        }
+
+        return saved;
     }
 
     @Transactional

@@ -53,6 +53,7 @@ const adminItems = [
   { icon: 'bar_chart', label: 'Revenue Analytics', path: '/admin/revenue' },
   { icon: 'receipt_long', label: 'Audit Logs', path: '/admin/audit-logs' },
   { icon: 'settings', label: 'System Settings', path: '/admin/settings' },
+  { icon: 'api', label: 'API Management', path: '/admin/api-management' },
 ];
 
 const departmentAdminItems = [
@@ -70,7 +71,7 @@ const departmentAdminItems = [
   { icon: 'currency_rupee', label: 'Payments', path: '/department-admin/payments' },
 ];
 
-export default function Sidebar({ role }) {
+export default function Sidebar({ role, isOpen, onClose }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -104,6 +105,7 @@ export default function Sidebar({ role }) {
 
   const handleLogout = () => {
     logout();
+    if (onClose) onClose();
     navigate('/login');
   };
 
@@ -113,84 +115,105 @@ export default function Sidebar({ role }) {
   };
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-[280px] bg-surface border-r border-border shadow-sm flex flex-col py-base-unit px-4 z-50">
-      {/* Brand */}
-      <Link 
-        to={activeRole === 'admin' ? '/admin/dashboard' : activeRole === 'consultant' ? `/department-consultant/${activeDepartment || 'loans'}/dashboard` : activeRole === 'department-admin' ? `/department-admin/${activeDepartment || 'loans'}/dashboard` : '/client/dashboard'}
-        className="flex items-center gap-3 px-2 py-6 mb-4 hover:opacity-95 group transition-opacity"
-      >
-        <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-on-primary group-hover:scale-105 transition-transform duration-200">
-          <span className="material-symbols-filled text-xl">account_balance</span>
-        </div>
-        <div>
-          <h1 className="text-headline-md font-bold text-accent leading-tight">FinBridge</h1>
-          <p className="text-body-sm text-text-muted opacity-70">Premium Solutions</p>
-        </div>
-      </Link>
+    <>
+      {/* Sidebar Backdrop Overlay on Mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
 
-      {/* Main Nav */}
-      <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
-        <p className="text-label-sm text-text-muted uppercase tracking-widest px-4 mb-3 font-bold">{sectionTitle}</p>
-        {menuItems.map((item) => {
-          // Highlight active link if it matches current path exactly or matches the prefix
-          const isActive = location.pathname === item.path || 
-            (item.path !== '/client/dashboard' && item.path !== '/consultant/dashboard' && item.path !== '/admin/dashboard' && item.path !== '/department-admin/dashboard' && location.pathname.startsWith(item.path));
-          
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`sidebar-link ${isActive ? 'active' : ''}`}
-            >
-              <span className="material-symbols-outlined text-xl">{item.icon}</span>
-              <span className="text-body-md font-semibold">{item.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Bottom User section */}
-      <div className="mt-auto border-t border-border pt-4 pb-2">
-        {activeRole === 'client' && (
-          <>
-            <Link to="/client/settings" className={`sidebar-link ${location.pathname === '/client/settings' ? 'active' : ''}`}>
-              <span className="material-symbols-outlined">settings</span>
-              <span className="text-body-md font-semibold">Settings</span>
-            </Link>
-            <Link to="/client/notifications" className={`sidebar-link ${location.pathname === '/client/notifications' ? 'active' : ''}`}>
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-body-md font-semibold">Notifications</span>
-            </Link>
-          </>
-        )}
-        {activeRole === 'consultant' && (
-          <>
-            <Link to="/consultant/notifications" className={`sidebar-link ${location.pathname === '/consultant/notifications' ? 'active' : ''}`}>
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="text-body-md font-semibold">Notifications</span>
-            </Link>
-          </>
-        )}
-        
-        <div className="flex items-center justify-between gap-2 p-2.5 mt-3 rounded-xl bg-surface border border-border">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-base shrink-0">
-              {getAvatarLetter()}
-            </div>
-            <div className="overflow-hidden">
-              <p className="text-label-lg font-bold truncate text-accent leading-tight">{user?.name || 'Alexander Vance'}</p>
-              <p className="text-[10px] text-text-muted truncate font-semibold uppercase tracking-wider">{user?.tier || user?.role || 'Premium'} Account</p>
-            </div>
-          </div>
-          <button 
-            onClick={handleLogout}
-            title="Log Out"
-            className="p-1.5 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors shrink-0 flex items-center justify-center"
+      <aside className={`fixed left-0 top-0 h-full w-[280px] bg-surface border-r border-border shadow-sm flex flex-col py-base-unit px-4 z-50 transition-transform duration-300 ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+        {/* Brand */}
+        <div className="flex items-center justify-between px-2 py-6 mb-4 border-b border-border/40">
+          <Link 
+            to={activeRole === 'admin' ? '/admin/dashboard' : activeRole === 'consultant' ? `/department-consultant/${activeDepartment || 'loans'}/dashboard` : activeRole === 'department-admin' ? `/department-admin/${activeDepartment || 'loans'}/dashboard` : '/client/dashboard'}
+            onClick={onClose}
+            className="flex items-center gap-3 hover:opacity-95 group transition-opacity"
           >
-            <span className="material-symbols-outlined text-xl">logout</span>
+            <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center text-on-primary group-hover:scale-105 transition-transform duration-200">
+              <span className="material-symbols-filled text-xl">account_balance</span>
+            </div>
+            <div>
+              <h1 className="text-headline-md font-bold text-accent leading-tight">FinBridge</h1>
+              <p className="text-body-sm text-text-muted opacity-70">Premium Solutions</p>
+            </div>
+          </Link>
+          <button 
+            onClick={onClose}
+            className="lg:hidden p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors"
+            title="Close Menu"
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
           </button>
         </div>
-      </div>
-    </aside>
+
+        {/* Main Nav */}
+        <nav className="flex-1 space-y-1 overflow-y-auto pr-1">
+          <p className="text-label-sm text-text-muted uppercase tracking-widest px-4 mb-3 font-bold">{sectionTitle}</p>
+          {menuItems.map((item) => {
+            // Highlight active link if it matches current path exactly or matches the prefix
+            const isActive = location.pathname === item.path || 
+              (item.path !== '/client/dashboard' && item.path !== '/consultant/dashboard' && item.path !== '/admin/dashboard' && item.path !== '/department-admin/dashboard' && location.pathname.startsWith(item.path));
+            
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={onClose}
+                className={`sidebar-link ${isActive ? 'active' : ''}`}
+              >
+                <span className="material-symbols-outlined text-xl">{item.icon}</span>
+                <span className="text-body-md font-semibold">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Bottom User section */}
+        <div className="mt-auto border-t border-border pt-4 pb-2">
+          {activeRole === 'client' && (
+            <>
+              <Link to="/client/settings" onClick={onClose} className={`sidebar-link ${location.pathname === '/client/settings' ? 'active' : ''}`}>
+                <span className="material-symbols-outlined">settings</span>
+                <span className="text-body-md font-semibold">Settings</span>
+              </Link>
+              <Link to="/client/notifications" onClick={onClose} className={`sidebar-link ${location.pathname === '/client/notifications' ? 'active' : ''}`}>
+                <span className="material-symbols-outlined">notifications</span>
+                <span className="text-body-md font-semibold">Notifications</span>
+              </Link>
+            </>
+          )}
+          {activeRole === 'consultant' && (
+            <>
+              <Link to="/consultant/notifications" onClick={onClose} className={`sidebar-link ${location.pathname === '/consultant/notifications' ? 'active' : ''}`}>
+                <span className="material-symbols-outlined">notifications</span>
+                <span className="text-body-md font-semibold">Notifications</span>
+              </Link>
+            </>
+          )}
+          
+          <div className="flex items-center justify-between gap-2 p-2.5 mt-3 rounded-xl bg-surface border border-border">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-base shrink-0">
+                {getAvatarLetter()}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-label-lg font-bold truncate text-accent leading-tight">{user?.name || 'Alexander Vance'}</p>
+                <p className="text-[10px] text-text-muted truncate font-semibold uppercase tracking-wider">{user?.tier || user?.role || 'Premium'} Account</p>
+              </div>
+            </div>
+            <button 
+              onClick={handleLogout}
+              title="Log Out"
+              className="p-1.5 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-colors shrink-0 flex items-center justify-center"
+            >
+              <span className="material-symbols-outlined text-xl">logout</span>
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

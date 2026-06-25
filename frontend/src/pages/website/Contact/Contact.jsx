@@ -256,17 +256,42 @@ const Contact = () => {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="border-l-4 border-[#D4AF37] pl-8"
+                    className="border-l-4 border-[#D4AF37] pl-6 space-y-4"
                   >
-                    <div className="font-semibold text-xl mb-3">{office.city}</div>
-                    <div className="text-gray-400 text-sm leading-relaxed mb-4">{office.address}</div>
-                    <div className="flex flex-col gap-2 text-sm">
-                      <a href={`tel:${office.phone}`} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2">
-                        <Phone className="w-4 h-4" /> {office.phone}
+                    <div className="font-semibold text-xl text-white">{office.city}</div>
+                    
+                    <div className="space-y-3 text-sm">
+                      <div className="flex items-start gap-3 text-gray-400">
+                        <MapPin className="w-4 h-4 text-[#D4AF37]/80 shrink-0 mt-0.5" />
+                        <span>{office.address}</span>
+                      </div>
+                      
+                      <a 
+                        href={`tel:${office.phone}`} 
+                        className="flex items-center gap-3 text-gray-300 hover:text-[#D4AF37] transition-colors"
+                      >
+                        <Phone className="w-4 h-4 text-[#D4AF37]/80 shrink-0" />
+                        <span>{office.phone}</span>
                       </a>
-                      <a href={`mailto:${office.email}`} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2">
-                        <Mail className="w-4 h-4" /> {office.email}
+                      
+                      <a 
+                        href={`mailto:${office.email}`} 
+                        className="flex items-center gap-3 text-gray-300 hover:text-[#D4AF37] transition-colors"
+                      >
+                        <Mail className="w-4 h-4 text-[#D4AF37]/80 shrink-0" />
+                        <span>{office.email}</span>
                       </a>
+                    </div>
+
+                    {/* Office Map */}
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 hover:border-[#D4AF37]/30 transition-all duration-300 shadow-md">
+                      <iframe 
+                        title="Office Map"
+                        src="https://maps.google.com/maps?q=Chittagong,%20Bangladesh&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+                        className="w-full h-44 border-0 filter grayscale-[0.6] contrast-[1.15] hover:grayscale-0 transition-all duration-500"
+                        allowFullScreen="" 
+                        loading="lazy"
+                      />
                     </div>
                   </motion.div>
                 ))}

@@ -650,9 +650,128 @@ function ApprovalsTab({ dept, cfg, proposals, onRefresh }) {
 }
 
 // ── Tab: Tracker / Policy Management / Claims (dept-specific static tracker) ──
-function TrackerTab({ dept, cfg }) {
+function TrackerTab({ dept, cfg, cases = [] }) {
   const [search, setSearch] = useState('');
-  const rows = cfg.trackerRows || [];
+
+  // Map backend cases to row format for the current department
+  const rows = (cases || []).map(c => {
+    if (dept === 'loans') {
+      const applicant = c.client?.name || c.clientId?.name || '—';
+      const amount = c.requestedAmount ? `₹${Number(c.requestedAmount).toLocaleString('en-IN')}` : '—';
+      
+      let status = 'In Review';
+      if (c.stage === 'completion' || c.stage === 'emi_tracking') {
+        status = 'Approved';
+      } else if (c.stage === 'client_approval') {
+        status = 'Pending';
+      } else if (c.bankProcessing?.bankStatus) {
+        const bs = c.bankProcessing.bankStatus;
+        if (bs === 'Disbursed' || bs === 'Approved') status = 'Approved';
+        else if (bs === 'Rejected') status = 'Rejected';
+        else status = 'In Review';
+      }
+      
+      const stageName = c.stage ? c.stage.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '—';
+
+      return {
+        col1: applicant,
+        col2: c.loanType || '—',
+        col3: amount,
+        stage: stageName,
+        status: status
+      };
+    } else if (dept === 'tax') {
+      const clientName = c.clientId?.name || c.client?.name || '—';
+      const filingType = c.filingType || '—';
+      const fy = c.financialYear || '—';
+      const dueDate = c.dueDate || (c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—');
+      
+      let status = 'In Progress';
+      if (c.stage === 'completion') {
+        status = 'Completed';
+      } else if (c.stage === 'client_approval') {
+        status = 'Pending';
+      }
+      
+      return {
+        col1: clientName,
+        col2: filingType,
+        col3: fy,
+        stage: dueDate,
+        status: status
+      };
+    } else if (dept === 'investment') {
+      const clientName = c.clientId?.name || c.client?.name || '—';
+      const value = c.monitoring?.currentValue 
+        ? `₹${Number(c.monitoring.currentValue).toLocaleString('en-IN')}` 
+        : (c.investmentAmount ? `₹${Number(c.investmentAmount).toLocaleString('en-IN')}` : '—');
+      
+      const assetClass = c.portfolio?.length 
+        ? c.portfolio.map(p => p.assetClass).filter((v, idx, self) => self.indexOf(v) === idx).join(' + ') 
+        : (c.investmentGoal || '—');
+      
+      const returns = c.monitoring?.xirr ? `${Number(c.monitoring.xirr) >= 0 ? '+' : ''}${c.monitoring.xirr}%` : '—';
+      
+      let status = 'Active';
+      if (c.stage === 'client_approval') {
+        status = 'Review';
+      }
+      
+      return {
+        col1: clientName,
+        col2: value,
+        col3: assetClass,
+        stage: returns,
+        status: status
+      };
+    } else if (dept === 'insurance') {
+      const clientName = c.clientId?.name || c.client?.name || '—';
+      const policyType = c.policy?.policyNumber 
+        ? `${c.policy.insurer} - ${c.insuranceType || ''}` 
+        : (c.insuranceType || '—');
+      const premium = c.policy?.premiumAmount 
+        ? `₹${Number(c.policy.premiumAmount).toLocaleString('en-IN')}/yr` 
+        : '—';
+      const renewalDate = c.policy?.endDate 
+        ? new Date(c.policy.endDate).toLocaleDateString() 
+        : '—';
+      
+      let status = c.policy?.status || 'Active';
+      if (c.stage === 'client_approval') {
+        status = 'Review';
+      }
+      
+      return {
+        col1: clientName,
+        col2: policyType,
+        col3: premium,
+        stage: renewalDate,
+        status: status
+      };
+    } else if (dept === 'wealth') {
+      const clientName = c.clientId?.name || c.client?.name || '—';
+      const aum = c.aum ? `₹${Number(c.aum).toLocaleString('en-IN')}` : '—';
+      const strategy = c.assessment?.riskProfile ? `${c.assessment.riskProfile} Strategy` : '—';
+      const nextReview = c.quarterlyReviews?.length 
+        ? new Date(c.quarterlyReviews[c.quarterlyReviews.length - 1].date).toLocaleDateString() 
+        : '—';
+      
+      let status = 'Active';
+      if (c.stage === 'client_approval') {
+        status = 'Pending';
+      }
+      
+      return {
+        col1: clientName,
+        col2: aum,
+        col3: strategy,
+        stage: nextReview,
+        status: status
+      };
+    }
+    return { col1: '—', col2: '—', col3: '—', stage: '—', status: 'Pending' };
+  });
+
   const filtered = rows.filter(r => r.col1.toLowerCase().includes(search.toLowerCase()));
 
   // dept-specific subtitle
@@ -716,7 +835,7 @@ function TrackerTab({ dept, cfg }) {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={5} className="py-12 text-center text-text-muted">No results found.</td></tr>
+                <tr><td colSpan={cols.length} className="py-12 text-center text-text-muted">No results found.</td></tr>
               )}
             </tbody>
           </table>
@@ -727,8 +846,8 @@ function TrackerTab({ dept, cfg }) {
 }
 
 // ── Insurance-specific: Policy Management tab ─────────────────────────────────
-function PoliciesTab({ cfg }) {
-  return <TrackerTab dept="insurance" cfg={{ ...cfg, trackerRows: cfg.trackerRows }} />;
+function PoliciesTab({ cfg, cases }) {
+  return <TrackerTab dept="insurance" cfg={cfg} cases={cases} />;
 }
 
 // ── Insurance-specific: Claims Oversight tab ──────────────────────────────────
@@ -746,9 +865,24 @@ const CLAIM_COLOR = {
   Rejected: 'bg-red-500/20 text-red-400',
 };
 
-function ClaimsTab({ cfg }) {
+function ClaimsTab({ cfg, cases = [] }) {
   const [search, setSearch] = useState('');
-  const filtered = CLAIMS_DATA.filter(c =>
+
+  // Extract real claims from insurance cases if status is 'Claim' or stage is 'claim'
+  const realClaims = (cases || [])
+    .filter(c => c.policy?.status === 'Claim' || c.stage === 'claim')
+    .map(c => ({
+      id: c.caseId || `CLM-${c._id?.substring(0, 4).toUpperCase()}`,
+      client: c.clientId?.name || c.client?.name || '—',
+      type: c.insuranceType || '—',
+      amount: c.policy?.premiumAmount ? `₹${Number(c.policy.premiumAmount).toLocaleString('en-IN')}` : '—',
+      filed: c.createdAt ? new Date(c.createdAt).toLocaleDateString() : '—',
+      status: 'Under Review'
+    }));
+
+  const displayClaims = [...realClaims, ...CLAIMS_DATA];
+
+  const filtered = displayClaims.filter(c =>
     c.client.toLowerCase().includes(search.toLowerCase()) ||
     c.type.toLowerCase().includes(search.toLowerCase())
   );
@@ -762,10 +896,10 @@ function ClaimsTab({ cfg }) {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
         {[
-          { label: 'Total Claims', value: CLAIMS_DATA.length, icon: 'gavel', color: 'text-accent', bg: 'bg-accent/10' },
-          { label: 'Under Review', value: CLAIMS_DATA.filter(c => c.status === 'Under Review').length, icon: 'manage_search', color: 'text-blue-400', bg: 'bg-blue-500/10' },
-          { label: 'Pending Docs', value: CLAIMS_DATA.filter(c => c.status === 'Pending Docs').length, icon: 'upload_file', color: 'text-amber-400', bg: 'bg-amber-500/10' },
-          { label: 'Settled',      value: CLAIMS_DATA.filter(c => c.status === 'Settled').length,      icon: 'check_circle', color: 'text-green-400', bg: 'bg-green-500/10' },
+          { label: 'Total Claims', value: displayClaims.length, icon: 'gavel', color: 'text-accent', bg: 'bg-accent/10' },
+          { label: 'Under Review', value: displayClaims.filter(c => c.status === 'Under Review').length, icon: 'manage_search', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+          { label: 'Pending Docs', value: displayClaims.filter(c => c.status === 'Pending Docs').length, icon: 'upload_file', color: 'text-amber-400', bg: 'bg-amber-500/10' },
+          { label: 'Settled',      value: displayClaims.filter(c => c.status === 'Settled').length,      icon: 'check_circle', color: 'text-green-400', bg: 'bg-green-500/10' },
         ].map((k, i) => <KPI key={i} {...k} sub="claims" />)}
       </div>
 
@@ -825,19 +959,22 @@ export default function DepartmentAdminDashboard({ department: deptProp = 'loans
   const [consultants,  setConsultants]  = useState([]);
   const [leads,        setLeads]        = useState([]);
   const [proposals,    setProposals]    = useState([]);
+  const [cases,        setCases]        = useState([]);
   const [loading,      setLoading]      = useState(true);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [cRes, lRes, pRes] = await Promise.all([
+      const [cRes, lRes, pRes, casesRes] = await Promise.all([
         api.get('/auth/consultants', { params: { department: deptKey } }),
         api.get('/leads',            { params: { department: deptKey } }),
         api.get('/proposals',        { params: { department: deptKey } }).catch(() => ({ data: { proposals: [] } })),
+        (deptKey === 'loans' ? api.get('/loan-cases') : api.get(`/dept-cases/${deptKey}`)).catch(() => ({ data: { cases: [] } })),
       ]);
       setConsultants(cRes.data.consultants || []);
       setLeads(lRes.data.leads || []);
       setProposals((pRes.data.proposals || []).filter(p => p.department === deptKey));
+      setCases(casesRes.data.cases || []);
     } catch { toast.error('Failed to load department data'); }
     finally { setLoading(false); }
   };
@@ -851,10 +988,10 @@ export default function DepartmentAdminDashboard({ department: deptProp = 'loans
       case 'consultants': return <ConsultantsTab dept={deptKey} cfg={cfg} consultants={consultants} onRefresh={fetchData} />;
       case 'assignments': return <AssignmentsTab dept={deptKey} cfg={cfg} leads={leads} consultants={consultants} onRefresh={fetchData} />;
       case 'approvals':   return <ApprovalsTab   dept={deptKey} cfg={cfg} proposals={proposals} onRefresh={fetchData} />;
-      case 'tracker':     return <TrackerTab     dept={deptKey} cfg={cfg} />;
+      case 'tracker':     return <TrackerTab     dept={deptKey} cfg={cfg} cases={cases} />;
       // Insurance-specific
-      case 'policies':    return <PoliciesTab    cfg={cfg} />;
-      case 'claims':      return <ClaimsTab      cfg={cfg} />;
+      case 'policies':    return <PoliciesTab    cfg={cfg} cases={cases} />;
+      case 'claims':      return <ClaimsTab      cfg={cfg} cases={cases} />;
       default:            return null;
     }
   };

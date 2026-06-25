@@ -8,6 +8,7 @@ import com.finbridge.repository.*;
 import com.finbridge.security.B2BAccessGuard;
 import com.finbridge.security.JwtService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +22,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class B2BService {
+
+    private static final long VERIFY_TTL_MS = 24 * 60 * 60 * 1000L; // 24h
 
     private final OrganizationRepository orgRepo;
     private final OrganizationUserRepository orgUserRepo;
@@ -46,6 +50,10 @@ public class B2BService {
     private final DeptCaseRepository deptCaseRepository;
     private final LoanCaseRepository loanCaseRepository;
     private final ProposalService proposalService;
+    private final EmailService emailService;
+
+    @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     @org.springframework.beans.factory.annotation.Value("${app.payments.mock-enabled:true}")
     private boolean mockPaymentsEnabled;
@@ -56,7 +64,8 @@ public class B2BService {
         String cleanGstin = req.getGstin() != null && !req.getGstin().trim().isEmpty() ? req.getGstin().trim() : null;
         String cleanCin = req.getCin() != null && !req.getCin().trim().isEmpty() ? req.getCin().trim() : null;
         String cleanPan = req.getPan() != null && !req.getPan().trim().isEmpty() ? req.getPan().trim() : null;
-        String cleanWebsite = req.getWebsite() != null && !req.getWebsite().trim().isEmpty() ? req.getWebsite().trim() : null;
+        String cleanWebsite = req.getWebsite() != null && !req.getWebsite().trim().isEmpty() ? req.getWebsite().trim()
+                : null;
 
         if (orgUserRepo.existsByEmailIgnoreCase(req.getAdminEmail()))
             throw new BadRequestException("Email already registered");
@@ -105,13 +114,22 @@ public class B2BService {
         admin.setEmail(req.getAdminEmail());
         admin.setPasswordHash(passwordEncoder.encode(req.getAdminPassword()));
         admin.setRole("COMPANY_ADMIN");
+        admin.setActive(false); // Require email verification before login
+        admin.setEmailVerified(false);
         orgUserRepo.save(admin);
 
-        // Auto-generate a CRM lead so the sales team can follow up on the new B2B sign-up.
+        // Auto-generate a CRM lead so the sales team can follow up on the new B2B
+        // sign-up.
         createCrmLead(org, req);
 
-        String token = jwtService.generateB2BToken(admin.getId().toString(), org.getId().toString());
-        return buildLoginResponse(token, admin, org);
+        // Send verification email
+        String verifyToken = jwtService.generatePurposeToken(admin.getId().toString(), "verify-email-b2b",
+                VERIFY_TTL_MS);
+        String verifyLink = frontendUrl + "/verify-email?token=" + verifyToken;
+        emailService.sendVerificationEmail(admin.getEmail(), admin.getName(), verifyLink);
+        log.info("B2B registration: verification email sent to {}", admin.getEmail());
+
+        return buildLoginResponse(null, admin, org);
     }
 
     /** Creates a CRM lead from a freshly registered organization. */
@@ -130,34 +148,51 @@ public class B2BService {
 
     private String buildRequirement(Organization org, OrgRegisterRequest req) {
         StringBuilder sb = new StringBuilder("New B2B organization registration");
-        if (org.getIndustry() != null) sb.append(" • Industry: ").append(org.getIndustry());
+        if (org.getIndustry() != null)
+            sb.append(" • Industry: ").append(org.getIndustry());
         if (req.getServices() != null && !req.getServices().isEmpty())
             sb.append(" • Services: ").append(String.join(", ", req.getServices()));
-        if (org.getEmployeeCount() != null) sb.append(" • Employees: ").append(org.getEmployeeCount());
+        if (org.getEmployeeCount() != null)
+            sb.append(" • Employees: ").append(org.getEmployeeCount());
         return sb.toString();
     }
 
     /** Maps a service name string to a department ID. */
     private String mapServiceToDepartmentId(String serviceName) {
-        if (serviceName == null) return null;
+        if (serviceName == null)
+            return null;
         String s = serviceName.toLowerCase();
-        if (s.contains("loan")) return "loans";
-        if (s.contains("tax")) return "tax";
-        if (s.contains("invest")) return "investment";
-        if (s.contains("insurance")) return "insurance";
-        if (s.contains("wealth")) return "wealth";
+        if (s.contains("loan"))
+            return "loans";
+        if (s.contains("tax"))
+            return "tax";
+        if (s.contains("invest"))
+            return "investments";
+        if (s.contains("insurance"))
+            return "insurance";
+        if (s.contains("wealth"))
+            return "wealth";
         return null;
     }
 
-    /** Maps the first selected service to a CRM department code (null if none/unknown). */
+    /**
+     * Maps the first selected service to a CRM department code (null if
+     * none/unknown).
+     */
     private String primaryDepartment(List<String> services) {
-        if (services == null || services.isEmpty()) return null;
+        if (services == null || services.isEmpty())
+            return null;
         String s = services.get(0).toLowerCase();
-        if (s.contains("loan")) return "loans";
-        if (s.contains("tax")) return "tax";
-        if (s.contains("invest")) return "investment";
-        if (s.contains("insurance")) return "insurance";
-        if (s.contains("wealth")) return "wealth";
+        if (s.contains("loan"))
+            return "loans";
+        if (s.contains("tax"))
+            return "tax";
+        if (s.contains("invest"))
+            return "investments";
+        if (s.contains("insurance"))
+            return "insurance";
+        if (s.contains("wealth"))
+            return "wealth";
         return null;
     }
 
@@ -168,8 +203,10 @@ public class B2BService {
                 .orElseThrow(() -> new BadRequestException("Invalid credentials"));
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash()))
             throw new BadRequestException("Invalid credentials");
+        if (!user.isEmailVerified())
+            throw new BadRequestException("Please verify your email before logging in. Check your inbox for the verification link.");
         if (!user.isActive())
-            throw new BadRequestException("Account is disabled");
+            throw new BadRequestException("Account is deactivated");
 
         user.setLastLogin(Instant.now());
         orgUserRepo.save(user);
@@ -199,7 +236,7 @@ public class B2BService {
         // Also create a Lead for the department admin to assign a consultant
         Lead lead = new Lead();
         lead.setName(org.getCompanyName());
-        
+
         String adminEmail = "";
         List<OrganizationUser> members = orgUserRepo.findByOrganizationId(org.getId());
         for (OrganizationUser u : members) {
@@ -212,7 +249,7 @@ public class B2BService {
             adminEmail = members.get(0).getEmail();
         }
         String adminPhone = leadService.getPhoneByEmail(adminEmail);
-        
+
         lead.setEmail(adminEmail);
         lead.setPhone(adminPhone);
         lead.setSource("b2b_request");
@@ -220,6 +257,10 @@ public class B2BService {
         lead.setServiceType(req.getTitle());
         lead.setDepartment(req.getDepartmentId());
         lead.setRequirement(req.getDescription());
+        if (lead.getDepartment() != null) {
+            lead.setDepartment(
+                    lead.getDepartment().toLowerCase().equals("investment") ? "investments" : lead.getDepartment());
+        }
         lead.setBudget(req.getAmountInvolved());
         lead.setStatus("qualified"); // direct routing to department
         leadService.create(lead);
@@ -253,7 +294,7 @@ public class B2BService {
     // ─── Organization Dashboard Stats ────────────────────────────────────────
     public java.util.Map<String, Object> getOrgStats(UUID orgId) {
         var all = serviceReqRepo.findByOrganizationIdAndActiveTrue(orgId);
-        long pending = all.stream().filter(s -> !List.of("completed","rejected").contains(s.getStatus())).count();
+        long pending = all.stream().filter(s -> !List.of("completed", "rejected").contains(s.getStatus())).count();
         long completed = all.stream().filter(s -> "completed".equals(s.getStatus())).count();
         var docs = orgDocRepo.findByOrganizationId(orgId);
         long pendingDocs = docs.stream().filter(d -> "pending".equals(d.getStatus())).count();
@@ -261,7 +302,8 @@ public class B2BService {
         var totalPaid = payments.stream().filter(p -> "paid".equals(p.getStatus()))
                 .mapToDouble(p -> p.getAmount().doubleValue()).sum();
 
-        java.util.Set<String> requiredTypes = java.util.Set.of("GST_CERTIFICATE", "PAN", "CIN", "INCORPORATION", "BANK_STATEMENT");
+        java.util.Set<String> requiredTypes = java.util.Set.of("GST_CERTIFICATE", "PAN", "CIN", "INCORPORATION",
+                "BANK_STATEMENT");
         boolean allRequiredUploaded = requiredTypes.stream()
                 .allMatch(type -> docs.stream().anyMatch(d -> type.equals(d.getDocumentType())));
 
@@ -273,13 +315,13 @@ public class B2BService {
                 "pendingDocuments", pendingDocs,
                 "totalPaid", totalPaid,
                 "activeProposals", orgProposalRepo.findByOrganizationIdAndActiveTrue(orgId).size(),
-                "allRequiredUploaded", allRequiredUploaded
-        );
+                "allRequiredUploaded", allRequiredUploaded);
     }
 
     // ─── Support Tickets ─────────────────────────────────────────────────────
     @Transactional
-    public SupportTicket createTicket(UUID orgId, String subject, String description, String category, String priority) {
+    public SupportTicket createTicket(UUID orgId, String subject, String description, String category,
+            String priority) {
         Organization org = orgRepo.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
         SupportTicket ticket = new SupportTicket();
@@ -303,7 +345,8 @@ public class B2BService {
 
     @Transactional
     public OrganizationUser addTeamMember(UUID orgId, String name, String email, String role, String password) {
-        if (orgUserRepo.existsByEmailIgnoreCase(email)) throw new BadRequestException("Email already registered");
+        if (orgUserRepo.existsByEmailIgnoreCase(email))
+            throw new BadRequestException("Email already registered");
         Organization org = orgRepo.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
         OrganizationUser u = new OrganizationUser();
@@ -362,12 +405,14 @@ public class B2BService {
                 for (OrganizationUser member : members) {
                     List<Lead> leads = leadRepo.findByEmailIgnoreCase(member.getEmail());
                     for (Lead l : leads) {
-                        if (l.isActive() && l.getDepartment() != null && l.getDepartment().equalsIgnoreCase(p.getDepartment())) {
+                        if (l.isActive() && l.getDepartment() != null
+                                && l.getDepartment().equalsIgnoreCase(p.getDepartment())) {
                             if ("pending_fee".equals(l.getStatus())) {
                                 matchedLead = l;
                                 break;
                             }
-                            if (matchedLead == null || (l.getCreatedAt() != null && matchedLead.getCreatedAt() != null && l.getCreatedAt().isAfter(matchedLead.getCreatedAt()))) {
+                            if (matchedLead == null || (l.getCreatedAt() != null && matchedLead.getCreatedAt() != null
+                                    && l.getCreatedAt().isAfter(matchedLead.getCreatedAt()))) {
                                 matchedLead = l;
                             }
                         }
@@ -388,7 +433,8 @@ public class B2BService {
                 List<ServiceRequest> serviceRequests = serviceReqRepo.findByOrganizationIdAndActiveTrue(orgId);
                 for (ServiceRequest sr : serviceRequests) {
                     if (sr.getDepartmentId() != null && sr.getDepartmentId().equalsIgnoreCase(p.getDepartment())) {
-                        if (matchedSr == null || (sr.getCreatedAt() != null && matchedSr.getCreatedAt() != null && sr.getCreatedAt().isAfter(matchedSr.getCreatedAt()))) {
+                        if (matchedSr == null || (sr.getCreatedAt() != null && matchedSr.getCreatedAt() != null
+                                && sr.getCreatedAt().isAfter(matchedSr.getCreatedAt()))) {
                             matchedSr = sr;
                         }
                     }
@@ -438,7 +484,8 @@ public class B2BService {
             om.setOrganization(org);
             om.setConsultant(c.getConsultant());
             String category = c.getCategory();
-            if (category == null) category = "Consultation";
+            if (category == null)
+                category = "Consultation";
             String title = category;
             if (!category.toLowerCase().contains("consultation")) {
                 title += " Consultation";
@@ -458,7 +505,8 @@ public class B2BService {
                 } else {
                     time = "00:00";
                 }
-                java.time.ZoneOffset offset = java.time.OffsetDateTime.now(java.time.ZoneId.systemDefault()).getOffset();
+                java.time.ZoneOffset offset = java.time.OffsetDateTime.now(java.time.ZoneId.systemDefault())
+                        .getOffset();
                 scheduled = java.time.OffsetDateTime.parse(date + "T" + time + ":00" + offset.getId()).toInstant();
             } catch (Exception e) {
                 scheduled = c.getCreatedAt();
@@ -469,7 +517,8 @@ public class B2BService {
             om.setAgenda(c.getClientNotes());
 
             String status = "scheduled";
-            if ("completed".equalsIgnoreCase(c.getStatus()) || "completed_by_consultant".equalsIgnoreCase(c.getStatus())) {
+            if ("completed".equalsIgnoreCase(c.getStatus())
+                    || "completed_by_consultant".equalsIgnoreCase(c.getStatus())) {
                 status = "completed";
             }
             om.setStatus(status);
@@ -492,28 +541,35 @@ public class B2BService {
     }
 
     /**
-     * Settle a pending payment. For now this is a MOCK gateway (no real charge) so the flow can be
-     * demoed end-to-end; once Razorpay keys are provided, replace the body with: create order →
-     * client opens Razorpay Checkout → verify the returned signature here → then mark paid.
+     * Settle a pending payment. For now this is a MOCK gateway (no real charge) so
+     * the flow can be
+     * demoed end-to-end; once Razorpay keys are provided, replace the body with:
+     * create order →
+     * client opens Razorpay Checkout → verify the returned signature here → then
+     * mark paid.
      *
      * @param gatewayRef the payment id returned by the (mock) gateway
      */
     @Transactional
     public OrganizationPayment payPayment(UUID paymentId, Object principal, String gatewayRef) {
         if (!mockPaymentsEnabled)
-            throw new BadRequestException("Online payment is not available yet. Please contact FinBridge to settle this invoice.");
+            throw new BadRequestException(
+                    "Online payment is not available yet. Please contact FinBridge to settle this invoice.");
         OrganizationPayment op = orgPaymentRepo.findById(paymentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
         B2BAccessGuard.assertOrgAccess(principal, op.getOrganization().getId());
-        if ("paid".equals(op.getStatus())) return op;   // idempotent
+        if ("paid".equals(op.getStatus()))
+            return op; // idempotent
 
         op.setStatus("paid");
         op.setPaidAt(Instant.now());
         op.setGateway("razorpay");
-        op.setGatewayPaymentId(gatewayRef != null ? gatewayRef : "pay_mock_" + UUID.randomUUID().toString().substring(0, 12));
+        op.setGatewayPaymentId(
+                gatewayRef != null ? gatewayRef : "pay_mock_" + UUID.randomUUID().toString().substring(0, 12));
         orgPaymentRepo.save(op);
 
-        // Reflect the settlement on the originating CRM invoice (gateway_order_id holds the invoice number),
+        // Reflect the settlement on the originating CRM invoice (gateway_order_id holds
+        // the invoice number),
         // so the consultant/department side and revenue analytics show it as paid too.
         if (op.getGatewayOrderId() != null) {
             invoiceRepo.findByInvoiceNumber(op.getGatewayOrderId()).ifPresent(inv -> {
@@ -528,7 +584,10 @@ public class B2BService {
         return op;
     }
 
-    /** Build a printable invoice payload for an org payment (real CRM invoice if linked, else a basic one). */
+    /**
+     * Build a printable invoice payload for an org payment (real CRM invoice if
+     * linked, else a basic one).
+     */
     @Transactional(readOnly = true)
     public Map<String, Object> getPaymentInvoice(UUID paymentId, Object principal) {
         OrganizationPayment op = orgPaymentRepo.findById(paymentId)
@@ -543,11 +602,13 @@ public class B2BService {
         if (inv != null) {
             out.put("invoiceNumber", inv.getInvoiceNumber());
             out.put("clientId", ref(org.getCompanyName(), inv.getClient() != null ? inv.getClient().getEmail() : null));
-            out.put("consultantId", ref(inv.getConsultant() != null ? inv.getConsultant().getName() : "FinBridge Advisory", null));
+            out.put("consultantId",
+                    ref(inv.getConsultant() != null ? inv.getConsultant().getName() : "FinBridge Advisory", null));
             out.put("serviceTitle", inv.getServiceTitle());
             out.put("department", inv.getDepartment());
             List<Map<String, Object>> items = new ArrayList<>();
-            for (InvoiceLineItem li : inv.getLineItems()) items.add(lineItem(li.getDescription(), li.getAmount()));
+            for (InvoiceLineItem li : inv.getLineItems())
+                items.add(lineItem(li.getDescription(), li.getAmount()));
             out.put("lineItems", items);
             out.put("subtotal", inv.getSubtotal());
             out.put("tax", inv.getTax());
@@ -597,23 +658,27 @@ public class B2BService {
         return orgDocRepo.findByOrganizationId(orgId);
     }
 
-    private static final int MAX_DOC_CHARS = 8_000_000;   // ~6 MB file once base64-encoded
+    private static final int MAX_DOC_CHARS = 8_000_000; // ~6 MB file once base64-encoded
     private static final Set<String> ALLOWED_DOC_TYPES = Set.of(
             "GST_CERTIFICATE", "PAN", "CIN", "INCORPORATION", "BANK_STATEMENT", "FINANCIAL_STATEMENT", "OTHER");
     private static final Set<String> ALLOWED_MIME = Set.of(
             "application/pdf", "image/jpeg", "image/jpg", "image/png");
 
-    /** Upload (or replace) a KYC document for an organization. Content is a base64 data URI. */
+    /**
+     * Upload (or replace) a KYC document for an organization. Content is a base64
+     * data URI.
+     */
     @Transactional
     public OrganizationDocument uploadDocument(UUID orgId, String documentType, String fileName,
-                                               String content, Object principal) {
+            String content, Object principal) {
         if (documentType == null || content == null || content.isBlank())
             throw new BadRequestException("documentType and file content are required");
         if (!ALLOWED_DOC_TYPES.contains(documentType))
             throw new BadRequestException("Unsupported document type: " + documentType);
         if (content.length() > MAX_DOC_CHARS)
             throw new BadRequestException("File too large. Maximum size is ~6 MB.");
-        // Must be a base64 data URI of an allowed file type, e.g. data:application/pdf;base64,XXXX
+        // Must be a base64 data URI of an allowed file type, e.g.
+        // data:application/pdf;base64,XXXX
         if (!content.startsWith("data:") || !content.contains(";base64,"))
             throw new BadRequestException("Invalid file content; expected a base64 data URI.");
         String mime = content.substring(5, content.indexOf(';')).toLowerCase();
@@ -621,7 +686,8 @@ public class B2BService {
             throw new BadRequestException("Unsupported file type. Allowed: PDF, JPG, PNG.");
         Organization org = orgRepo.findById(orgId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
-        // Re-upload replaces the existing document of the same type; otherwise create a new one.
+        // Re-upload replaces the existing document of the same type; otherwise create a
+        // new one.
         OrganizationDocument doc = orgDocRepo.findByOrganizationId(orgId).stream()
                 .filter(d -> documentType.equals(d.getDocumentType()))
                 .findFirst().orElseGet(OrganizationDocument::new);
@@ -631,14 +697,18 @@ public class B2BService {
         doc.setFileUrl(content);
         doc.setStatus("pending");
         doc.setReviewerNote(null);
-        if (principal instanceof OrganizationUser ou) doc.setUploadedBy(ou);
+        if (principal instanceof OrganizationUser ou)
+            doc.setUploadedBy(ou);
         return orgDocRepo.save(doc);
     }
 
     /**
-     * Fetch a single document (including its base64 content) for download, scoped to the
-     * organization the caller was already authorized for. Verifying the document belongs to
-     * {@code orgId} closes the cross-org IDOR where a valid docId from another org could be read.
+     * Fetch a single document (including its base64 content) for download, scoped
+     * to the
+     * organization the caller was already authorized for. Verifying the document
+     * belongs to
+     * {@code orgId} closes the cross-org IDOR where a valid docId from another org
+     * could be read.
      */
     @Transactional(readOnly = true)
     public OrganizationDocument getDocument(UUID docId, UUID orgId) {

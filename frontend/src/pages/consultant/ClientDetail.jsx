@@ -5,7 +5,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const PRIORITY_COLOR = {
-  hot:  'bg-error/15 text-error',
+  hot: 'bg-error/15 text-error',
   warm: 'bg-warning/15 text-warning',
   cold: 'bg-secondary/15 text-secondary',
 };
@@ -152,6 +152,7 @@ export default function ClientDetail() {
   const [inputDate, setInputDate] = useState('');
   const [inputTime, setInputTime] = useState('');
   const [inputLink, setInputLink] = useState('');
+  const [recordMeeting, setRecordMeeting] = useState(false);
   const [submittingSchedule, setSubmittingSchedule] = useState(false);
   const [submittingAction, setSubmittingAction] = useState(false);
 
@@ -161,9 +162,9 @@ export default function ClientDetail() {
     api.get('/consultations')
       .then(res => {
         const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
-        const found = list.find(c => 
-          c.clientId && 
-          c.clientId.id === clientId && 
+        const found = list.find(c =>
+          c.clientId &&
+          c.clientId.id === clientId &&
           c.department?.toLowerCase() === dept?.toLowerCase()
         );
         setActiveConsultation(found || null);
@@ -213,7 +214,8 @@ export default function ClientDetail() {
       await api.patch(`/consultations/${activeConsultation.id}/schedule`, {
         confirmedDate: inputDate,
         confirmedTime: inputTime,
-        meetingLink: inputLink || undefined
+        meetingLink: inputLink || undefined,
+        recordingEnabled: recordMeeting
       });
       toast.success('Consultation scheduled successfully!');
       setShowScheduleModal(false);
@@ -343,11 +345,12 @@ export default function ClientDetail() {
             <>
               {/* If pending or scheduled */}
               {(activeConsultation.status === 'pending' || activeConsultation.status === 'scheduled') && (
-                <button 
+                <button
                   onClick={() => {
                     if (!inputLink) {
                       setInputLink(activeConsultation.meetingLink || `https://zoom.us/j/${Math.floor(1000000000 + Math.random() * 9000000000)}`);
                     }
+                    setRecordMeeting(activeConsultation.recordingEnabled || false);
                     setShowScheduleModal(true);
                   }}
                   className="btn-primary flex items-center gap-2"
@@ -472,7 +475,7 @@ export default function ClientDetail() {
                   <div>
                     <h4 className="text-body-sm font-bold text-accent">Zoom Link</h4>
                     {activeConsultation.meetingLink ? (
-                      <a 
+                      <a
                         href={activeConsultation.meetingLink}
                         target="_blank"
                         rel="noreferrer"
@@ -491,13 +494,12 @@ export default function ClientDetail() {
                   <div>
                     <h4 className="text-body-sm font-bold text-accent">Status</h4>
                     <div className="mt-1">
-                      <span className={`status-badge ${
-                        activeConsultation.status === 'pending' ? 'status-warning' :
+                      <span className={`status-badge ${activeConsultation.status === 'pending' ? 'status-warning' :
                         activeConsultation.status === 'scheduled' ? 'status-info' :
-                        activeConsultation.status === 'accepted' ? 'status-success' :
-                        activeConsultation.status === 'completed_by_consultant' ? 'status-warning' :
-                        'status-success'
-                      }`}>
+                          activeConsultation.status === 'accepted' ? 'status-success' :
+                            activeConsultation.status === 'completed_by_consultant' ? 'status-warning' :
+                              'status-success'
+                        }`}>
                         {activeConsultation.status === 'pending' && 'Pending Schedule'}
                         {activeConsultation.status === 'scheduled' && 'Scheduled (Draft)'}
                         {activeConsultation.status === 'accepted' && 'Confirmed (Sent)'}
@@ -514,18 +516,18 @@ export default function ClientDetail() {
           {/* Health Score Card */}
           <div className="card p-8 flex flex-col items-center">
             <h3 className="text-label-lg font-bold text-text-muted uppercase tracking-wider mb-6">Financial Health Score</h3>
-            
+
             <div className="relative w-40 h-40 flex items-center justify-center shrink-0">
               <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
                 <circle cx="18" cy="18" fill="none" r="15.915" stroke="#e6e8ec" strokeWidth="4" />
-                <circle 
-                  cx="18" 
-                  cy="18" 
-                  fill="none" 
-                  r="15.915" 
-                  stroke={client.healthScore >= 90 ? '#1F9D6B' : '#785a02'} 
-                  strokeDasharray={`${client.healthScore} ${100 - client.healthScore}`} 
-                  strokeWidth="4" 
+                <circle
+                  cx="18"
+                  cy="18"
+                  fill="none"
+                  r="15.915"
+                  stroke={client.healthScore >= 90 ? '#1F9D6B' : '#785a02'}
+                  strokeDasharray={`${client.healthScore} ${100 - client.healthScore}`}
+                  strokeWidth="4"
                 />
               </svg>
               <div className="absolute inset-3 bg-surface rounded-full flex flex-col items-center justify-center shadow-inner">
@@ -589,7 +591,7 @@ export default function ClientDetail() {
           {/* Notes Section */}
           <div className="card p-8 space-y-6">
             <h3 className="text-headline-md font-bold text-accent">Advisor Notes & Timeline</h3>
-            
+
             {/* Add Note Form */}
             <div className="space-y-3">
               <textarea
@@ -600,7 +602,7 @@ export default function ClientDetail() {
                 placeholder="Type a new advisor note or update timeline details..."
               />
               <div className="flex justify-end">
-                <button 
+                <button
                   onClick={handleAddNote}
                   disabled={savingNote}
                   className="btn-primary px-5 py-2.5 text-xs font-bold"
@@ -645,18 +647,18 @@ export default function ClientDetail() {
           <div className="card w-full max-w-md p-8 bg-surface border border-border rounded-xl space-y-4 shadow-soft">
             <div className="flex justify-between items-center pb-2 border-b border-border">
               <h4 className="text-headline-md font-bold text-accent">Schedule Consultation</h4>
-              <button 
-                onClick={() => setShowScheduleModal(false)} 
+              <button
+                onClick={() => setShowScheduleModal(false)}
                 className="text-text-muted hover:text-text cursor-pointer"
               >
                 <span className="material-symbols-outlined">close</span>
               </button>
             </div>
-            
+
             <form onSubmit={handleScheduleSubmit} className="space-y-4 pt-2">
               <div>
                 <label className="text-xs font-bold text-text-muted block mb-1">Meeting Date</label>
-                <input 
+                <input
                   type="date"
                   min={(() => {
                     const today = new Date();
@@ -673,9 +675,9 @@ export default function ClientDetail() {
                       return;
                     }
                     const today = new Date();
-                    today.setHours(0,0,0,0);
+                    today.setHours(0, 0, 0, 0);
                     const selected = new Date(val);
-                    selected.setHours(0,0,0,0);
+                    selected.setHours(0, 0, 0, 0);
                     if (selected < today) {
                       toast.error('Cannot select a past date.');
                       const year = today.getFullYear();
@@ -693,7 +695,7 @@ export default function ClientDetail() {
 
               <div>
                 <label className="text-xs font-bold text-text-muted block mb-1">Time Slot (10:00 AM - 10:00 PM)</label>
-                <input 
+                <input
                   type="time"
                   min="10:00"
                   max="22:00"
@@ -706,7 +708,7 @@ export default function ClientDetail() {
 
               <div>
                 <label className="text-xs font-bold text-text-muted block mb-1">Zoom Meeting Link</label>
-                <input 
+                <input
                   type="url"
                   placeholder="e.g. https://zoom.us/j/1234567890"
                   value={inputLink}
@@ -716,15 +718,28 @@ export default function ClientDetail() {
                 <p className="text-[11px] text-text-faint mt-1">Leave empty to auto-generate a random Zoom link on save.</p>
               </div>
 
+              <div className="flex items-center gap-2 py-1">
+                <input
+                  type="checkbox"
+                  id="recordMeetingDetail"
+                  checked={recordMeeting}
+                  onChange={(e) => setRecordMeeting(e.target.checked)}
+                  className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary bg-surface"
+                />
+                <label htmlFor="recordMeetingDetail" className="text-xs font-bold text-text-muted cursor-pointer select-none">
+                  Enable Meeting Recording (Record this meeting)
+                </label>
+              </div>
+
               <div className="flex justify-end gap-3 pt-4 border-t border-border">
-                <button 
+                <button
                   type="button"
-                  onClick={() => setShowScheduleModal(false)}
+                  onClick={() => { setShowScheduleModal(false); setRecordMeeting(false); }}
                   className="btn-ghost py-2 px-4 text-xs font-bold"
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   type="submit"
                   disabled={submittingSchedule}
                   className="btn-primary py-2 px-5 text-xs font-bold"

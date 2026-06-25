@@ -7,6 +7,7 @@ import com.finbridge.exception.BadRequestException;
 import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.OrganizationDocumentRepository;
 import com.finbridge.repository.OrganizationRepository;
+import com.finbridge.repository.OrganizationUserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,8 @@ public class KycService {
 
     private final OrganizationDocumentRepository docRepo;
     private final OrganizationRepository orgRepo;
+    private final OrganizationUserRepository orgUserRepo;
+    private final EmailService emailService;
 
     /** All uploaded organization documents awaiting / completed review, newest first. */
     @Transactional(readOnly = true)
@@ -71,6 +74,28 @@ public class KycService {
         recomputeKyc(org);
         log.info("KYC doc {} ({}) marked {} by {}", d.getDocumentType(), org.getCompanyName(), status,
                 reviewer != null ? reviewer.getEmail() : "system");
+
+        // Notify organization users via email
+        try {
+            if (org != null) {
+                var users = orgUserRepo.findByOrganizationId(org.getId());
+                for (com.finbridge.entity.OrganizationUser u : users) {
+                    if (u.getEmail() != null && !u.getEmail().isBlank()) {
+                        String subject = "KYC Document Status Update — " + d.getDocumentType();
+                        String statusColor = "verified".equals(status) ? "#22c55e" : "#ef4444";
+                        String msgHtml = "Your KYC document <strong>" + d.getDocumentType() + "</strong> (" + (d.getFileName() != null ? d.getFileName() : "") + ") has been marked as <strong style='color:" + statusColor + "'>" + status + "</strong>" +
+                                ("rejected".equals(status) ? ". Reason: " + note : ".") + 
+                                "<br/><br/>Current Organization KYC Status: <strong>" + (org.isKycVerified() ? "VERIFIED ✓" : "PENDING") + "</strong>";
+                        
+                        String body = emailService.buildNotificationEmailBody(u.getName(), subject, msgHtml);
+                        emailService.sendHtml(u.getEmail(), subject + " | FinBridge", body, "kyc_status", null);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to send KYC review email notifications for organization: {}", org != null ? org.getCompanyName() : "unknown", e);
+        }
+
         return toDto(d);
     }
 

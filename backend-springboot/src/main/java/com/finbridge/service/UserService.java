@@ -39,6 +39,10 @@ public class UserService {
         return userRepository.findByRoleOrderByCreatedAtDesc("client");
     }
 
+    public List<User> getClientsByDepartment(String department) {
+        return userRepository.findByRoleAndDepartmentOrderByCreatedAtDesc("client", department);
+    }
+
     /** Admins, optionally filtered by a specific admin role and/or department. */
     public List<User> getAdmins(String role, String department) {
         if (role != null && department != null)

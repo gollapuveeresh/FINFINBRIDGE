@@ -39,18 +39,9 @@ const FooterCanvasBackground = () => {
       });
     }
     
+    
     const animate = () => {
-      const p = canvas.parentElement;
-      const currentWidth = p ? p.clientWidth : window.innerWidth;
-      const currentHeight = p ? p.clientHeight : 400;
-      if (canvas.width !== currentWidth || canvas.height !== currentHeight) {
-        width = canvas.width = currentWidth;
-        height = canvas.height = currentHeight;
-      }
-      
       ctx.clearRect(0, 0, width, height);
-      ctx.fillStyle = 'rgba(10, 25, 47, 0.01)';
-      ctx.fillRect(0, 0, width, height);
       
       // Update and draw stars
       particles.forEach(pt => {
@@ -100,7 +91,7 @@ const FooterCanvasBackground = () => {
 
 const Footer = () => {
   return (
-    <footer className="bg-[#0A192F] border-t border-white/10 pt-20 pb-12 relative overflow-hidden">
+    <footer className="bg-[#0A192F] border-t border-white/10 pt-20 pb-12 relative overflow-hidden" style={{ minHeight: '420px', contain: 'layout style' }}>
       {/* Subtle animated background */}
       <FooterCanvasBackground />
       

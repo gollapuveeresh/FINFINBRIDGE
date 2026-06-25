@@ -14,16 +14,16 @@ public class SwaggerConfig {
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
-            .info(new Info()
-                .title("FinBridge API")
-                .description("FinBridge CRM — Spring Boot + Supabase PostgreSQL")
-                .version("1.0.0"))
-            .addSecurityItem(new SecurityRequirement().addList("Bearer"))
-            .components(new Components()
-                .addSecuritySchemes("Bearer", new SecurityScheme()
-                    .name("Bearer")
-                    .type(SecurityScheme.Type.HTTP)
-                    .scheme("bearer")
-                    .bearerFormat("JWT")));
+                .info(new Info()
+                        .title("FinBridge API")
+                        .description("FinBridge CRM — Spring Boot + Supabase PostgreSQL")
+                        .version("1.0.0"))
+                .addSecurityItem(new SecurityRequirement().addList("Bearer"))
+                .components(new Components()
+                        .addSecuritySchemes("Bearer", new SecurityScheme()
+                                .name("Bearer")
+                                .type(SecurityScheme.Type.HTTP)
+                                .scheme("bearer")
+                                .bearerFormat("JWT")));
     }
 }

@@ -55,9 +55,13 @@ public class ConsultationController {
 
     @PatchMapping("/{id}/accept")
     public ResponseEntity<Map<String, Object>> accept(@PathVariable UUID id,
-                                                       @RequestBody Map<String, String> body,
+                                                       @RequestBody Map<String, Object> body,
                                                        @AuthenticationPrincipal User user) {
-        ConsultationResponse c = consultationService.accept(id, body.get("confirmedDate"), body.get("confirmedTime"), user);
+        String confirmedDate = body.get("confirmedDate") != null ? body.get("confirmedDate").toString() : null;
+        String confirmedTime = body.get("confirmedTime") != null ? body.get("confirmedTime").toString() : null;
+        Boolean recordingEnabled = body.containsKey("recordingEnabled") && body.get("recordingEnabled") != null 
+                ? Boolean.valueOf(body.get("recordingEnabled").toString()) : false;
+        ConsultationResponse c = consultationService.accept(id, confirmedDate, confirmedTime, recordingEnabled, user);
         return ResponseEntity.ok(Map.of("status", "success", "consultation", c));
     }
 
@@ -71,9 +75,14 @@ public class ConsultationController {
 
     @PatchMapping("/{id}/schedule")
     public ResponseEntity<ConsultationResponse> schedule(@PathVariable UUID id,
-                                                         @RequestBody Map<String, String> body,
+                                                         @RequestBody Map<String, Object> body,
                                                          @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(consultationService.schedule(id, body.get("confirmedDate"), body.get("confirmedTime"), body.get("meetingLink"), user));
+        String confirmedDate = body.get("confirmedDate") != null ? body.get("confirmedDate").toString() : null;
+        String confirmedTime = body.get("confirmedTime") != null ? body.get("confirmedTime").toString() : null;
+        String meetingLink = body.get("meetingLink") != null ? body.get("meetingLink").toString() : null;
+        Boolean recordingEnabled = body.containsKey("recordingEnabled") && body.get("recordingEnabled") != null 
+                ? Boolean.valueOf(body.get("recordingEnabled").toString()) : false;
+        return ResponseEntity.ok(consultationService.schedule(id, confirmedDate, confirmedTime, meetingLink, recordingEnabled, user));
     }
 
     @PatchMapping("/{id}/send-to-client")

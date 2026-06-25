@@ -2,20 +2,47 @@ import { useState } from 'react';
 import ConsultantLayout from '../../layouts/ConsultantLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { KPI, Modal, StageBar, CaseNotes, ClientDecisionPanel, useDeptWorkflow, resolveClientField } from './WorkflowShared';
+import { KPI, Modal, StageBar, CaseNotes, DocumentChecklist, ClientDecisionPanel, useDeptWorkflow, resolveClientField } from './WorkflowShared';
+import RecommendationsModal from '../../components/RecommendationsModal';
 
 const DEPT = 'investment';
 const STAGES = [
-  { key:'risk_assessment',     label:'Risk Assessment',  icon:'shield' },
-  { key:'portfolio_design',    label:'Portfolio Design', icon:'pie_chart' },
-  { key:'client_approval',     label:'Client Approval',  icon:'thumb_up' },
-  { key:'investment_execution',label:'Execution',        icon:'rocket_launch' },
-  { key:'portfolio_monitoring',label:'Monitoring',       icon:'monitoring' },
-  { key:'periodic_reviews',    label:'Reviews',          icon:'event_repeat' },
+  { key: 'document_collection',        label: 'Documents',     icon: 'upload_file' },
+  { key: 'risk_assessment',             label: 'Risk Assessment',  icon: 'shield' },
+  { key: 'portfolio_design',            label: 'Portfolio Design', icon: 'pie_chart' },
+  { key: 'client_approval',             label: 'Client Approval',  icon: 'thumb_up' },
+  { key: 'investment_execution',        label: 'Execution',        icon: 'rocket_launch' },
+  { key: 'portfolio_monitoring',        label: 'Monitoring',       icon: 'monitoring' },
+  { key: 'periodic_reviews',            label: 'Reviews',          icon: 'event_repeat' },
 ];
 
 const ASSET_CLASSES = ['Equity','Debt','Hybrid','Gold','Real Estate','International','Liquid'];
 const RISK_PROFILES = ['Conservative','Moderate','Aggressive'];
+
+function DocCollection({ lc, onRefresh }) {
+  const allVerified = lc.documents?.every(d => d.status === 'Verified');
+  const advance = async () => {
+    try {
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, { stage: 'risk_assessment' });
+      toast.success('Moved to Risk Assessment'); onRefresh();
+    } catch {
+      toast.error('Failed to proceed');
+    }
+  };
+  return (
+    <div className="space-y-gutter">
+      <div className="flex justify-between items-start">
+        <h2 className="text-xl font-bold text-accent">Document Collection</h2>
+        {allVerified && (
+          <button onClick={advance} className="btn-primary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">arrow_forward</span> Proceed to Assessment
+          </button>
+        )}
+      </div>
+      <DocumentChecklist dept={DEPT} lc={lc} onRefresh={onRefresh} />
+    </div>
+  );
+}
 
 function RiskAssessment({ lc, onRefresh }) {
   const ra = lc.riskAssessment || {};
@@ -370,6 +397,7 @@ function PeriodicReviews({ lc, onRefresh }) {
 export default function InvestmentWorkflow() {
   const { cases, clientOptions, loading, activeCaseId, setActiveCaseId, activeCase, fetchCases, refreshCases } = useDeptWorkflow(DEPT);
   const [showCreate, setShowCreate] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const [form, setForm] = useState({ clientId:'', investmentGoal:'Wealth Creation', investmentAmount:'', horizon:'5 years' });
   const [creating, setCreating] = useState(false);
   const [mobileShowList, setMobileShowList] = useState(true);
@@ -389,6 +417,7 @@ export default function InvestmentWorkflow() {
     if (!activeCase) return null;
     const p = { lc: activeCase, onRefresh: refreshCases };
     switch (activeCase.stage) {
+      case 'document_collection':   return <DocCollection         {...p} />;
       case 'risk_assessment':      return <RiskAssessment      {...p} />;
       case 'portfolio_design':     return <PortfolioDesign     {...p} />;
       case 'client_approval':      return <div className="space-y-gutter"><h2 className="text-xl font-bold text-accent">Client Approval</h2><ClientDecisionPanel dept={DEPT} lc={activeCase} nextStage="investment_execution" onRefresh={refreshCases} /></div>;
@@ -411,9 +440,14 @@ export default function InvestmentWorkflow() {
       <div className="flex justify-between items-start">
         <div><h1 className="text-headline-lg font-bold text-accent">Investment Workflow</h1>
           <p className="text-text-muted text-sm mt-1">End-to-end investment portfolio management</p></div>
-        <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
-          <span className="material-symbols-outlined text-base">add_circle</span> New Investment Case
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
+          </button>
+          <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">add_circle</span> New Investment Case
+          </button>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">{kpis.map((k,i)=><KPI key={i} {...k} sub="" />)}</div>
       {loading ? <div className="py-24 text-center text-text-muted">Loading cases...</div>
@@ -421,7 +455,12 @@ export default function InvestmentWorkflow() {
         <div className="card py-20 text-center">
           <span className="material-symbols-outlined text-5xl text-text-muted">trending_up</span>
           <p className="font-bold text-accent mt-4 text-xl">No investment cases yet</p>
-          <button onClick={()=>setShowCreate(true)} className="btn-primary mt-6 px-8 py-3">Create Investment Case</button>
+          <div className="flex justify-center gap-3 mt-6">
+            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
+              View Recommendations
+            </button>
+            <button onClick={()=>setShowCreate(true)} className="btn-primary px-8 py-3">Create Investment Case</button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-12 gap-gutter">
@@ -489,6 +528,9 @@ export default function InvestmentWorkflow() {
             <button onClick={createCase} disabled={creating} className="flex-1 btn-primary py-3 disabled:opacity-60">{creating?'Creating...':'Create Case'}</button>
           </div>
         </Modal>
+      )}
+      {showRecommendations && (
+        <RecommendationsModal department="investments" onClose={() => setShowRecommendations(false)} />
       )}
     </ConsultantLayout>
   );

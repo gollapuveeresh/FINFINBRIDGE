@@ -9,6 +9,7 @@ import com.finbridge.repository.OrganizationProposalRepository;
 import com.finbridge.repository.OrganizationUserRepository;
 import com.finbridge.repository.ProposalRepository;
 import com.finbridge.repository.UserRepository;
+import com.finbridge.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,13 +26,24 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class ProposalServiceTest {
 
-    @Mock ProposalRepository proposalRepository;
-    @Mock UserRepository userRepository;
-    @Mock LeadRepository leadRepository;
-    @Mock OrganizationUserRepository orgUserRepository;
-    @Mock OrganizationProposalRepository orgProposalRepository;
-    @Mock com.finbridge.repository.DeptCaseRepository deptCaseRepository;
-    @Mock com.finbridge.repository.LoanCaseRepository loanCaseRepository;
+    @Mock
+    ProposalRepository proposalRepository;
+    @Mock
+    UserRepository userRepository;
+    @Mock
+    LeadRepository leadRepository;
+    @Mock
+    OrganizationUserRepository orgUserRepository;
+    @Mock
+    OrganizationProposalRepository orgProposalRepository;
+    @Mock
+    com.finbridge.repository.DeptCaseRepository deptCaseRepository;
+    @Mock
+    com.finbridge.repository.LoanCaseRepository loanCaseRepository;
+    @Mock
+    EmailService emailService;
+    @Mock
+    NotificationService notificationService;
     ProposalService proposalService;
 
     private Proposal proposal;
@@ -39,7 +51,8 @@ class ProposalServiceTest {
     @BeforeEach
     void setUp() {
         // Use a real DtoMapper so we can assert on the mapped response.
-        proposalService = new ProposalService(proposalRepository, userRepository, leadRepository, orgUserRepository, orgProposalRepository, new DtoMapper(), deptCaseRepository, loanCaseRepository);
+        proposalService = new ProposalService(proposalRepository, userRepository, leadRepository, orgUserRepository,
+                orgProposalRepository, new DtoMapper(), deptCaseRepository, loanCaseRepository, emailService, notificationService);
         proposal = new Proposal();
         proposal.setId(UUID.randomUUID());
         proposal.setTitle("Home Loan Proposal");
@@ -53,7 +66,7 @@ class ProposalServiceTest {
         when(proposalRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> proposalService.getById(id))
-            .isInstanceOf(ResourceNotFoundException.class);
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test

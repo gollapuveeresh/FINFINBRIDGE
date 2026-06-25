@@ -19,7 +19,10 @@ const authErrMsg = (err, fallback) => {
 const TOKEN_KEY = 'finbridge_token';
 const getToken  = () => sessionStorage.getItem(TOKEN_KEY) || localStorage.getItem(TOKEN_KEY);
 const setToken  = (t) => { sessionStorage.setItem(TOKEN_KEY, t); localStorage.setItem(TOKEN_KEY, t); };
-const clearToken = () => { sessionStorage.removeItem(TOKEN_KEY); };
+const clearToken = () => { 
+  sessionStorage.removeItem(TOKEN_KEY); 
+  localStorage.removeItem(TOKEN_KEY); 
+};
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -53,11 +56,8 @@ export function AuthProvider({ children }) {
   // last-logged-in session but can independently switch portals afterwards.
   useEffect(() => {
     const verifySession = async () => {
-      // Skip auth check entirely on B2B and CRM admin pages — they use their own session
-      if (typeof window !== 'undefined' && (
-        window.location.pathname.startsWith('/b2b') ||
-        window.location.pathname.startsWith('/crm-admin')
-      )) {
+      // Skip auth check entirely on B2B page — it uses its own session
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/b2b')) {
         setLoading(false);
         return;
       }
@@ -72,7 +72,6 @@ export function AuthProvider({ children }) {
         if (userData?.role) {
           if (userData.role === 'client') {
             clearToken();
-            localStorage.removeItem(TOKEN_KEY);
             setUser(null);
             setIsAuthenticated(false);
           } else {
@@ -135,7 +134,6 @@ export function AuthProvider({ children }) {
   // Logout only clears this tab's session — other tabs are unaffected
   const logout = () => {
     clearToken();
-    localStorage.removeItem(TOKEN_KEY);
     setUser(null);
     setIsAuthenticated(false);
     setHasFinancialProfile(false);

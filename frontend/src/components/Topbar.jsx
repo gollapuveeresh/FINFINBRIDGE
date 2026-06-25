@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function Topbar({ role }) {
+export default function Topbar({ role, onMenuClick }) {
   const { user } = useAuth();
   const activeRole = role || user?.role || 'client';
 
@@ -27,8 +27,18 @@ export default function Topbar({ role }) {
   const iconBtn = 'w-10 h-10 flex items-center justify-center rounded-xl text-text-muted hover:text-accent hover:bg-surface-hover transition-colors active:scale-95';
 
   return (
-    <header className="fixed top-0 right-0 w-[calc(100%-280px)] h-[72px] bg-surface border-b border-border flex justify-end items-center px-margin-desktop z-40 shadow-sm">
-      {/* Quick actions */}
+    <header className="fixed top-0 right-0 w-full lg:w-[calc(100%-280px)] h-[72px] bg-surface border-b border-border flex justify-between lg:justify-end items-center px-4 lg:px-margin-desktop z-40 shadow-sm">
+      {/* Mobile Hamburger (left side) */}
+      <div className="flex items-center lg:hidden">
+        <button 
+          onClick={onMenuClick}
+          className="p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors flex items-center justify-center"
+          title="Open Menu"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+      </div>
+
       <div className="flex items-center gap-1">
         {activeRole === 'client' && (
           <Link to={notificationsPath} className={`relative ${iconBtn}`} title="Notifications">

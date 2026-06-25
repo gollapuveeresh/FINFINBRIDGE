@@ -8,6 +8,7 @@ import com.finbridge.entity.User;
 import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.InvoiceRepository;
 import com.finbridge.repository.PaymentRepository;
+import com.finbridge.repository.UserRepository;
 import com.finbridge.security.OwnershipGuard;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,9 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final InvoiceRepository invoiceRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<PaymentResponse> getAll() {
@@ -82,6 +86,37 @@ public class PaymentService {
         p.setNotes(notes);
         Payment saved = paymentRepository.save(p);
         log.info("Payment recorded: invoice={} amount={}", invoice.getInvoiceNumber(), saved.getAmount());
+
+        // Email the client about successful payment
+        if (invoice.getClient() != null && invoice.getClient().getEmail() != null) {
+            emailService.sendPaymentCompleted(invoice.getClient().getEmail(), invoice.getClient().getName(),
+                    invoice.getInvoiceNumber(), saved.getAmount(), saved.getId());
+        }
+
+        // Notify consultant, department admins, and CRM admins about payment
+        try {
+            String title = "Payment Confirmed";
+            String message = "Client " + invoice.getClient().getName() + " has paid invoice " + invoice.getInvoiceNumber() + 
+                    " of amount ₹" + saved.getAmount() + ".";
+            
+            // 1. Notify consultant
+            if (invoice.getConsultant() != null) {
+                notificationService.create(invoice.getConsultant(), "payment", title, message);
+            }
+            
+            // 2. Notify department admins
+            for (User admin : userRepository.findByRoleAndDepartmentAndActiveTrue("department-admin", invoice.getDepartment())) {
+                notificationService.create(admin, "payment", title, message + " (Dept: " + invoice.getDepartment() + ")");
+            }
+            
+            // 3. Notify CRM admins
+            for (User crmAdmin : userRepository.findByRoleAndActiveTrue("crm-admin")) {
+                notificationService.create(crmAdmin, "payment", title, message);
+            }
+        } catch (Exception e) {
+            log.error("Failed to generate payment notifications: {}", e.getMessage());
+        }
+
         return saved;
     }
 

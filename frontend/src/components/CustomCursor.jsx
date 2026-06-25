@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 const CustomCursor = () => {
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
+  const [isInputHovered, setIsInputHovered] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -20,6 +21,9 @@ const CustomCursor = () => {
     const handleMouseOver = (e) => {
       const interactive = e.target.closest('a, button, [role="button"], [class*="cursor-pointer"]');
       setIsHovering(!!interactive);
+
+      const isInputField = e.target.closest('input, textarea, select, [contenteditable="true"]');
+      setIsInputHovered(!!isInputField);
     };
 
     document.addEventListener('mousemove', moveCursor);
@@ -32,7 +36,7 @@ const CustomCursor = () => {
     };
   }, []);
 
-  if (isMobile) return null;
+  if (isMobile || isInputHovered) return null;
 
   return (
     <div

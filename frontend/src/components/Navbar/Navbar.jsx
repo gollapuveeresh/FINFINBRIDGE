@@ -211,13 +211,13 @@ const Navbar = () => {
           <div className="relative">
             <button
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className={`action-icon-btn flex items-center gap-2 px-3 py-2 rounded-xl text-gray-300 hover:text-white ${
+              className={`action-icon-btn flex items-center gap-2 px-3.5 py-2 rounded-xl text-gray-300 hover:text-white ${
                 isProfileOpen ? 'text-[#D4AF37] bg-white/5 border-b border-[#D4AF37]' : ''
               }`}
-              aria-label="Toggle profile menu"
+              aria-label="Toggle login menu"
             >
-              <User className="w-[18px] h-[18px] text-[#D4AF37]" />
-              <span className="hidden md:inline text-xs font-semibold uppercase tracking-wider">Profile</span>
+              <LogIn className="w-[18px] h-[18px] text-[#D4AF37]" />
+              <span className="hidden md:inline text-xs font-semibold uppercase tracking-wider">Login / Sign Up</span>
             </button>
             
             {/* Desktop Profile Dropdown */}

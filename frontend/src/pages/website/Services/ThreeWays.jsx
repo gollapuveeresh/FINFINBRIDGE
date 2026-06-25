@@ -120,15 +120,6 @@ const CanvasBackground = () => {
     canvas.addEventListener('mouseleave', handleMouseLeave);
     
     const animate = () => {
-      // Robust client size sync on every frame to prevent stretching
-      const p = canvas.parentElement;
-      const currentWidth = p ? p.clientWidth : window.innerWidth;
-      const currentHeight = p ? p.clientHeight : 500;
-      if (canvas.width !== currentWidth || canvas.height !== currentHeight) {
-        width = canvas.width = currentWidth;
-        height = canvas.height = currentHeight;
-      }
-
       ctx.clearRect(0, 0, width, height);
       
       // Draw background ambient dark overlay
@@ -247,6 +238,31 @@ const CanvasBackground = () => {
 };
 
 const ThreeWays = () => {
+  const [hoveredIndex, setHoveredIndex] = React.useState(null);
+  
+  const cards = [
+    {
+      to: "/financial-transformation",
+      title: "Strengthen Your Financial Foundation",
+      desc: "Improve profitability through financial planning and cash-flow optimization",
+      animateClass: "animate-card-1"
+    },
+    {
+      to: "/transaction-services",
+      title: "Accelerate Business Growth",
+      desc: "Scale confidently with business consulting and growth strategies",
+      animateClass: "animate-card-2"
+    },
+    {
+      to: "/corporate-finance",
+      title: "Unlock Funding & Investment Opportunities",
+      desc: "Connect growth ambitions with funding and investment solutions",
+      animateClass: "animate-card-3"
+    }
+  ];
+
+  const activeIndex = hoveredIndex !== null ? hoveredIndex : 1;
+
   return (
     <section className="py-20 bg-[#0A192F] text-white relative overflow-hidden">
       {/* Floating Card Animations in CSS (separated from JS mouse-tilt to prevent conflicts) */}
@@ -298,70 +314,49 @@ const ThreeWays = () => {
 
         {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-          
-          {/* Card 1 */}
-          <div className="animate-card-1 h-full">
-            <FloatingCard 
-              to="/financial-transformation" 
-              className="group flex flex-col justify-between p-6 bg-[#0c1a30]/85 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 min-h-[180px] shadow-sm hover:shadow-md hover:bg-[#0e223f]/90 backdrop-blur-md h-full"
-            >
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3 transition-colors duration-300 group-hover:text-[#D4AF37]">
-                  Strengthen Your Financial Foundation
-                </h3>
-                <p className="text-[15px] text-gray-300 leading-relaxed font-sans font-light line-clamp-2">
-                  Improve profitability through financial planning and cash-flow optimization
-                </p>
+          {cards.map((card, index) => {
+            const isActive = index === activeIndex;
+            return (
+              <div 
+                key={index} 
+                className={`${card.animateClass} h-full`}
+                onMouseEnter={() => setHoveredIndex(index)}
+                onMouseLeave={() => setHoveredIndex(null)}
+              >
+                <FloatingCard 
+                  to={card.to} 
+                  className={`group flex flex-col justify-between p-6 rounded-2xl transition-all duration-300 min-h-[180px] backdrop-blur-md h-full relative overflow-hidden ${
+                    isActive 
+                      ? 'bg-[#112540]/90 border border-[#D4AF37]/35 shadow-lg shadow-[#D4AF37]/2 hover:shadow-[#D4AF37]/10 hover:bg-[#163052]/95 hover:border-[#D4AF37]' 
+                      : 'bg-[#0c1a30]/85 border border-white/10 hover:border-white/20 shadow-sm hover:shadow-md hover:bg-[#0e223f]/90'
+                  }`}
+                >
+                  {isActive && (
+                    <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
+                  )}
+                  
+                  <div>
+                    <h3 className={`text-xl font-bold mb-3 transition-colors duration-300 ${
+                      isActive ? 'text-[#D4AF37]' : 'text-white group-hover:text-[#D4AF37]'
+                    }`}>
+                      {card.title}
+                    </h3>
+                    <p className={`text-[15px] leading-relaxed font-sans font-light line-clamp-2 ${
+                      isActive ? 'text-gray-200' : 'text-gray-300'
+                    }`}>
+                      {card.desc}
+                    </p>
+                  </div>
+                  
+                  <div className={`mt-4 flex items-center justify-start text-[#D4AF37] transition-opacity duration-300 ${
+                    isActive ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                  }`}>
+                    <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
+                  </div>
+                </FloatingCard>
               </div>
-              <div className="mt-4 flex items-center justify-start text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
-              </div>
-            </FloatingCard>
-          </div>
- 
-          {/* Card 2 (Featured Card) */}
-          <div className="animate-card-2 h-full">
-            <FloatingCard 
-              to="/transaction-services" 
-              className="group flex flex-col justify-between p-6 bg-[#112540]/90 border border-[#D4AF37]/35 hover:border-[#D4AF37] rounded-2xl transition-all duration-300 min-h-[180px] shadow-lg shadow-[#D4AF37]/2 hover:shadow-[#D4AF37]/10 relative overflow-hidden backdrop-blur-md hover:bg-[#163052]/95 h-full"
-            >
-              <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-transparent via-[#D4AF37]/40 to-transparent" />
-              
-              <div>
-                <h3 className="text-xl font-bold text-[#D4AF37] mb-3 transition-colors duration-300">
-                  Accelerate Business Growth
-                </h3>
-                <p className="text-[15px] text-gray-200 leading-relaxed font-sans font-light line-clamp-2">
-                  Scale confidently with business consulting and growth strategies
-                </p>
-              </div>
-              
-              <div className="mt-4 flex items-center justify-start text-[#D4AF37]">
-                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
-              </div>
-            </FloatingCard>
-          </div>
- 
-          {/* Card 3 */}
-          <div className="animate-card-3 h-full">
-            <FloatingCard 
-              to="/corporate-finance" 
-              className="group flex flex-col justify-between p-6 bg-[#0c1a30]/85 border border-white/10 hover:border-white/20 rounded-2xl transition-all duration-300 min-h-[180px] shadow-sm hover:shadow-md hover:bg-[#0e223f]/90 backdrop-blur-md h-full"
-            >
-              <div>
-                <h3 className="text-xl font-bold text-white mb-3 transition-colors duration-300 group-hover:text-[#D4AF37]">
-                  Unlock Funding & Investment Opportunities
-                </h3>
-                <p className="text-[15px] text-gray-300 leading-relaxed font-sans font-light line-clamp-2">
-                  Connect growth ambitions with funding and investment solutions
-                </p>
-              </div>
-              <div className="mt-4 flex items-center justify-start text-[#D4AF37] opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300" />
-              </div>
-            </FloatingCard>
-          </div>
-
+            );
+          })}
         </div>
       </div>
     </section>

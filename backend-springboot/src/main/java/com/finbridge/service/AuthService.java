@@ -7,6 +7,7 @@ import com.finbridge.entity.User;
 import com.finbridge.exception.BadRequestException;
 import com.finbridge.exception.UnauthorizedException;
 import com.finbridge.repository.UserRepository;
+import com.finbridge.repository.OrganizationUserRepository;
 import com.finbridge.security.JwtService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,12 +24,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final OrganizationUserRepository orgUserRepository;
 
     @org.springframework.beans.factory.annotation.Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
-    private static final long VERIFY_TTL_MS = 24 * 60 * 60 * 1000L;  // 24h
-    private static final long RESET_TTL_MS  = 60 * 60 * 1000L;        // 1h
+    private static final long VERIFY_TTL_MS = 24 * 60 * 60 * 1000L; // 24h
+    private static final long RESET_TTL_MS = 60 * 60 * 1000L; // 1h
 
     @Transactional
     public LoginResponse register(RegisterRequest request) {
@@ -43,10 +45,17 @@ public class AuthService {
         user.setDepartment(request.department());
         user.setPhone(request.phone());
         user.setCompanyName(request.companyName());
+        user.setEmailVerified(false);
 
         User saved = userRepository.save(user);
-        log.info("User registered: {} role={}", saved.getEmail(), saved.getRole());
-        return toLoginResponse(saved);
+
+        // Send verification email
+        String token = jwtService.generatePurposeToken(saved.getId().toString(), "verify-email", VERIFY_TTL_MS);
+        String verifyLink = frontendUrl + "/verify-email?token=" + token;
+        emailService.sendVerificationEmail(saved.getEmail(), saved.getName(), verifyLink);
+        log.info("User registered: {} role={}, verification email sent", saved.getEmail(), saved.getRole());
+
+        return new LoginResponse(null, saved.getId(), saved.getName(), saved.getEmail(), saved.getRole(), saved.getDepartment());
     }
 
     public LoginResponse login(LoginRequest request) {
@@ -59,6 +68,10 @@ public class AuthService {
         if (!user.isActive()) {
             throw new UnauthorizedException("Account is deactivated");
         }
+        if (!user.isEmailVerified()) {
+            throw new UnauthorizedException(
+                    "Please verify your email before logging in. Check your inbox for the verification link.");
+        }
         log.info("User logged in: {}", user.getEmail());
         return toLoginResponse(user);
     }
@@ -67,12 +80,27 @@ public class AuthService {
     @Transactional
     public void verifyEmail(String token) {
         String userId = jwtService.verifyPurposeToken(token, "verify-email");
-        if (userId == null) throw new BadRequestException("Invalid or expired verification link");
-        User user = userRepository.findById(java.util.UUID.fromString(userId))
-                .orElseThrow(() -> new BadRequestException("Account not found"));
-        user.setEmailVerified(true);
-        userRepository.save(user);
-        log.info("Email verified: {}", user.getEmail());
+        if (userId != null) {
+            User user = userRepository.findById(java.util.UUID.fromString(userId))
+                    .orElseThrow(() -> new BadRequestException("Account not found"));
+            user.setEmailVerified(true);
+            userRepository.save(user);
+            log.info("Email verified: {}", user.getEmail());
+            return;
+        }
+
+        String orgUserId = jwtService.verifyPurposeToken(token, "verify-email-b2b");
+        if (orgUserId != null) {
+            com.finbridge.entity.OrganizationUser orgUser = orgUserRepository.findById(java.util.UUID.fromString(orgUserId))
+                    .orElseThrow(() -> new BadRequestException("B2B Account not found"));
+            orgUser.setEmailVerified(true);
+            orgUser.setActive(true);
+            orgUserRepository.save(orgUser);
+            log.info("B2B Email verified: {}", orgUser.getEmail());
+            return;
+        }
+
+        throw new BadRequestException("Invalid or expired verification link");
     }
 
     /**
@@ -93,7 +121,8 @@ public class AuthService {
     @Transactional
     public void resetPassword(String token, String newPassword) {
         String userId = jwtService.verifyPurposeToken(token, "reset-password");
-        if (userId == null) throw new BadRequestException("Invalid or expired reset link");
+        if (userId == null)
+            throw new BadRequestException("Invalid or expired reset link");
         if (newPassword == null || newPassword.length() < 6)
             throw new BadRequestException("Password must be at least 6 characters");
         User user = userRepository.findById(java.util.UUID.fromString(userId))

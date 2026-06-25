@@ -16,9 +16,14 @@ import java.util.UUID;
 public class InvestmentService {
     private final InvestmentRepository investmentRepository;
 
-    public List<Investment> getByUser(UUID userId) { return investmentRepository.findByUserIdAndActiveTrue(userId); }
+    public List<Investment> getByUser(UUID userId) {
+        return investmentRepository.findByUserIdAndActiveTrue(userId);
+    }
 
-    /** Load and authorize: only the owning user (or admin-tier staff) may access the record. */
+    /**
+     * Load and authorize: only the owning user (or admin-tier staff) may access the
+     * record.
+     */
     public Investment getById(UUID id, User actor) {
         Investment inv = load(id);
         OwnershipGuard.assertOwnerOrAdmin(actor, inv.getUser(), "investment");
@@ -26,14 +31,19 @@ public class InvestmentService {
     }
 
     @Transactional
-    public Investment create(Investment inv) { return investmentRepository.save(inv); }
+    public Investment create(Investment inv) {
+        return investmentRepository.save(inv);
+    }
 
     @Transactional
     public Investment update(UUID id, Investment patch, User actor) {
         Investment inv = getById(id, actor);
-        if (patch.getCurrentValue() != null) inv.setCurrentValue(patch.getCurrentValue());
-        if (patch.getNotes() != null) inv.setNotes(patch.getNotes());
-        if (patch.getRiskLevel() != null) inv.setRiskLevel(patch.getRiskLevel());
+        if (patch.getCurrentValue() != null)
+            inv.setCurrentValue(patch.getCurrentValue());
+        if (patch.getNotes() != null)
+            inv.setNotes(patch.getNotes());
+        if (patch.getRiskLevel() != null)
+            inv.setRiskLevel(patch.getRiskLevel());
         return investmentRepository.save(inv);
     }
 

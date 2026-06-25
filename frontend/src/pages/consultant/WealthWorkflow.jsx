@@ -2,23 +2,50 @@ import { useState } from 'react';
 import ConsultantLayout from '../../layouts/ConsultantLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
-import { KPI, Modal, StageBar, CaseNotes, ClientDecisionPanel, useDeptWorkflow, resolveClientField } from './WorkflowShared';
+import { KPI, Modal, StageBar, CaseNotes, DocumentChecklist, ClientDecisionPanel, useDeptWorkflow, resolveClientField } from './WorkflowShared';
+import RecommendationsModal from '../../components/RecommendationsModal';
 
 const DEPT = 'wealth';
 const STAGES = [
-  { key:'financial_assessment', label:'Assessment',    icon:'analytics' },
-  { key:'goal_planning',        label:'Goal Planning', icon:'flag' },
-  { key:'asset_allocation',     label:'Allocation',    icon:'pie_chart' },
-  { key:'client_approval',      label:'Approval',      icon:'thumb_up' },
-  { key:'portfolio_creation',   label:'Portfolio',     icon:'account_balance' },
-  { key:'continuous_monitoring',label:'Monitoring',    icon:'monitoring' },
-  { key:'quarterly_reviews',    label:'Reviews',       icon:'event_repeat' },
+  { key: 'document_collection',        label: 'Documents',     icon: 'upload_file' },
+  { key: 'financial_assessment',        label: 'Assessment',    icon: 'analytics' },
+  { key: 'goal_planning',               label: 'Goal Planning', icon: 'flag' },
+  { key: 'asset_allocation',            label: 'Allocation',    icon: 'pie_chart' },
+  { key: 'client_approval',             label: 'Approval',      icon: 'thumb_up' },
+  { key: 'portfolio_creation',          label: 'Portfolio',     icon: 'account_balance' },
+  { key: 'continuous_monitoring',       label: 'Monitoring',    icon: 'monitoring' },
+  { key: 'quarterly_reviews',           label: 'Reviews',       icon: 'event_repeat' },
 ];
 
 const RISK_PROFILES = ['Conservative','Moderate','Aggressive'];
 const ASSET_CLASSES = ['Equity','Debt','Real Estate','Gold','Alternative','International','Liquid'];
 const PRIORITIES    = ['High','Medium','Low'];
 const GOAL_STATUSES = ['On Track','At Risk','Achieved'];
+
+function DocCollection({ lc, onRefresh }) {
+  const allVerified = lc.documents?.every(d => d.status === 'Verified');
+  const advance = async () => {
+    try {
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, { stage: 'financial_assessment' });
+      toast.success('Moved to Financial Assessment'); onRefresh();
+    } catch {
+      toast.error('Failed to proceed');
+    }
+  };
+  return (
+    <div className="space-y-gutter">
+      <div className="flex justify-between items-start">
+        <h2 className="text-xl font-bold text-accent">Document Collection</h2>
+        {allVerified && (
+          <button onClick={advance} className="btn-primary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">arrow_forward</span> Proceed to Assessment
+          </button>
+        )}
+      </div>
+      <DocumentChecklist dept={DEPT} lc={lc} onRefresh={onRefresh} />
+    </div>
+  );
+}
 
 function FinancialAssessment({ lc, onRefresh }) {
   const a = lc.assessment||{};
@@ -298,6 +325,7 @@ function QuarterlyReviews({ lc, onRefresh }) {
 export default function WealthWorkflow() {
   const { cases, clientOptions, loading, activeCaseId, setActiveCaseId, activeCase, fetchCases, refreshCases } = useDeptWorkflow(DEPT);
   const [showCreate, setShowCreate] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const [form, setForm] = useState({ clientId:'', aum:'' });
   const [creating, setCreating] = useState(false);
   const [mobileShowList, setMobileShowList] = useState(true);
@@ -317,6 +345,7 @@ export default function WealthWorkflow() {
     if (!activeCase) return null;
     const p = { lc: activeCase, onRefresh: refreshCases };
     switch (activeCase.stage) {
+      case 'document_collection':   return <DocCollection         {...p} />;
       case 'financial_assessment':  return <FinancialAssessment  {...p} />;
       case 'goal_planning':         return <GoalPlanning          {...p} />;
       case 'asset_allocation':      return <AssetAllocation       {...p} />;
@@ -340,11 +369,27 @@ export default function WealthWorkflow() {
       <div className="flex justify-between items-start">
         <div><h1 className="text-headline-lg font-bold text-accent">Wealth Workflow</h1>
           <p className="text-text-muted text-sm mt-1">End-to-end wealth management</p></div>
-        <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5"><span className="material-symbols-outlined text-base">add_circle</span> New Wealth Case</button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
+          </button>
+          <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5"><span className="material-symbols-outlined text-base">add_circle</span> New Wealth Case</button>
+        </div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">{kpis.map((k,i)=><KPI key={i} {...k} sub="" />)}</div>
       {loading ? <div className="py-24 text-center text-text-muted">Loading cases...</div>
-      : cases.length===0 ? (<div className="card py-20 text-center"><span className="material-symbols-outlined text-5xl text-text-muted">account_balance</span><p className="font-bold text-accent mt-4 text-xl">No wealth cases yet</p><button onClick={()=>setShowCreate(true)} className="btn-primary mt-6 px-8 py-3">Create Wealth Case</button></div>)
+      : cases.length===0 ? (
+        <div className="card py-20 text-center">
+          <span className="material-symbols-outlined text-5xl text-text-muted">account_balance</span>
+          <p className="font-bold text-accent mt-4 text-xl">No wealth cases yet</p>
+          <div className="flex justify-center gap-3 mt-6">
+            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
+              View Recommendations
+            </button>
+            <button onClick={()=>setShowCreate(true)} className="btn-primary px-8 py-3">Create Wealth Case</button>
+          </div>
+        </div>
+      )
       : (<div className="grid grid-cols-12 gap-gutter">
           <div className={`col-span-12 md:col-span-3 space-y-2 ${mobileShowList ? 'block' : 'hidden md:block'}`}>
             <div className="flex justify-between items-center"><p className="text-xs font-bold text-text-muted uppercase tracking-wider">Cases ({cases.length})</p><button onClick={fetchCases} className="text-text-muted hover:text-accent"><span className="material-symbols-outlined text-base">refresh</span></button></div>
@@ -382,6 +427,9 @@ export default function WealthWorkflow() {
         </div>
         <div className="flex gap-3 mt-6"><button onClick={()=>setShowCreate(false)} className="flex-1 btn-ghost py-3">Cancel</button><button onClick={createCase} disabled={creating} className="flex-1 btn-primary py-3 disabled:opacity-60">{creating?'Creating...':'Create Case'}</button></div>
       </Modal>)}
+      {showRecommendations && (
+        <RecommendationsModal department="wealth" onClose={() => setShowRecommendations(false)} />
+      )}
     </ConsultantLayout>
   );
 }

@@ -32,7 +32,7 @@ function KPI({ icon, label, value, sub, color = 'text-accent', bg = 'bg-accent/1
 }
 
 // ── TAB: Client Management ────────────────────────────────────────────────────
-function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoading }) {
+function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoading, clients, deptCases }) {
   const [search, setSearch] = useState('');
   const data = deptData.consultant;
 
@@ -41,11 +41,23 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
     (l.email || '').toLowerCase().includes(search.toLowerCase())
   );
 
+  const displayCases = deptCases && deptCases.length > 0 
+    ? deptCases.map(c => ({
+        name: c.clientId?.name || c.client?.name || 'Client',
+        service: c.loanType || c.stage?.replace(/_/g, ' ') || 'Service Case',
+        priority: c.lead?.priority || 'Medium',
+        status: c.stage?.replace(/_/g, ' ') || 'Active'
+      }))
+    : deptData.clients;
+
+  const totalClientsCount = clients && clients.length > 0 ? String(clients.length) : data.totalClients;
+  const activeClientsCount = clients && clients.length > 0 ? String(clients.filter(c => c.active !== false).length) : data.activeClients;
+
   return (
     <div className="space-y-gutter">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-        <KPI icon="groups"       label="Total Clients"   value={data.totalClients}  sub="Portfolio" />
-        <KPI icon="check_circle" label="Active Clients"  value={data.activeClients} sub="Under advisory" color="text-green-400" bg="bg-green-500/10" />
+        <KPI icon="groups"       label="Total Clients"   value={totalClientsCount}  sub="Portfolio" />
+        <KPI icon="check_circle" label="Active Clients"  value={activeClientsCount} sub="Under advisory" color="text-green-400" bg="bg-green-500/10" />
         <KPI icon="contacts"     label="Leads Assigned"  value={String(assignedLeads.length)} sub="In pipeline" color="text-purple-400" bg="bg-purple-500/10" />
         <KPI icon="event"        label="Consultations"   value={String(consultations.length)} sub="Scheduled" color="text-secondary" bg="bg-secondary/10" />
       </div>
@@ -109,21 +121,21 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
         )}
       </div>
 
-      {/* Static dept clients snapshot */}
+      {/* Original dept clients snapshot */}
       <div className="card overflow-hidden">
         <div className="px-6 py-4 border-b border-border">
           <h3 className="font-bold text-accent">{deptData.name} Consultation Request</h3>
         </div>
         <div className="divide-y divide-border">
-          {deptData.clients.map((c, i) => (
+          {displayCases.map((c, i) => (
             <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
               <div>
                 <p className="font-semibold text-text text-sm">{c.name}</p>
-                <p className="text-xs text-text-muted">{c.service}</p>
+                <p className="text-xs text-text-muted capitalize">{c.service}</p>
               </div>
               <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${PRIORITY_COLOR[c.priority]}`}>{c.priority}</span>
-                <span className="text-xs text-text-muted">{c.status}</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${PRIORITY_COLOR[c.priority] || 'bg-surface text-text-muted'}`}>{c.priority}</span>
+                <span className="text-xs text-text-muted capitalize">{c.status}</span>
               </div>
             </div>
           ))}
@@ -493,8 +505,11 @@ const EMAIL_TEMPLATES = [
 ];
 
 function CommunicationTab({ notifications }) {
-  const [activeContact, setActiveContact] = useState('dept');
-  const [messages, setMessages]           = useState(INITIAL_MSGS);
+  const [contacts, setContacts] = useState([]);
+  const [activeContact, setActiveContact] = useState(null);
+  const [messages, setMessages] = useState({});
+  const [loadingContacts, setLoadingContacts] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [input, setInput]                 = useState('');
   const [commTab, setCommTab]             = useState('chat');  // chat | email | sms
   const [emailForm, setEmailForm]         = useState({ to: '', subject: '', body: '' });
@@ -503,16 +518,70 @@ function CommunicationTab({ notifications }) {
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
+    api.get('/chat/contacts')
+      .then(res => {
+        const list = res.data || [];
+        setContacts(list);
+        if (list.length > 0) {
+          setActiveContact(list[0].id);
+        } else {
+          setContacts(CHAT_CONTACTS);
+          setActiveContact('dept');
+          setMessages(INITIAL_MSGS);
+        }
+      })
+      .catch(() => {
+        setContacts(CHAT_CONTACTS);
+        setActiveContact('dept');
+        setMessages(INITIAL_MSGS);
+      })
+      .finally(() => setLoadingContacts(false));
+  }, []);
+
+  useEffect(() => {
+    if (!activeContact) return;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeContact);
+    if (!isUuid) return;
+
+    setLoadingMessages(true);
+    api.get('/chat/messages', { params: { contactId: activeContact } })
+      .then(res => {
+        setMessages(prev => ({
+          ...prev,
+          [activeContact]: res.data || []
+        }));
+      })
+      .catch(() => {})
+      .finally(() => setLoadingMessages(false));
+  }, [activeContact]);
+
+  useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, activeContact]);
 
   const sendMsg = () => {
-    if (!input.trim()) return;
-    setMessages(prev => ({
-      ...prev,
-      [activeContact]: [...(prev[activeContact] || []), { from: 'me', text: input, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]
-    }));
-    setInput('');
+    if (!input.trim() || !activeContact) return;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(activeContact);
+
+    if (isUuid) {
+      api.post('/chat/messages', { recipientId: activeContact, text: input })
+        .then(res => {
+          setMessages(prev => ({
+            ...prev,
+            [activeContact]: [...(prev[activeContact] || []), res.data]
+          }));
+          setInput('');
+        })
+        .catch(() => {
+          toast.error('Failed to send message');
+        });
+    } else {
+      setMessages(prev => ({
+        ...prev,
+        [activeContact]: [...(prev[activeContact] || []), { from: 'me', text: input, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]
+      }));
+      setInput('');
+    }
   };
 
   const sendEmail = () => {
@@ -570,12 +639,12 @@ function CommunicationTab({ notifications }) {
               <p className="text-xs font-bold text-text-muted uppercase tracking-wider">Contacts</p>
             </div>
             <div className="divide-y divide-border">
-              {CHAT_CONTACTS.map(c => (
+              {contacts.map(c => (
                 <button key={c.id} onClick={() => setActiveContact(c.id)}
                   className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors hover:bg-surface/50 ${activeContact === c.id ? 'bg-accent/5 border-r-2 border-accent' : ''}`}>
                   <div className="relative">
                     <div className="w-9 h-9 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                      {c.name[0]}
+                      {c.name ? c.name[0] : '?'}
                     </div>
                     <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-surface ${c.online ? 'bg-green-400' : 'bg-gray-400'}`} />
                   </div>
@@ -592,11 +661,11 @@ function CommunicationTab({ notifications }) {
           <div className="col-span-12 md:col-span-9 card flex flex-col h-[420px]">
             <div className="px-5 py-3 border-b border-border flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-sm">
-                {CHAT_CONTACTS.find(c => c.id === activeContact)?.name[0]}
+                {contacts.find(c => c.id === activeContact)?.name ? contacts.find(c => c.id === activeContact).name[0] : '?'}
               </div>
               <div>
-                <p className="text-sm font-bold text-accent">{CHAT_CONTACTS.find(c => c.id === activeContact)?.name}</p>
-                <p className="text-xs text-text-muted">{CHAT_CONTACTS.find(c => c.id === activeContact)?.role}</p>
+                <p className="text-sm font-bold text-accent">{contacts.find(c => c.id === activeContact)?.name || 'Select Contact'}</p>
+                <p className="text-xs text-text-muted">{contacts.find(c => c.id === activeContact)?.role || ''}</p>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-5 space-y-3">
@@ -758,6 +827,8 @@ export default function ConsultantDashboard({ department: deptProp = 'loans' }) 
 
   const [activeTab,      setActiveTab]      = useState('clients');
   const [assignedLeads,  setAssignedLeads]  = useState([]);
+  const [clients,        setClients]        = useState([]);
+  const [deptCases,      setDeptCases]      = useState([]);
   const [consultations,  setConsultations]  = useState([]);
   const [notifications,  setNotifications]  = useState([]);
   const [leadsLoading,   setLeadsLoading]   = useState(true);
@@ -769,18 +840,29 @@ export default function ConsultantDashboard({ department: deptProp = 'loans' }) 
       .catch(() => {})
       .finally(() => setLeadsLoading(false));
 
+    // Clients assigned to this consultant's department
+    api.get('/auth/consultant/clients')
+      .then(r => setClients(r.data.clients || []))
+      .catch(() => {});
+
+    // Fetch active cases for this department
+    const casesUrl = deptKey === 'loans' ? '/loan-cases' : `/dept-cases/${deptKey}`;
+    api.get(casesUrl)
+      .then(r => setDeptCases(r.data.cases || []))
+      .catch(() => {});
+
     // Consultations
     api.get('/consultations').then(r => setConsultations(r.data.data || [])).catch(() => {});
 
     // Notifications
     api.get('/notifications').then(r => setNotifications(r.data.data || [])).catch(() => {});
-  }, []);
+  }, [deptKey]);
 
   const unreadNotifs = notifications.filter(n => !n.isRead).length;
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'clients':       return <ClientManagementTab deptData={deptData} assignedLeads={assignedLeads} consultations={consultations} leadsLoading={leadsLoading} />;
+      case 'clients':       return <ClientManagementTab deptData={deptData} assignedLeads={assignedLeads} consultations={consultations} leadsLoading={leadsLoading} clients={clients} deptCases={deptCases} />;
       case 'tasks':         return <TasksTab />;
       case 'documents':     return <DocumentsTab />;
       case 'communication': return <CommunicationTab notifications={notifications} />;

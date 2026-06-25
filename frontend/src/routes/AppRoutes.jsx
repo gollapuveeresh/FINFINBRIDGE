@@ -1,120 +1,133 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
 import MainLayout from '../layouts/MainLayout';
-import Navbar from '../components/Navbar/Navbar';
-import Footer from '../components/Footer';
-import CustomCursor from '../components/CustomCursor';
 
 import ProtectedRoute from '../components/ProtectedRoute';
 import RoleBasedRoute from '../components/RoleBasedRoute';
+import B2BProtectedRoute from '../components/B2BProtectedRoute';
 import { useAuth } from '../context/AuthContext';
+
+// Eagerly load critical landing and login routes for instant FCP/LCP
+import Home from '../pages/website/Home/Home';
+import LandingPage from '../pages/public/LandingPage';
+import B2BLogin from '../pages/b2b/Login';
+import CRMAdminLogin from '../pages/public/CRMAdminLogin';
+import AdminLogin from '../pages/public/AdminLogin';
+import DepartmentAdminLogin from '../pages/public/DepartmentAdminLogin';
+import ConsultantLogin from '../pages/public/ConsultantLogin';
+
+// Lazy-load non-critical shell components
+const Navbar = lazy(() => import('../components/Navbar/Navbar'));
+const Footer = lazy(() => import('../components/Footer'));
+const CustomCursor = lazy(() => import('../components/CustomCursor'));
+const Chatbot = lazy(() => import('../components/Chatbot'));
+const CookieConsent = lazy(() => import('../components/CookieConsent'));
 import { getDepartmentDashboardPath, getUserDepartment } from '../utils/departmentAccess';
 
-// Website pages
-import Home from '../pages/website/Home/Home';
-import About from '../pages/website/About/About';
-import PrivacyPolicy from '../pages/website/Legal/PrivacyPolicy';
-import TermsOfService from '../pages/website/Legal/TermsOfService';
-import RegulatoryDisclosures from '../pages/website/Legal/RegulatoryDisclosures';
-import CookieConsent from '../components/CookieConsent';
-import Contact from '../pages/website/Contact/Contact';
-import ValuationAdvisory from '../pages/website/Services/ValuationAdvisory';
-import TransactionServices from '../pages/website/Services/TransactionServices';
-import RiskCompliance from '../pages/website/Services/RiskCompliance';
-import FinancialTransformation from '../pages/website/Services/FinancialTransformation';
-import WealthManagement from '../pages/website/Services/WealthManagement';
-import CorporateFinance from '../pages/website/Services/CorporateFinance';
-import MarketIntelligence from '../pages/website/Industries/MarketIntelligence';
-import DigitalFinance from '../pages/website/Services/DigitalFinance';
-import TaxAdvisory from '../pages/website/Services/TaxAdvisory';
-import DynamicDetail from '../pages/website/Services/DynamicDetail';
-import ServicesWeOffer from '../pages/website/Services/ServicesWeOffer';
-import ThreeWays from '../pages/website/Services/ThreeWays';
-import LandingPage from '../pages/public/LandingPage';
+// Minimal loading fallback
+const PageLoader = () => (
+  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
+    <div style={{ width: 36, height: 36, border: '3px solid rgba(212,175,55,0.2)', borderTopColor: '#D4AF37', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+    <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+  </div>
+);
 
-// Auth pages
-import B2BLogin from '../pages/b2b/Login';
-import B2BRegister from '../pages/b2b/Register';
-import ForgotPassword from '../pages/public/ForgotPassword';
-import ResetPassword from '../pages/public/ResetPassword';
-import VerifyEmail from '../pages/public/VerifyEmail';
-import NotFound from '../pages/public/NotFound';
+// ── Website pages (lazy) ──
+const About = lazy(() => import('../pages/website/About/About'));
+const PrivacyPolicy = lazy(() => import('../pages/website/Legal/PrivacyPolicy'));
+const TermsOfService = lazy(() => import('../pages/website/Legal/TermsOfService'));
+const RegulatoryDisclosures = lazy(() => import('../pages/website/Legal/RegulatoryDisclosures'));
+const Contact = lazy(() => import('../pages/website/Contact/Contact'));
+const ValuationAdvisory = lazy(() => import('../pages/website/Services/ValuationAdvisory'));
+const TransactionServices = lazy(() => import('../pages/website/Services/TransactionServices'));
+const RiskCompliance = lazy(() => import('../pages/website/Services/RiskCompliance'));
+const FinancialTransformation = lazy(() => import('../pages/website/Services/FinancialTransformation'));
+const WealthManagement = lazy(() => import('../pages/website/Services/WealthManagement'));
+const CorporateFinance = lazy(() => import('../pages/website/Services/CorporateFinance'));
+const MarketIntelligence = lazy(() => import('../pages/website/Industries/MarketIntelligence'));
+const DigitalFinance = lazy(() => import('../pages/website/Services/DigitalFinance'));
+const TaxAdvisory = lazy(() => import('../pages/website/Services/TaxAdvisory'));
+const DynamicDetail = lazy(() => import('../pages/website/Services/DynamicDetail'));
+const ServicesWeOffer = lazy(() => import('../pages/website/Services/ServicesWeOffer'));
+const ThreeWays = lazy(() => import('../pages/website/Services/ThreeWays'));
 
-// B2B (Client) Portal
-import B2BProtectedRoute from '../components/B2BProtectedRoute';
-import B2BDashboard from '../pages/b2b/Dashboard';
-import B2BServiceRequests from '../pages/b2b/ServiceRequests';
-import B2BDocuments from '../pages/b2b/Documents';
-import B2BProposals from '../pages/b2b/Proposals';
-import B2BMeetings from '../pages/b2b/Meetings';
-import B2BPayments from '../pages/b2b/Payments';
-import B2BTeam from '../pages/b2b/Team';
-import B2BSupport from '../pages/b2b/Support';
-import B2BSettings from '../pages/b2b/Settings';
+// ── Auth pages (lazy) ──
+const B2BRegister = lazy(() => import('../pages/b2b/Register'));
+const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword'));
+const ResetPassword = lazy(() => import('../pages/public/ResetPassword'));
+const VerifyEmail = lazy(() => import('../pages/public/VerifyEmail'));
+const NotFound = lazy(() => import('../pages/public/NotFound'));
 
-// CRM Admin
-import CRMAdminLogin from '../pages/public/CRMAdminLogin';
-import CRMDashboard from '../pages/crm-admin/Dashboard';
-import CRMLeads from '../pages/crm-admin/Leads';
-import CRMClients from '../pages/crm-admin/Clients';
-import CRMAdminPipeline from '../pages/crm-admin/Pipeline';
+// ── B2B (Client) Portal (lazy) ──
+const B2BDashboard = lazy(() => import('../pages/b2b/Dashboard'));
+const B2BServiceRequests = lazy(() => import('../pages/b2b/ServiceRequests'));
+const B2BDocuments = lazy(() => import('../pages/b2b/Documents'));
+const B2BProposals = lazy(() => import('../pages/b2b/Proposals'));
+const B2BMeetings = lazy(() => import('../pages/b2b/Meetings'));
+const B2BPayments = lazy(() => import('../pages/b2b/Payments'));
+const B2BTeam = lazy(() => import('../pages/b2b/Team'));
+const B2BSupport = lazy(() => import('../pages/b2b/Support'));
+const B2BSettings = lazy(() => import('../pages/b2b/Settings'));
 
-// Internal Admin
-import AdminLogin from '../pages/public/AdminLogin';
-import AdminDashboard from '../pages/admin/Dashboard';
-import UserManagement from '../pages/admin/UserManagement';
-import ConsultantManagement from '../pages/admin/ConsultantManagement';
-import ProductManagement from '../pages/admin/ProductManagement';
-import CRMPipeline from '../pages/admin/CRMPipeline';
-import ContactMessages from '../pages/admin/ContactMessages';
-import AnalyticsDashboard from '../pages/admin/AnalyticsDashboard';
-import SystemSettings from '../pages/admin/SystemSettings';
-import AuditLogs from '../pages/admin/AuditLogs';
-import LeadManagement from '../pages/admin/LeadManagement';
-import CRMManagement from '../pages/admin/CRMManagement';
-import DepartmentManagement from '../pages/admin/DepartmentManagement';
-import RevenueAnalytics from '../pages/admin/RevenueAnalytics';
+// ── CRM Admin (lazy) ──
+const CRMDashboard = lazy(() => import('../pages/crm-admin/Dashboard'));
+const CRMLeads = lazy(() => import('../pages/crm-admin/Leads'));
+const CRMClients = lazy(() => import('../pages/crm-admin/Clients'));
+const CRMAdminPipeline = lazy(() => import('../pages/crm-admin/Pipeline'));
 
-// Department Admin
-import DepartmentAdminLogin from '../pages/public/DepartmentAdminLogin';
-import DepartmentAdminDashboard from '../pages/department-admin/Dashboard';
-import DepartmentAdminClients from '../pages/department-admin/Clients';
-import DepartmentLeadReview from '../pages/department-admin/LeadReview';
-import DeptLeadQueue from '../pages/department-admin/LeadQueue';
-import DeptAssignedClients from '../pages/department-admin/AssignedClients';
-import DeptConsultationQueue from '../pages/department-admin/ConsultationQueue';
-import DeptAssignments from '../pages/department-admin/Assignments';
-import DeptAdminClientDocuments from '../pages/department-admin/ClientDocuments';
-import KycReview from '../pages/department-admin/KycReview';
-import CompletedMeetings from '../pages/department-admin/CompletedMeetings';
-import DepartmentAdminPayments from '../pages/department-admin/Payments';
+// ── Internal Admin (lazy) ──
+const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
+const UserManagement = lazy(() => import('../pages/admin/UserManagement'));
+const ConsultantManagement = lazy(() => import('../pages/admin/ConsultantManagement'));
+const ProductManagement = lazy(() => import('../pages/admin/ProductManagement'));
+const CRMPipeline = lazy(() => import('../pages/admin/CRMPipeline'));
+const ContactMessages = lazy(() => import('../pages/admin/ContactMessages'));
+const AnalyticsDashboard = lazy(() => import('../pages/admin/AnalyticsDashboard'));
+const SystemSettings = lazy(() => import('../pages/admin/SystemSettings'));
+const AuditLogs = lazy(() => import('../pages/admin/AuditLogs'));
+const LeadManagement = lazy(() => import('../pages/admin/LeadManagement'));
+const CRMManagement = lazy(() => import('../pages/admin/CRMManagement'));
+const DepartmentManagement = lazy(() => import('../pages/admin/DepartmentManagement'));
+const RevenueAnalytics = lazy(() => import('../pages/admin/RevenueAnalytics'));
+const ApiManagement = lazy(() => import('../pages/admin/ApiManagement'));
 
-// Consultants
-import ConsultantLogin from '../pages/public/ConsultantLogin';
-import ConsultantDashboard from '../pages/consultant/Dashboard';
-import MyClients from '../pages/consultant/ClientList';
-import ClientDetail from '../pages/consultant/ClientDetail';
-import ConsultantReports from '../pages/consultant/Reports';
-import ConsultantInvoices from '../pages/consultant/Invoices';
-import ConsultantSchedule from '../pages/consultant/Schedule';
-import ConsultantNotifications from '../pages/consultant/Notifications';
-import LoanWorkflow from '../pages/consultant/LoanWorkflow';
-import TaxWorkflow from '../pages/consultant/TaxWorkflow';
-import InvestmentWorkflow from '../pages/consultant/InvestmentWorkflow';
-import InsuranceWorkflow from '../pages/consultant/InsuranceWorkflow';
-import WealthWorkflow from '../pages/consultant/WealthWorkflow';
-import ConsultantProposals from '../pages/consultant/Proposals';
-import ConsultantPayments from '../pages/consultant/Payments';
+// ── Department Admin (lazy) ──
+const DepartmentAdminDashboard = lazy(() => import('../pages/department-admin/Dashboard'));
+const DepartmentAdminClients = lazy(() => import('../pages/department-admin/Clients'));
+const DepartmentLeadReview = lazy(() => import('../pages/department-admin/LeadReview'));
+const DeptLeadQueue = lazy(() => import('../pages/department-admin/LeadQueue'));
+const DeptAssignedClients = lazy(() => import('../pages/department-admin/AssignedClients'));
+const DeptConsultationQueue = lazy(() => import('../pages/department-admin/ConsultationQueue'));
+const DeptAssignments = lazy(() => import('../pages/department-admin/Assignments'));
+const DeptAdminClientDocuments = lazy(() => import('../pages/department-admin/ClientDocuments'));
+const KycReview = lazy(() => import('../pages/department-admin/KycReview'));
+const CompletedMeetings = lazy(() => import('../pages/department-admin/CompletedMeetings'));
+const DepartmentAdminPayments = lazy(() => import('../pages/department-admin/Payments'));
 
-// Workflow pages
-import WorkflowOverview from '../pages/workflow/WorkflowOverview';
-import Step1_LeadCapture from '../pages/workflow/Step1_LeadCapture';
-import Step2_CRMQualify from '../pages/workflow/Step2_CRMQualify';
-import Step3_DeptAssign from '../pages/workflow/Step3_DeptAssign';
-import Step4_ConsultantAction from '../pages/workflow/Step4_ConsultantAction';
-import Step5_ClientApprove from '../pages/workflow/Step5_ClientApprove';
-import Step6_Onboarding from '../pages/workflow/Step6_Onboarding';
+// ── Consultants (lazy) ──
+const ConsultantDashboard = lazy(() => import('../pages/consultant/Dashboard'));
+const MyClients = lazy(() => import('../pages/consultant/ClientList'));
+const ClientDetail = lazy(() => import('../pages/consultant/ClientDetail'));
+const ConsultantReports = lazy(() => import('../pages/consultant/Reports'));
+const ConsultantInvoices = lazy(() => import('../pages/consultant/Invoices'));
+const ConsultantSchedule = lazy(() => import('../pages/consultant/Schedule'));
+const ConsultantNotifications = lazy(() => import('../pages/consultant/Notifications'));
+const LoanWorkflow = lazy(() => import('../pages/consultant/LoanWorkflow'));
+const TaxWorkflow = lazy(() => import('../pages/consultant/TaxWorkflow'));
+const InvestmentWorkflow = lazy(() => import('../pages/consultant/InvestmentWorkflow'));
+const InsuranceWorkflow = lazy(() => import('../pages/consultant/InsuranceWorkflow'));
+const WealthWorkflow = lazy(() => import('../pages/consultant/WealthWorkflow'));
+const ConsultantProposals = lazy(() => import('../pages/consultant/Proposals'));
+const ConsultantPayments = lazy(() => import('../pages/consultant/Payments'));
+
+// ── Workflow pages (lazy) ──
+const WorkflowOverview = lazy(() => import('../pages/workflow/WorkflowOverview'));
+const Step1_LeadCapture = lazy(() => import('../pages/workflow/Step1_LeadCapture'));
+const Step2_CRMQualify = lazy(() => import('../pages/workflow/Step2_CRMQualify'));
+const Step3_DeptAssign = lazy(() => import('../pages/workflow/Step3_DeptAssign'));
+const Step4_ConsultantAction = lazy(() => import('../pages/workflow/Step4_ConsultantAction'));
+const Step5_ClientApprove = lazy(() => import('../pages/workflow/Step5_ClientApprove'));
+const Step6_Onboarding = lazy(() => import('../pages/workflow/Step6_Onboarding'));
 
 // Route wrappers
 function ConsultantRoute({ children }) {
@@ -194,12 +207,13 @@ export default function AppRoutes() {
 
   return (
     <div className="relative min-h-screen bg-[#0A192F] text-white overflow-x-hidden">
-      <CustomCursor />
-      {!isPortalRoute && <Navbar />}
-      <CookieConsent />
+      <Suspense fallback={null}><CustomCursor /></Suspense>
+      {!isPortalRoute && <Suspense fallback={null}><Navbar /></Suspense>}
+      <Suspense fallback={null}><CookieConsent /></Suspense>
+      {!isPortalRoute && <Suspense fallback={null}><Chatbot /></Suspense>}
 
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
+      <Suspense fallback={<PageLoader />}>
+        <Routes location={location}>
           {/* ============================================ */}
           {/* PUBLIC WEBSITE                                */}
           {/* ============================================ */}
@@ -315,6 +329,7 @@ export default function AppRoutes() {
           <Route path="/admin/messages" element={<AdminRoute><ContactMessages /></AdminRoute>} />
           <Route path="/admin/analytics" element={<AdminRoute><AnalyticsDashboard /></AdminRoute>} />
           <Route path="/admin/settings" element={<AdminRoute><SystemSettings /></AdminRoute>} />
+          <Route path="/admin/api-management" element={<AdminRoute><ApiManagement /></AdminRoute>} />
           <Route path="/admin/audit-logs" element={<AdminRoute><AuditLogs /></AdminRoute>} />
           <Route path="/admin/revenue" element={<AdminRoute><RevenueAnalytics /></AdminRoute>} />
           <Route path="/admin/kyc" element={<AdminRoute><KycReview /></AdminRoute>} />
@@ -392,9 +407,9 @@ export default function AppRoutes() {
 
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </AnimatePresence>
+      </Suspense>
 
-      {!isPortalRoute && <Footer />}
+      {!isPortalRoute && <Suspense fallback={null}><Footer /></Suspense>}
     </div>
   );
 }

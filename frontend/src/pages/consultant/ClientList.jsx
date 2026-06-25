@@ -94,6 +94,24 @@ export default function MyClients() {
 
   const allClients = [...apiClients, ...addedClients];
 
+  const parseAUM = (aumStr) => {
+    if (!aumStr || aumStr === '—') return 0;
+    const clean = aumStr.replace(/[^0-9.]/g, '');
+    const val = parseFloat(clean) || 0;
+    if (aumStr.toUpperCase().includes('M')) return val;
+    if (aumStr.toUpperCase().includes('K')) return val / 1000;
+    if (val > 100000) return val / 1000000;
+    return val;
+  };
+
+  const totalAUMVal = allClients.reduce((acc, c) => acc + parseAUM(c.aum), 0);
+  const formattedAUM = totalAUMVal > 0 ? `$${totalAUMVal.toFixed(1)}M` : '$0.0M';
+
+  const avgHealthScoreVal = allClients.length > 0
+    ? Math.round(allClients.reduce((acc, c) => acc + (Number(c.score) || 0), 0) / allClients.length)
+    : 0;
+  const formattedHealth = `${avgHealthScoreVal}/100`;
+
   const filtered = allClients.filter((client) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
@@ -121,9 +139,9 @@ export default function MyClients() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
         {[
           { label: 'Total Clients', value: String(allClients.length), icon: 'people', color: 'text-accent bg-accent/10' },
-          { label: 'Total AUM', value: '$89.4M', icon: 'account_balance', color: 'text-secondary bg-secondary/10' },
+          { label: 'Total AUM', value: formattedAUM, icon: 'account_balance', color: 'text-secondary bg-secondary/10' },
           { label: 'Active', value: String(allClients.filter(c => c.status === 'Active').length), icon: 'check_circle', color: 'text-success bg-success/10' },
-          { label: 'Avg Health Score', value: '82/100', icon: 'favorite', color: 'text-error bg-error/10' },
+          { label: 'Avg Health Score', value: formattedHealth, icon: 'favorite', color: 'text-error bg-error/10' },
         ].map((s, i) => (
           <div key={i} className="card p-6 flex items-center gap-4">
             <div className={`p-3 rounded-xl ${s.color.split(' ')[1]}`}>
