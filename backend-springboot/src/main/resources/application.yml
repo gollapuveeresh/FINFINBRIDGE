@@ -13,8 +13,8 @@ spring:
     # Secrets MUST be supplied via environment variables — there are deliberately NO committed
     # fallbacks for DB_PASSWORD / JWT_SECRET. The app connects as a least-privilege role
     # (finbridge_svc), never the database superuser.
-    url: ${DB_URL:jdbc:postgresql://db.vtcgcjtroxvtsjjfattt.supabase.co:6543/postgres}
-    username: ${DB_USERNAME:finbridge_svc}
+    url: ${DB_URL:jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres}
+    username: ${DB_USERNAME:finbridge_svc.vtcgcjtroxvtsjjfattt}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
