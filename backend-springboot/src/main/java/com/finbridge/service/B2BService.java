@@ -70,7 +70,7 @@ public class B2BService {
         if (orgUserRepo.existsByEmailIgnoreCase(req.getAdminEmail()))
             throw new BadRequestException("Email already registered");
         if (cleanGstin != null && orgRepo.findByGstin(cleanGstin).isPresent())
-            throw new BadRequestException("GSTIN already registered");
+            throw new BadRequestException("VAT Number (BIN) already registered");
 
         Organization org = new Organization();
         org.setCompanyName(req.getCompanyName());

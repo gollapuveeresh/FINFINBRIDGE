@@ -13,7 +13,7 @@ public class OrgRegisterRequest {
     @NotBlank(message = "Company name is required")
     private String companyName;
     private String industry;
-    @Size(max = 20, message = "GSTIN looks too long")
+    @Size(max = 20, message = "VAT Number (BIN) looks too long")
     private String gstin;
     private String cin;
     private String pan;
