@@ -34,7 +34,7 @@ export default function B2BSettings() {
             {[
               { label:'Company Name',   value: company?.companyName },
               { label:'Industry',       value: company?.industry },
-              { label:'GSTIN',          value: company?.gstin },
+              { label:'VAT Number (BIN)', value: company?.gstin },
               { label:'KYC Status',     value: company?.kycVerified ? 'Verified' : 'Pending' },
               { label:'Account Status', value: company?.status },
               { label:'Your Role',      value: company?.role?.replace(/_/g,' ') },
@@ -50,7 +50,7 @@ export default function B2BSettings() {
 
           <div className="pt-2 border-t border-border">
             <p className="text-xs text-text-muted">
-              To update company details or GSTIN, please raise a support ticket or contact your assigned consultant.
+              To update company details or VAT Number (BIN), please raise a support ticket or contact your assigned consultant.
             </p>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquare, X, Send, Bot } from 'lucide-react';
 
 const SUGGESTIONS = [
-  { text: "What services do you offer?", reply: "FinBridge provides end-to-end financial advisory across four core departments: Tax Management (ITR, GST), Investment Management (Mutual Funds, SIPs), Loan Management (Business, Home loans), and Wealth Planning." },
+  { text: "What services do you offer?", reply: "FinBridge provides end-to-end financial advisory across four core departments: Tax Management (TIN, VAT), Investment Management (Mutual Funds, SIPs), Loan Management (Business, Home loans), and Wealth Planning." },
   { text: "How do I register my business?", reply: "Click 'Login / Sign Up' in the top right, click 'Sign Up' in the dropdown, complete the company details, and submit. Our compliance team will review and approve your account within 24 hours." },
   { text: "How can I contact support?", reply: "You can reach us at contact@finbridge.com or call our Helpline at +880 1719 765432. You can also view our map location at the bottom of the page." },
   { text: "Do you have dedicated consultants?", reply: "Yes! Once your company registration is approved on our B2B Portal, a dedicated consultant will be assigned to your account to guide you through customized workflows." }
@@ -46,12 +46,12 @@ export default function Chatbot() {
 
       if (lowerText.includes('loan') || lowerText.includes('borrow') || lowerText.includes('interest')) {
         replyText = "We offer Home, Personal, Business, and Vehicle Loans. Register on our Business Portal to start a loan application and track its progress.";
-      } else if (lowerText.includes('tax') || lowerText.includes('itr') || lowerText.includes('gst') || lowerText.includes('audit')) {
-        replyText = "Our Tax Management department handles ITR filing, GST returns, tax audits, and customized tax saving strategies.";
+      } else if (lowerText.includes('tax') || lowerText.includes('tin') || lowerText.includes('vat') || lowerText.includes('audit')) {
+        replyText = "Our Tax Management department handles tax returns, VAT filing, audits, and customized tax saving strategies.";
       } else if (lowerText.includes('invest') || lowerText.includes('mutual') || lowerText.includes('stock') || lowerText.includes('sip')) {
         replyText = "Our Investment department helps build custom portfolios (Mutual Funds, SIPs, Equities) based on your growth targets and risk tolerance.";
       } else if (lowerText.includes('register') || lowerText.includes('signup') || lowerText.includes('account')) {
-        replyText = "Click 'Login / Sign Up' on the navigation bar, click 'Sign Up', fill out your company info (GSTIN, PAN etc.), and submit. Access is unlocked upon verification.";
+        replyText = "Click 'Login / Sign Up' on the navigation bar, click 'Sign Up', fill out your company info (VAT, TIN etc.), and submit. Access is unlocked upon verification.";
       } else if (lowerText.includes('contact') || lowerText.includes('support') || lowerText.includes('phone') || lowerText.includes('email') || lowerText.includes('address')) {
         replyText = "Contact us at contact@finbridge.com, call +880 1719 765432, or visit FinBridge Tower in Agrabad, Chittagong, Bangladesh.";
       } else {

@@ -22,7 +22,7 @@ public class OrgRegisterRequest {
     private String address;
     private String city;
     private String state;
-    @Pattern(regexp = "^$|^[1-9][0-9]{5}$", message = "Enter a valid 6-digit pincode")
+    @Pattern(regexp = "^$|^[0-9]{4,6}$", message = "Enter a valid 4-to-6 digit postcode")
     private String pincode;
     private String website;
     private List<String> services;

@@ -5,8 +5,8 @@ import { useB2BAuth } from '../../context/B2BAuthContext';
 import b2bApi from '../../services/b2bApi';
 
 const DOC_TYPES = [
-  { key:'GST_CERTIFICATE', label:'GST Certificate', icon:'receipt_long', required:true },
-  { key:'PAN',             label:'PAN Card',        icon:'badge',        required:true },
+  { key:'GST_CERTIFICATE', label:'VAT Registration (BIN)', icon:'receipt_long', required:true },
+  { key:'PAN',             label:'TIN Certificate',        icon:'badge',        required:true },
   { key:'CIN',             label:'CIN Document',   icon:'apartment',    required:true },
   { key:'INCORPORATION',   label:'Incorporation Certificate', icon:'gavel', required:true },
   { key:'BANK_STATEMENT',  label:'Bank Statement (6 months)', icon:'account_balance', required:true },

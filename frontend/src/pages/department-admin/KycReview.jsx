@@ -7,7 +7,7 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const DOC_LABELS = {
-  GST_CERTIFICATE: 'GST Certificate', PAN: 'PAN Card', CIN: 'CIN Document',
+  GST_CERTIFICATE: 'VAT Registration (BIN)', PAN: 'TIN Certificate', CIN: 'CIN Document',
   INCORPORATION: 'Incorporation Certificate', BANK_STATEMENT: 'Bank Statement',
   FINANCIAL_STATEMENT: 'Financial Statements', OTHER: 'Other Document',
 };

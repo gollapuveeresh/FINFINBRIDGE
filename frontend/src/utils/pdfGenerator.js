@@ -18,7 +18,7 @@ export const downloadInvoicePDF = (invoice, user) => {
   const doc = iframe.contentWindow.document;
 
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A';
-  const formatCurrency = (val) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: invoice.currency || 'INR', maximumFractionDigits: 0 }).format(val || 0);
+  const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: invoice.currency || 'BDT', maximumFractionDigits: 0 }).format(val || 0);
 
   const clientName  = invoice.clientId?.name  || user?.name  || 'N/A';
   const clientEmail = invoice.clientId?.email || user?.email || '';
@@ -104,7 +104,7 @@ export const downloadInvoicePDF = (invoice, user) => {
 
         <div class="totals">
           <div class="row"><span>Subtotal</span><span>${formatCurrency(invoice.subtotal)}</span></div>
-          <div class="row"><span>GST (${invoice.taxPercent ?? 18}%)</span><span>${formatCurrency(invoice.tax)}</span></div>
+          <div class="row"><span>VAT (${invoice.taxPercent ?? 18}%)</span><span>${formatCurrency(invoice.tax)}</span></div>
           <div class="row grand"><span>Total</span><span>${formatCurrency(invoice.totalAmount)}</span></div>
         </div>
 

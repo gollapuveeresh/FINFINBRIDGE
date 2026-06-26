@@ -189,7 +189,7 @@ export default function ConsultantInvoices() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
-                    <label className="text-xs text-text-muted block mb-1">GST %</label>
+                    <label className="text-xs text-text-muted block mb-1">VAT %</label>
                     <input type="number" value={form.taxPercent} onChange={e => setForm(f => ({ ...f, taxPercent: parseFloat(e.target.value) || 0 }))}
                       className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" />
                   </div>
@@ -200,9 +200,9 @@ export default function ConsultantInvoices() {
                   </div>
                   <div className="flex flex-col justify-end">
                     <div className="bg-bg rounded-xl p-3 text-sm">
-                      <div className="flex justify-between text-text-muted"><span>Subtotal</span><span>₹{subtotal.toLocaleString('en-IN')}</span></div>
-                      <div className="flex justify-between text-text-muted"><span>GST</span><span>₹{tax.toLocaleString('en-IN')}</span></div>
-                      <div className="flex justify-between font-bold text-accent border-t border-border/30 mt-1 pt-1"><span>Total</span><span>₹{total.toLocaleString('en-IN')}</span></div>
+                      <div className="flex justify-between text-text-muted"><span>Subtotal</span><span>৳{subtotal.toLocaleString('en-US')}</span></div>
+                      <div className="flex justify-between text-text-muted"><span>VAT</span><span>৳{tax.toLocaleString('en-US')}</span></div>
+                      <div className="flex justify-between font-bold text-accent border-t border-border/30 mt-1 pt-1"><span>Total</span><span>৳{total.toLocaleString('en-US')}</span></div>
                     </div>
                   </div>
                 </div>

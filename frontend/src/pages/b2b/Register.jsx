@@ -60,10 +60,10 @@ const isStrongPassword = (v) => {
 const validatePhone = (code, phone) => {
   const cleanPhone = String(phone || '').replace(/[\s-]/g, '');
   if (!cleanPhone) return 'Phone number is required';
-  if (code === '+91') {
-    return /^[6-9][0-9]{9}$/.test(cleanPhone) ? null : 'Enter a valid 10-digit mobile number';
+  if (code === '+880') {
+    return /^1[3-9][0-9]{8}$/.test(cleanPhone) ? null : 'Enter a valid 10-digit Bangladesh mobile number (e.g., 1712345678)';
   } else {
-    return /^[0-9]{7,12}$/.test(cleanPhone) ? null : 'Enter a valid phone number (7-12 digits)';
+    return /^[0-9]{7,12}$/.test(cleanPhone) ? null : 'Enter a valid phone number';
   }
 };
 
@@ -76,7 +76,7 @@ export default function B2BRegister() {
     companyName:'', industry:'', gstin:'', cin:'', pan:'',
     annualTurnover:'', employeeCount:'',
     address:'', city:'', state:'', pincode:'', website:'',
-    adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+91', adminPassword:'', confirmPassword:'',
+    adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+880', adminPassword:'', confirmPassword:'',
     services:[],
   });
 
@@ -87,8 +87,8 @@ export default function B2BRegister() {
   }));
 
   const validateStep1 = () => {
-    const gstinRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[0-9A-Z]{3}$/;
-    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    const binRegex = /^[0-9]{9}$|^[0-9]{13}$/;
+    const tinRegex = /^[0-9]{12}$/;
 
     if (!required(form.companyName)) {
       toast.error('Company name is required');
@@ -99,14 +99,14 @@ export default function B2BRegister() {
       return false;
     }
     if (!required(form.gstin)) {
-      toast.error('GSTIN is required');
+      toast.error('VAT Number (BIN) is required');
       return false;
-    } else if (!gstinRegex.test(form.gstin.trim().toUpperCase())) {
-      toast.error('Enter a valid 15-character GSTIN (e.g., 27AABCT1234A1Z5)');
+    } else if (!binRegex.test(form.gstin.trim())) {
+      toast.error('Enter a valid 9 or 13-digit VAT Number (BIN)');
       return false;
     }
-    if (form.pan && !panRegex.test(form.pan.trim().toUpperCase())) {
-      toast.error('Enter a valid 10-character PAN (e.g., AABCT1234A)');
+    if (form.pan && !tinRegex.test(form.pan.trim())) {
+      toast.error('Enter a valid 12-digit TIN (Taxpayer Identification Number)');
       return false;
     }
     if (form.annualTurnover && (isNaN(form.annualTurnover) || Number(form.annualTurnover) <= 0)) {
@@ -136,7 +136,7 @@ export default function B2BRegister() {
       address:  required(form.address)       ? null : 'Registered address is required',
       city:     required(form.city)          ? null : 'City is required',
       state:    required(form.state)         ? null : 'State is required',
-      pincode:  required(form.pincode)       ? (isPincode(form.pincode) ? null : 'Enter a valid 6-digit PIN code') : 'PIN Code is required',
+      pincode:  required(form.pincode)       ? (isPincode(form.pincode) ? null : 'Enter a valid 4-to-6 digit postcode') : 'Postcode is required',
     });
     if (err) { toast.error(err); return false; }
     return true;
@@ -222,10 +222,10 @@ export default function B2BRegister() {
                       {INDUSTRIES.map(i => <option key={i}>{i}</option>)}
                     </select>
                   </div>
-                  <Field label="GSTIN"               value={form.gstin}          onChange={set('gstin')}          placeholder="27AABCT1234A1Z5" required />
+                  <Field label="VAT Number (BIN)"    value={form.gstin}          onChange={set('gstin')}          placeholder="1234567890123" required />
                   <Field label="CIN (optional)"      value={form.cin}            onChange={set('cin')}            placeholder="U72900MH2020PTC123456" />
-                  <Field label="PAN"                 value={form.pan}            onChange={set('pan')}            placeholder="AABCT1234A" />
-                  <Field label="Annual Turnover (₹)" value={form.annualTurnover} onChange={set('annualTurnover')} placeholder="50000000" />
+                  <Field label="TIN"                 value={form.pan}            onChange={set('pan')}            placeholder="123456789012" />
+                  <Field label="Annual Turnover (BDT)" value={form.annualTurnover} onChange={set('annualTurnover')} placeholder="5000000" />
                   <Field label="No. of Employees"    value={form.employeeCount}  onChange={set('employeeCount')}  placeholder="150" />
                   <Field label="Website (optional)"  value={form.website}        onChange={set('website')}        placeholder="https://yourcompany.com" />
                 </div>
@@ -242,24 +242,15 @@ export default function B2BRegister() {
                   <div>
                     <label className="text-xs text-text-muted block mb-1">Phone *</label>
                     <div className="flex gap-2">
-                      <select
-                        value={form.countryCode}
-                        onChange={(e) => setForm(p => ({ ...p, countryCode: e.target.value }))}
-                        className="p-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary text-white w-28 cursor-pointer"
-                      >
-                        <option value="+91">+91 (IN)</option>
-                        <option value="+1">+1 (US)</option>
-                        <option value="+44">+44 (UK)</option>
-                        <option value="+880">+880 (BD)</option>
-                        <option value="+65">+65 (SG)</option>
-                        <option value="+971">+971 (AE)</option>
-                      </select>
+                      <div className="flex items-center justify-center p-2.5 rounded-xl border border-border bg-border/20 text-sm text-text-muted w-20 select-none">
+                        +880
+                      </div>
                       <input
                         type="tel"
                         value={form.adminPhoneOnly}
                         onChange={set('adminPhoneOnly')}
                         className="flex-1 p-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary"
-                        placeholder="9876543210"
+                        placeholder="1712345678"
                         required
                       />
                     </div>
@@ -269,9 +260,10 @@ export default function B2BRegister() {
                   <div className="md:col-span-2">
                     <Field label="Registered Address" value={form.address} onChange={set('address')} placeholder="123, Business Park, MG Road" required />
                   </div>
-                  <Field label="City"     value={form.city}    onChange={set('city')}    placeholder="Mumbai"      required />
-                  <Field label="State"    value={form.state}   onChange={set('state')}   placeholder="Maharashtra" required />
-                  <Field label="PIN Code" value={form.pincode} onChange={set('pincode')} placeholder="400001"      required />
+                  <Field label="City"     value={form.city}    onChange={set('city')}    placeholder="Dhaka"      required />
+                  <Field label="State"    value={form.state}   onChange={set('state')}   placeholder="Dhaka Division" required />
+                  <Field label="Postcode" value={form.pincode} onChange={set('pincode')} placeholder="1209"      required />
+
                 </div>
               </>
             )}

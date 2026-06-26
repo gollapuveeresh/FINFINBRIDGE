@@ -176,7 +176,7 @@ export default function B2BDashboard() {
           <div>
             <p className="font-semibold text-amber-400">KYC Verification Pending</p>
             <p className="text-sm text-text-muted mt-1">
-              Upload your GST Certificate, PAN, CIN, and Bank Statements to complete verification.
+              Upload your VAT Registration (BIN), TIN Certificate, CIN, and Bank Statements to complete verification.
               Our compliance team will review within 24 hours.
             </p>
             <Link to="/b2b/documents" className="inline-block mt-3 btn-primary text-xs px-4 py-2">

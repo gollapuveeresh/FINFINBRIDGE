@@ -2,7 +2,7 @@
 // The backend re-validates everything authoritatively; these mirror those rules for UX.
 
 export const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(v || '').trim());
-export const isPincode = (v) => /^[1-9][0-9]{5}$/.test(String(v || '').trim());
+export const isPincode = (v) => /^[0-9]{4,6}$/.test(String(v || '').trim());
 export const isMobile = (v) => /^[6-9][0-9]{9}$/.test(String(v || '').replace(/[\s+]/g, '').replace(/^91/, ''));
 export const minLen = (v, n) => String(v || '').length >= n;
 export const required = (v) => String(v || '').trim().length > 0;
