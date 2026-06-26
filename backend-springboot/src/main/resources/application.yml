@@ -27,6 +27,8 @@ spring:
       idle-timeout: 120000
       max-lifetime: 300000
       keepalive-time: 60000
+      data-source-properties:
+        prepareThreshold: 0
 
   jpa:
     hibernate:
