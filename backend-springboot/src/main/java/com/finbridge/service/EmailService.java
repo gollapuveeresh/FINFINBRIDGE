@@ -34,20 +34,20 @@ public class EmailService {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${RESEND_API_KEY:}")
+    private String resendApiKey;
+
     // ─── Core sender ─────────────────────────────────────────────────────────
 
     /**
      * Send an HTML email with dedup protection and audit logging.
-     * Silently skips if SMTP is not configured (empty MAIL_USERNAME).
+     * Integrates with Resend API when RESEND_API_KEY is configured to bypass SMTP port blocks on Render.
+     * Silently skips if neither SMTP nor Resend is configured.
      */
     @Async
     public void sendHtml(String to, String subject, String htmlBody, String type, UUID relatedEntityId) {
         if (to == null || to.isBlank())
             return;
-        if (mailUsername == null || mailUsername.isBlank()) {
-            log.warn("SMTP not configured — skipping email [{}] to {}", type, to);
-            return;
-        }
 
         // Dedup: don't send the same (recipient, type, entity) twice
         if (relatedEntityId != null &&
@@ -63,31 +63,79 @@ public class EmailService {
         record.setRelatedEntityId(relatedEntityId);
         record.setSubject(subject);
 
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(htmlBody, true);
-            String fromEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : mailUsername;
-            helper.setFrom(fromEmail, "FinBridge");
-            mailSender.send(message);
+        // Route based on available configuration
+        if (resendApiKey != null && !resendApiKey.isBlank()) {
+            try {
+                sendViaResend(to, subject, htmlBody);
+                record.setStatus("sent");
+                record.setSentAt(Instant.now());
+                log.info("✉ Email sent via Resend [{}] to {}: {}", type, to, subject);
+            } catch (Exception e) {
+                record.setStatus("failed");
+                record.setErrorMessage(
+                        e.getMessage() != null ? e.getMessage().substring(0, Math.min(e.getMessage().length(), 500))
+                                : "Unknown Resend error");
+                log.error("✉ Email FAILED via Resend [{}] to {}: {}", type, to, e.getMessage());
+            }
+        } else {
+            if (mailUsername == null || mailUsername.isBlank()) {
+                log.warn("Neither Resend nor SMTP is configured — skipping email [{}] to {}", type, to);
+                return;
+            }
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+                helper.setTo(to);
+                helper.setSubject(subject);
+                helper.setText(htmlBody, true);
+                String fromEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : mailUsername;
+                helper.setFrom(fromEmail, "FinBridge");
+                mailSender.send(message);
 
-            record.setStatus("sent");
-            record.setSentAt(Instant.now());
-            log.info("✉ Email sent [{}] to {}: {}", type, to, subject);
-        } catch (Exception e) {
-            record.setStatus("failed");
-            record.setErrorMessage(
-                    e.getMessage() != null ? e.getMessage().substring(0, Math.min(e.getMessage().length(), 500))
-                            : "Unknown error");
-            log.error("✉ Email FAILED [{}] to {}: {}", type, to, e.getMessage());
+                record.setStatus("sent");
+                record.setSentAt(Instant.now());
+                log.info("✉ Email sent via SMTP [{}] to {}: {}", type, to, subject);
+            } catch (Exception e) {
+                record.setStatus("failed");
+                record.setErrorMessage(
+                        e.getMessage() != null ? e.getMessage().substring(0, Math.min(e.getMessage().length(), 500))
+                                : "Unknown SMTP error");
+                log.error("✉ Email FAILED via SMTP [{}] to {}: {}", type, to, e.getMessage());
+            }
         }
 
         try {
             emailNotificationRepository.save(record);
         } catch (Exception e) {
             log.error("Failed to save email notification record: {}", e.getMessage());
+        }
+    }
+
+    private void sendViaResend(String to, String subject, String htmlBody) throws Exception {
+        org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
+        org.springframework.http.HttpHeaders headers = new org.springframework.http.HttpHeaders();
+        headers.setBearerAuth(resendApiKey);
+        headers.setContentType(org.springframework.http.MediaType.APPLICATION_JSON);
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        String fromEmail = (mailFrom != null && !mailFrom.isBlank()) ? mailFrom : "onboarding@resend.dev";
+        if (!fromEmail.contains("<")) {
+            fromEmail = "FinBridge <" + fromEmail + ">";
+        }
+        body.put("from", fromEmail);
+        body.put("to", java.util.List.of(to));
+        body.put("subject", subject);
+        body.put("html", htmlBody);
+
+        org.springframework.http.HttpEntity<java.util.Map<String, Object>> entity = new org.springframework.http.HttpEntity<>(body, headers);
+        org.springframework.http.ResponseEntity<String> response = restTemplate.postForEntity(
+                "https://api.resend.com/emails",
+                entity,
+                String.class
+        );
+
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new RuntimeException("Resend API returned status: " + response.getStatusCode() + " - " + response.getBody());
         }
     }
 
