@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { resolveClientField } from './WorkflowShared';
+import RecommendationsModal from '../../components/RecommendationsModal';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STAGES = [
@@ -694,6 +695,13 @@ function LoanDisbursement({ lc, onRefresh }) {
     if (!form.disbursedAmount || !form.monthlyEMI || !form.tenureMonths) {
       toast.error('Fill all disbursement fields'); return;
     }
+    const tenure = parseInt(form.tenureMonths);
+    if (isNaN(tenure) || tenure <= 0) {
+      toast.error('Tenure must be a positive number'); return;
+    }
+    if (tenure > 360) {
+      toast.error('Tenure cannot exceed 360 months (30 years)'); return;
+    }
     try {
       setSaving(true);
       await api.post(`/loan-cases/${lc._id}/disburse`, form);
@@ -889,6 +897,7 @@ export default function LoanWorkflow() {
   const [activeCaseId, setActiveCaseId] = useState(null);
   const [loading,      setLoading]      = useState(true);
   const [showCreate,   setShowCreate]   = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
   const [clients,      setClients]      = useState([]);
   const [leads,        setLeads]        = useState([]);
   const [createForm,   setCreateForm]   = useState({ clientId: '', leadId: '', loanType: 'Home Loan', requestedAmount: '' });
@@ -983,9 +992,14 @@ export default function LoanWorkflow() {
             Welcome, <span className="font-semibold text-accent">{user?.name}</span> · End-to-end loan case management
           </p>
         </div>
-        <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
-          <span className="material-symbols-outlined text-base">add_circle</span> New Loan Case
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
+          </button>
+          <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
+            <span className="material-symbols-outlined text-base">add_circle</span> New Loan Case
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -1000,9 +1014,14 @@ export default function LoanWorkflow() {
           <span className="material-symbols-outlined text-5xl text-text-muted">folder_open</span>
           <p className="font-bold text-accent mt-4 text-xl">No loan cases yet</p>
           <p className="text-text-muted mt-2">Create your first loan case to start the workflow</p>
-          <button onClick={() => setShowCreate(true)} className="btn-primary mt-6 px-8 py-3">
-            Create Loan Case
-          </button>
+          <div className="flex justify-center gap-3 mt-6">
+            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
+              View Recommendations
+            </button>
+            <button onClick={() => setShowCreate(true)} className="btn-primary px-8 py-3">
+              Create Loan Case
+            </button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-12 gap-gutter">
@@ -1116,6 +1135,10 @@ export default function LoanWorkflow() {
             </button>
           </div>
         </Modal>
+      )}
+
+      {showRecommendations && (
+        <RecommendationsModal department="loans" onClose={() => setShowRecommendations(false)} />
       )}
     </ConsultantLayout>
   );

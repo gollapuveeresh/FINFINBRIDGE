@@ -29,9 +29,10 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DeptCaseService {
 
-    private static final List<String> DEFAULT_DOCS =
-            List.of("PAN Card", "Aadhaar Card", "Income Proof", "Bank Statements");
-    // Keys handled as first-class columns — everything else in the create/patch body goes into JSONB data.
+    private static final List<String> DEFAULT_DOCS = List.of("PAN Card", "Aadhaar Card", "Income Proof",
+            "Bank Statements");
+    // Keys handled as first-class columns — everything else in the create/patch
+    // body goes into JSONB data.
     private static final Set<String> RESERVED = Set.of("clientId", "leadId", "stage", "department", "invoiceId");
 
     private final DeptCaseRepository deptCaseRepository;
@@ -40,6 +41,7 @@ public class DeptCaseService {
     private final SequenceGenerator sequenceGenerator;
     private final ProposalRepository proposalRepository;
     private final ProposalService proposalService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> getByDepartment(String department) {
@@ -81,7 +83,10 @@ public class DeptCaseService {
         data.put("documents", docs);
         data.put("notes", new ArrayList<>());
         // Carry any extra dept-specific fields from the create payload.
-        body.forEach((k, v) -> { if (!RESERVED.contains(k)) data.put(k, v); });
+        body.forEach((k, v) -> {
+            if (!RESERVED.contains(k))
+                data.put(k, v);
+        });
         c.setData(data);
 
         log.info("Dept case created: {} ({})", c.getCaseId(), department);
@@ -92,7 +97,7 @@ public class DeptCaseService {
     public Map<String, Object> patch(UUID id, Map<String, Object> body, User actor) {
         DeptCase c = loadOwned(id, actor);
         Map<String, Object> data = new HashMap<>(c.getData() != null ? c.getData() : new HashMap<>());
-        
+
         boolean transitioningToApproval = false;
         if (body.containsKey("stage")) {
             String newStage = body.get("stage") != null ? body.get("stage").toString() : null;
@@ -102,9 +107,12 @@ public class DeptCaseService {
         }
 
         body.forEach((k, v) -> {
-            if ("stage".equals(k)) c.setStage(v == null ? null : v.toString());
-            else if ("invoiceId".equals(k) && v != null) c.setInvoiceId(UUID.fromString(v.toString()));
-            else if (!RESERVED.contains(k)) data.put(k, v);
+            if ("stage".equals(k))
+                c.setStage(v == null ? null : v.toString());
+            else if ("invoiceId".equals(k) && v != null)
+                c.setInvoiceId(UUID.fromString(v.toString()));
+            else if (!RESERVED.contains(k))
+                data.put(k, v);
         });
 
         if (transitioningToApproval) {
@@ -150,6 +158,16 @@ public class DeptCaseService {
         // Sync proposal to organization B2B portal
         proposalService.syncToOrgProposal(saved);
         log.info("Automatically generated CRM proposal {} for DeptCase {}", saved.getId(), c.getCaseId());
+
+        // Notify client
+        try {
+            if (saved.getClient() != null) {
+                notificationService.create(saved.getClient(), "proposal", "New Proposal",
+                        "A new proposal has been prepared for you: \"" + saved.getTitle() + "\". Please review and approve/reject.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify client of new proposal: {}", e.getMessage());
+        }
     }
 
     @Transactional
@@ -158,17 +176,38 @@ public class DeptCaseService {
         DeptCase c = loadOwned(id, actor);
         Map<String, Object> data = new HashMap<>(c.getData() != null ? c.getData() : new HashMap<>());
         List<Map<String, Object>> docs = (List<Map<String, Object>>) data.getOrDefault("documents", new ArrayList<>());
+        String docName = "Document";
         for (Map<String, Object> d : docs) {
             if (docId.equals(String.valueOf(d.get("_id")))) {
                 d.put("status", status);
-                if ("Rejected".equals(status)) d.put("rejectionNote", rejectionNote != null ? rejectionNote : "");
-                if ("Uploaded".equals(status) || "Verified".equals(status)) d.put("uploadedAt", Instant.now().toString());
+                if ("Rejected".equals(status))
+                    d.put("rejectionNote", rejectionNote != null ? rejectionNote : "");
+                if ("Uploaded".equals(status) || "Verified".equals(status))
+                    d.put("uploadedAt", Instant.now().toString());
+                docName = String.valueOf(d.get("name"));
                 break;
             }
         }
         data.put("documents", docs);
         c.setData(data);
-        return toResponse(deptCaseRepository.save(c));
+        Map<String, Object> res = toResponse(deptCaseRepository.save(c));
+
+        // Notify client
+        try {
+            if (c.getClient() != null) {
+                if ("Verified".equals(status)) {
+                    notificationService.create(c.getClient(), "document", "Document Verified",
+                            "Your document \"" + docName + "\" has been verified successfully.");
+                } else if ("Rejected".equals(status)) {
+                    notificationService.create(c.getClient(), "document", "Document Rejected",
+                            "Your document \"" + docName + "\" has been rejected. Reason: " + rejectionNote);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify client of document status update: {}", e.getMessage());
+        }
+
+        return res;
     }
 
     @Transactional
@@ -192,14 +231,20 @@ public class DeptCaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Case not found: " + id));
     }
 
-    /** Load and enforce that the acting user may mutate this case (consultants → own cases only). */
+    /**
+     * Load and enforce that the acting user may mutate this case (consultants → own
+     * cases only).
+     */
     private DeptCase loadOwned(UUID id, User actor) {
         DeptCase c = load(id);
         OwnershipGuard.assertConsultantOwns(actor, c.getConsultant(), "case");
         return c;
     }
 
-    /** Merges base columns + the JSONB data blob into the flat shape the frontend expects. */
+    /**
+     * Merges base columns + the JSONB data blob into the flat shape the frontend
+     * expects.
+     */
     private Map<String, Object> toResponse(DeptCase c) {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("_id", c.getId());
@@ -211,7 +256,8 @@ public class DeptCaseService {
         out.put("clientId", c.getClient() == null ? null : ref(c.getClient()));
         out.put("consultantId", c.getConsultant() == null ? null : ref(c.getConsultant()));
         out.put("createdAt", c.getCreatedAt());
-        if (c.getData() != null) out.putAll(c.getData());
+        if (c.getData() != null)
+            out.putAll(c.getData());
         return out;
     }
 

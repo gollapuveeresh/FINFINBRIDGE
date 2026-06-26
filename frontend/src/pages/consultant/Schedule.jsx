@@ -12,6 +12,7 @@ export default function ConsultantSchedule() {
   const [schedulingId, setSchedulingId] = useState(null);
   const [inputDate, setInputDate] = useState('');
   const [inputTime, setInputTime] = useState('');
+  const [recordMeeting, setRecordMeeting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Buffer rules states (keep UI as static dashboard configuration)
@@ -58,12 +59,14 @@ export default function ConsultantSchedule() {
       setSubmitting(true);
       const res = await api.patch(`/consultations/${id}/accept`, {
         confirmedDate: inputDate,
-        confirmedTime: inputTime
+        confirmedTime: inputTime,
+        recordingEnabled: recordMeeting
       });
       if (res.data && res.data.status === 'success') {
         setSchedulingId(null);
         setInputDate('');
         setInputTime('');
+        setRecordMeeting(false);
         setSuccessMsg('Meeting accepted and synced successfully!');
         setTimeout(() => setSuccessMsg(''), 4000);
         fetchMeetings();
@@ -184,6 +187,7 @@ export default function ConsultantSchedule() {
                                   setSchedulingId(meet.id || meet._id);
                                   setInputDate('');
                                   setInputTime('');
+                                  setRecordMeeting(meet.recordingEnabled || false);
                                 }}
                                 className="btn-primary py-1.5 px-3 text-xs flex items-center gap-1 font-bold cursor-pointer font-sans"
                               >
@@ -259,9 +263,21 @@ export default function ConsultantSchedule() {
                             />
                           </div>
                         </div>
+                        <div className="flex items-center gap-2 py-1">
+                          <input 
+                            type="checkbox" 
+                            id="recordMeeting" 
+                            checked={recordMeeting} 
+                            onChange={(e) => setRecordMeeting(e.target.checked)} 
+                            className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary bg-surface"
+                          />
+                          <label htmlFor="recordMeeting" className="text-xs font-bold text-text-muted cursor-pointer select-none">
+                            Enable Meeting Recording (Record this meeting)
+                          </label>
+                        </div>
                         <div className="flex gap-2 justify-end">
                           <button 
-                            onClick={() => setSchedulingId(null)}
+                            onClick={() => { setSchedulingId(null); setRecordMeeting(false); }}
                             className="btn-ghost py-1.5 px-3 text-xs font-bold cursor-pointer font-sans"
                           >
                             Cancel

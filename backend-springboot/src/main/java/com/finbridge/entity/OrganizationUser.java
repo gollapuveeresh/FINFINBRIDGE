@@ -35,6 +35,9 @@ public class OrganizationUser {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "is_email_verified", nullable = false)
+    private boolean emailVerified = false;
+
     @Column(name = "last_login")
     private Instant lastLogin;
 

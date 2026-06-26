@@ -106,20 +106,7 @@ const CanvasBackground = () => {
     }
     
     const animate = () => {
-      // Robust client size sync on every frame to prevent blurriness and layout shift stretching
-      const p = canvas.parentElement;
-      const currentWidth = p ? p.clientWidth : window.innerWidth;
-      const currentHeight = p ? p.clientHeight : 500;
-      if (canvas.width !== currentWidth || canvas.height !== currentHeight) {
-        width = canvas.width = currentWidth;
-        height = canvas.height = currentHeight;
-      }
-      
       ctx.clearRect(0, 0, width, height);
-      
-      // Semi-transparent background clear for smooth trails
-      ctx.fillStyle = 'rgba(10, 25, 47, 0.02)';
-      ctx.fillRect(0, 0, width, height);
       
       // 1. Draw drifting dust particles across the entire height/width
       particles.forEach(p => {

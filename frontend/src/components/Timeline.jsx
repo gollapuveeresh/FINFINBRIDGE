@@ -5,9 +5,9 @@ const Timeline = ({ steps }) => {
   return (
     <div className="max-w-4xl mx-auto">
       <style>{`
-        @keyframes timeline-flow {
-          0% { background-position: 0% -100%; }
-          100% { background-position: 0% 100%; }
+        @keyframes timeline-flow-translate {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100%); }
         }
       `}</style>
       {steps.map((item, index) => (
@@ -23,8 +23,8 @@ const Timeline = ({ steps }) => {
               <div 
                 className="w-full h-full bg-gradient-to-b from-transparent via-[#D4AF37] to-transparent" 
                 style={{
-                  backgroundSize: '100% 200%',
-                  animation: 'timeline-flow 4s linear infinite'
+                  animation: 'timeline-flow-translate 4s linear infinite',
+                  willChange: 'transform'
                 }}
               />
             </div>

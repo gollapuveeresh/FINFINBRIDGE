@@ -26,8 +26,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class LoanCaseService {
 
-    private static final List<String> DEFAULT_DOCS =
-            List.of("PAN Card", "Aadhaar Card", "Income Proof", "Bank Statements (6 months)", "Address Proof");
+    private static final List<String> DEFAULT_DOCS = List.of("PAN Card", "Aadhaar Card", "Income Proof",
+            "Bank Statements (6 months)", "Address Proof");
 
     private final LoanCaseRepository loanCaseRepository;
     private final UserRepository userRepository;
@@ -35,6 +35,7 @@ public class LoanCaseService {
     private final SequenceGenerator sequenceGenerator;
     private final ProposalRepository proposalRepository;
     private final ProposalService proposalService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<LoanCaseResponse> getForUser(User user) {
@@ -61,7 +62,8 @@ public class LoanCaseService {
             if (client == null && lead != null && lead.getConvertedClient() != null)
                 client = lead.getConvertedClient();
         }
-        // Loan cases require a client; fall back to the consultant only to satisfy the FK in demo data.
+        // Loan cases require a client; fall back to the consultant only to satisfy the
+        // FK in demo data.
         lc.setClient(client != null ? client : consultant);
         lc.setLoanType(str(body.get("loanType")));
         lc.setRequestedAmount(bd(body.get("requestedAmount")));
@@ -89,43 +91,56 @@ public class LoanCaseService {
             }
             lc.setStage(newStage);
         }
- 
+
         Map<String, Object> elig = asMap(body.get("eligibility"));
         if (elig != null) {
             lc.setCreditScore(in(elig.get("creditScore")));
             lc.setDti(bd(elig.get("dti")));
             lc.setLtv(bd(elig.get("ltv")));
             lc.setEligible(bool(elig.get("eligible")));
-            if (elig.get("analystNote") != null) lc.setAnalystNote(str(elig.get("analystNote")));
+            if (elig.get("analystNote") != null)
+                lc.setAnalystNote(str(elig.get("analystNote")));
         }
- 
+
         Map<String, Object> rec = asMap(body.get("recommendation"));
         if (rec != null) {
-            if (rec.get("recommendedBank") != null) lc.setRecommendedBank(str(rec.get("recommendedBank")));
+            if (rec.get("recommendedBank") != null)
+                lc.setRecommendedBank(str(rec.get("recommendedBank")));
             lc.setRecommendedRate(bd(rec.get("recommendedRate")));
             lc.setRecommendedTenure(in(rec.get("recommendedTenure")));
             lc.setRecommendedEmi(bd(rec.get("recommendedEMI")));
-            if (rec.get("note") != null) lc.setRecommendationNote(str(rec.get("note")));
-            if (rec.get("sentToClient") != null) lc.setSentToClient(bool(rec.get("sentToClient")));
+            if (rec.get("note") != null)
+                lc.setRecommendationNote(str(rec.get("note")));
+            if (rec.get("sentToClient") != null)
+                lc.setSentToClient(bool(rec.get("sentToClient")));
         }
- 
+
         Map<String, Object> dec = asMap(body.get("clientDecision"));
         if (dec != null) {
-            if (dec.get("status") != null) lc.setClientDecision(str(dec.get("status")));
-            if (dec.get("decidedAt") != null) lc.setDecidedAt(inst(dec.get("decidedAt")));
-            if (dec.get("feedback") != null) lc.setClientFeedback(str(dec.get("feedback")));
+            if (dec.get("status") != null)
+                lc.setClientDecision(str(dec.get("status")));
+            if (dec.get("decidedAt") != null)
+                lc.setDecidedAt(inst(dec.get("decidedAt")));
+            if (dec.get("feedback") != null)
+                lc.setClientFeedback(str(dec.get("feedback")));
         }
- 
+
         Map<String, Object> bank = asMap(body.get("bankProcessing"));
         if (bank != null) {
-            if (bank.get("applicationRef") != null) lc.setApplicationRef(str(bank.get("applicationRef")));
-            if (bank.get("submittedDate") != null) lc.setSubmittedDate(ld(bank.get("submittedDate")));
-            if (bank.get("sanctionedAt") != null) lc.setSanctionedAt(inst(bank.get("sanctionedAt")));
-            if (bank.get("status") != null) lc.setBankStatus(str(bank.get("status")));
-            if (bank.get("remarks") != null) lc.setBankRemarks(str(bank.get("remarks")));
+            if (bank.get("applicationRef") != null)
+                lc.setApplicationRef(str(bank.get("applicationRef")));
+            if (bank.get("submittedDate") != null)
+                lc.setSubmittedDate(ld(bank.get("submittedDate")));
+            if (bank.get("sanctionedAt") != null)
+                lc.setSanctionedAt(inst(bank.get("sanctionedAt")));
+            if (bank.get("status") != null)
+                lc.setBankStatus(str(bank.get("status")));
+            if (bank.get("remarks") != null)
+                lc.setBankRemarks(str(bank.get("remarks")));
         }
- 
-        if (body.get("invoiceId") != null) lc.setInvoiceId(UUID.fromString(body.get("invoiceId").toString()));
+
+        if (body.get("invoiceId") != null)
+            lc.setInvoiceId(UUID.fromString(body.get("invoiceId").toString()));
 
         if (transitioningToApproval) {
             createProposalForLoanCase(lc);
@@ -163,6 +178,16 @@ public class LoanCaseService {
         // Sync proposal to organization B2B portal
         proposalService.syncToOrgProposal(saved);
         log.info("Automatically generated CRM proposal {} for LoanCase {}", saved.getId(), lc.getCaseId());
+
+        // Notify client
+        try {
+            if (saved.getClient() != null) {
+                notificationService.create(saved.getClient(), "proposal", "New Proposal",
+                        "A new proposal has been prepared for you: \"" + saved.getTitle() + "\". Please review and approve/reject.");
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify client of new proposal: {}", e.getMessage());
+        }
     }
 
     @Transactional
@@ -171,9 +196,29 @@ public class LoanCaseService {
         LoanCaseDocument doc = lc.getDocuments().stream().filter(d -> d.getId().equals(docId)).findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("Document not found: " + docId));
         doc.setStatus(status);
-        if ("Rejected".equals(status)) doc.setRejectionNote(rejectionNote != null ? rejectionNote : "");
-        if ("Uploaded".equals(status) || "Verified".equals(status)) doc.setUploadedAt(Instant.now());
-        return toResponse(loanCaseRepository.save(lc));
+        if ("Rejected".equals(status))
+            doc.setRejectionNote(rejectionNote != null ? rejectionNote : "");
+        if ("Uploaded".equals(status) || "Verified".equals(status))
+            doc.setUploadedAt(Instant.now());
+        
+        LoanCaseResponse res = toResponse(loanCaseRepository.save(lc));
+
+        // Notify client
+        try {
+            if (lc.getClient() != null) {
+                if ("Verified".equals(status)) {
+                    notificationService.create(lc.getClient(), "document", "Document Verified",
+                            "Your document \"" + doc.getName() + "\" has been verified successfully.");
+                } else if ("Rejected".equals(status)) {
+                    notificationService.create(lc.getClient(), "document", "Document Rejected",
+                            "Your document \"" + doc.getName() + "\" has been rejected. Reason: " + rejectionNote);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify client of document status update: {}", e.getMessage());
+        }
+
+        return res;
     }
 
     @Transactional
@@ -213,7 +258,8 @@ public class LoanCaseService {
         EmiScheduleItem emi = lc.getEmiSchedule().stream().filter(e -> e.getId().equals(emiId)).findFirst()
                 .orElseThrow(() -> new ResourceNotFoundException("EMI not found: " + emiId));
         emi.setStatus(status);
-        if ("Paid".equals(status)) emi.setPaidDate(paidDate != null ? ld(paidDate) : LocalDate.now());
+        if ("Paid".equals(status))
+            emi.setPaidDate(paidDate != null ? ld(paidDate) : LocalDate.now());
         return toResponse(loanCaseRepository.save(lc));
     }
 
@@ -234,7 +280,10 @@ public class LoanCaseService {
                 .orElseThrow(() -> new ResourceNotFoundException("Loan case not found: " + id));
     }
 
-    /** Load and enforce that the acting user may mutate this case (consultants → own cases only). */
+    /**
+     * Load and enforce that the acting user may mutate this case (consultants → own
+     * cases only).
+     */
     private LoanCase loadOwned(UUID id, User actor) {
         LoanCase lc = load(id);
         OwnershipGuard.assertConsultantOwns(actor, lc.getConsultant(), "loan case");
@@ -243,22 +292,29 @@ public class LoanCaseService {
 
     private LoanCaseResponse toResponse(LoanCase lc) {
         var client = lc.getClient() != null
-                ? new LoanCaseResponse.Ref(lc.getClient().getId(), lc.getClient().getName()) : null;
+                ? new LoanCaseResponse.Ref(lc.getClient().getId(), lc.getClient().getName())
+                : null;
         var consultant = lc.getConsultant() != null
-                ? new LoanCaseResponse.Ref(lc.getConsultant().getId(), lc.getConsultant().getName()) : null;
+                ? new LoanCaseResponse.Ref(lc.getConsultant().getId(), lc.getConsultant().getName())
+                : null;
         var docs = lc.getDocuments().stream().map(d -> new LoanCaseResponse.DocumentDto(
-                d.getId(), d.getName(), d.getCategory(), d.getStatus(), d.getRejectionNote(), d.getUploadedAt())).toList();
+                d.getId(), d.getName(), d.getCategory(), d.getStatus(), d.getRejectionNote(), d.getUploadedAt()))
+                .toList();
         var emis = lc.getEmiSchedule().stream().map(e -> new LoanCaseResponse.EmiDto(
-                e.getId(), e.getMonth(), e.getDueDate(), e.getAmount(), e.getPenalty(), e.getPaidDate(), e.getStatus())).toList();
+                e.getId(), e.getMonth(), e.getDueDate(), e.getAmount(), e.getPenalty(), e.getPaidDate(), e.getStatus()))
+                .toList();
         var notes = lc.getNotes().stream().map(n -> new LoanCaseResponse.NoteDto(
                 n.getText(), n.getAddedBy(), n.getAddedAt())).toList();
 
         return new LoanCaseResponse(
-                lc.getId(), lc.getCaseId(), client, consultant, lc.getLoanType(), lc.getRequestedAmount(), lc.getStage(),
+                lc.getId(), lc.getCaseId(), client, consultant, lc.getLoanType(), lc.getRequestedAmount(),
+                lc.getStage(),
                 docs,
-                new LoanCaseResponse.Eligibility(lc.getCreditScore(), lc.getDti(), lc.getLtv(), lc.getEligible(), lc.getAnalystNote()),
+                new LoanCaseResponse.Eligibility(lc.getCreditScore(), lc.getDti(), lc.getLtv(), lc.getEligible(),
+                        lc.getAnalystNote()),
                 new LoanCaseResponse.Recommendation(lc.getRecommendedBank(), lc.getRecommendedRate(),
-                        lc.getRecommendedTenure(), lc.getRecommendedEmi(), lc.getRecommendationNote(), lc.getSentToClient()),
+                        lc.getRecommendedTenure(), lc.getRecommendedEmi(), lc.getRecommendationNote(),
+                        lc.getSentToClient()),
                 new LoanCaseResponse.ClientDecision(lc.getClientDecision(), lc.getDecidedAt(), lc.getClientFeedback()),
                 new LoanCaseResponse.BankProcessing(lc.getApplicationRef(), lc.getSubmittedDate(),
                         lc.getSanctionedAt(), lc.getBankStatus(), lc.getBankRemarks()),
@@ -268,29 +324,52 @@ public class LoanCaseService {
 
     // ── JSON value coercion helpers ──────────────────────────────────────────
     @SuppressWarnings("unchecked")
-    private Map<String, Object> asMap(Object o) { return o instanceof Map ? (Map<String, Object>) o : null; }
-    private String str(Object o) { return o == null ? null : o.toString(); }
-    private BigDecimal bd(Object o) {
-        if (o == null || o.toString().isBlank()) return null;
-        try { return new BigDecimal(o.toString()); } catch (NumberFormatException e) { return null; }
+    private Map<String, Object> asMap(Object o) {
+        return o instanceof Map ? (Map<String, Object>) o : null;
     }
+
+    private String str(Object o) {
+        return o == null ? null : o.toString();
+    }
+
+    private BigDecimal bd(Object o) {
+        if (o == null || o.toString().isBlank())
+            return null;
+        try {
+            return new BigDecimal(o.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private Integer in(Object o) {
         BigDecimal b = bd(o);
         return b == null ? null : b.intValue();
     }
-    private Boolean bool(Object o) { return o == null ? null : Boolean.valueOf(o.toString()); }
+
+    private Boolean bool(Object o) {
+        return o == null ? null : Boolean.valueOf(o.toString());
+    }
+
     private LocalDate ld(Object o) {
-        if (o == null || o.toString().isBlank()) return null;
+        if (o == null || o.toString().isBlank())
+            return null;
         String s = o.toString();
         return LocalDate.parse(s.length() >= 10 ? s.substring(0, 10) : s);
     }
+
     private Instant inst(Object o) {
-        if (o == null || o.toString().isBlank()) return null;
+        if (o == null || o.toString().isBlank())
+            return null;
         String s = o.toString();
-        try { return Instant.parse(s); }
-        catch (Exception e) {
-            try { return LocalDate.parse(s.substring(0, 10)).atStartOfDay(java.time.ZoneOffset.UTC).toInstant(); }
-            catch (Exception ex) { return null; }
+        try {
+            return Instant.parse(s);
+        } catch (Exception e) {
+            try {
+                return LocalDate.parse(s.substring(0, 10)).atStartOfDay(java.time.ZoneOffset.UTC).toInstant();
+            } catch (Exception ex) {
+                return null;
+            }
         }
     }
 }

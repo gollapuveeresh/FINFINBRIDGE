@@ -44,8 +44,15 @@ public class LeadController {
     @Operation(summary = "Get all leads with optional department/status filter")
     public ResponseEntity<Map<String, Object>> getAll(
             @RequestParam(required = false) String department,
-            @RequestParam(required = false) String status) {
-        List<LeadResponse> leads = leadService.getFiltered(department, status)
+            @RequestParam(required = false) String status,
+            @AuthenticationPrincipal User user) {
+        String finalDepartment = department;
+        if (user != null && ("consultant".equalsIgnoreCase(user.getRole()) || "department-admin".equalsIgnoreCase(user.getRole()))) {
+            if (user.getDepartment() != null && !user.getDepartment().isBlank()) {
+                finalDepartment = user.getDepartment();
+            }
+        }
+        List<LeadResponse> leads = leadService.getFiltered(finalDepartment, status)
                 .stream().map(mapper::toLeadResponse).toList();
         return ResponseEntity.ok(Map.of("leads", leads));
     }

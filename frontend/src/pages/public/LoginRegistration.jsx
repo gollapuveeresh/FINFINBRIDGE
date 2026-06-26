@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const COUNTRY_CODES = [
   { code: '+93', flag: '🇦🇫', name: 'Afghanistan' },
@@ -122,6 +123,8 @@ export default function LoginRegistration({ portalType = 'client' }) {
   const { login, register, logout, checkProfile } = useAuth();
   const navigate = useNavigate();
 
+  const [showVerifyModal, setShowVerifyModal] = useState(false);
+
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -209,7 +212,12 @@ export default function LoginRegistration({ portalType = 'client' }) {
       }
       await navigateByRole(loggedUser);
     } catch (err) {
-      setError(err.message || 'Login failed. Please check credentials.');
+      const msg = err.message || '';
+      if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('email not verified')) {
+        setShowVerifyModal(true);
+      } else {
+        setError(msg || 'Login failed. Please check credentials.');
+      }
     }
   };
 
@@ -546,6 +554,42 @@ export default function LoginRegistration({ portalType = 'client' }) {
           <Link to="/contact" className="text-label-sm text-on-primary-container hover:text-secondary-fixed transition-colors">Contact Support</Link>
         </footer>
       </main>
+
+      <AnimatePresence>
+        {showVerifyModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-[#112240] border border-secondary/20 rounded-2xl p-6 shadow-2xl relative animate-in"
+            >
+              <button
+                onClick={() => setShowVerifyModal(false)}
+                className="absolute top-4 right-4 text-text-muted hover:text-white transition-colors bg-transparent border-0 cursor-pointer"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+
+              <div className="text-center">
+                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="material-symbols-outlined text-secondary text-4xl">mail</span>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">Verify Your Email</h3>
+                <p className="text-text-muted text-sm mb-6 leading-relaxed">
+                  Your email address is not verified yet. We sent a verification link to your registered email. Please check your inbox (and spam folder) and verify your account to log in.
+                </p>
+                <button
+                  onClick={() => setShowVerifyModal(false)}
+                  className="w-full btn-primary py-3 font-semibold"
+                >
+                  Got It
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

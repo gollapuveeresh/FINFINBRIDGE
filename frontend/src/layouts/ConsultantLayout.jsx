@@ -1,13 +1,30 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export default function ConsultantLayout({ children }) {
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-bg">
-      <Sidebar role="consultant" />
-      <main className="ml-[280px] min-h-screen p-margin-desktop">
+      <Sidebar role="consultant" isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      
+      {/* Mobile topbar/header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border flex items-center justify-between px-6 z-40">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors flex items-center justify-center"
+            title="Open Menu"
+          >
+            <span className="material-symbols-outlined">menu</span>
+          </button>
+          <span className="font-bold text-accent">FinBridge Advisor Desk</span>
+        </div>
+      </div>
+
+      <main className="ml-0 lg:ml-[280px] pt-14 lg:pt-0 min-h-screen p-4 lg:p-margin-desktop">
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -17,7 +34,7 @@ export default function ConsultantLayout({ children }) {
           {children}
         </motion.div>
       </main>
-      <footer className="ml-[280px] py-6 px-margin-desktop bg-surface-hover-lowest flex flex-col md:flex-row justify-between items-center border-t border-border text-text-muted text-body-sm">
+      <footer className="ml-0 lg:ml-[280px] py-6 px-4 lg:px-margin-desktop bg-surface-hover-lowest flex flex-col md:flex-row justify-between items-center border-t border-border text-text-muted text-body-sm">
         <p>© 2026 FinBridge Solutions. All rights reserved.</p>
         <div className="flex gap-8 mt-3 md:mt-0">
           <Link to="/consultant/dashboard" className="hover:underline decoration-secondary transition-opacity">Privacy Policy</Link>

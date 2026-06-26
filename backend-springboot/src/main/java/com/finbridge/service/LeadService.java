@@ -45,6 +45,7 @@ public class LeadService {
     private final ServiceRequestRepository serviceRequestRepository;
     private final OrganizationProposalRepository organizationProposalRepository;
     private final ConsultationRepository consultationRepository;
+    private final EmailService emailService;
 
     /** Result of converting a lead into a client account. */
     public record ConversionResult(boolean isNewClient, String tempPassword, User client) {
@@ -102,6 +103,16 @@ public class LeadService {
         lead.setPriority(scoreToPriority(lead.getScore()));
         Lead saved = leadRepository.save(lead);
         log.info("Lead created: {} score={} priority={}", saved.getLeadId(), saved.getScore(), saved.getPriority());
+
+        try {
+            for (User crmAdmin : userRepository.findByRoleAndActiveTrue("crm-admin")) {
+                notificationService.create(crmAdmin, "lead", "New Lead Created",
+                        "A new lead has been created: " + saved.getName() + " (" + saved.getLeadId() + ") for department: " + saved.getDepartment() + ".");
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify CRM admins of new lead: {}", e.getMessage());
+        }
+
         return saved;
     }
 
@@ -126,12 +137,13 @@ public class LeadService {
             lead.setServiceType(patch.serviceType());
         if (patch.status() != null) {
             lead.setStatus(patch.status());
-            if ("qualified".equals(patch.status()) || "new".equals(patch.status()) || "pending_fee".equals(patch.status())) {
+            if ("qualified".equals(patch.status()) || "new".equals(patch.status())
+                    || "pending_fee".equals(patch.status())) {
                 lead.setAssignedConsultant(null);
             }
         }
         if (patch.department() != null)
-            lead.setDepartment(patch.department());
+            lead.setDepartment(normalizeDepartment(patch.department()));
         if (patch.priority() != null)
             lead.setPriority(patch.priority());
         if (patch.score() != null)
@@ -139,6 +151,12 @@ public class LeadService {
         if (patch.assignedConsultant() != null) {
             userRepository.findById(patch.assignedConsultant()).ifPresent(consultant -> {
                 lead.setAssignedConsultant(consultant);
+                try {
+                    notificationService.create(consultant, "lead", "Lead Assigned",
+                            "You have been assigned as the consultant for Lead: " + lead.getName() + " (" + lead.getLeadId() + ").");
+                } catch (Exception e) {
+                    log.error("Failed to notify consultant of assignment: {}", e.getMessage());
+                }
                 organizationUserRepository.findByEmailIgnoreCase(lead.getEmail()).ifPresent(orgUser -> {
                     Organization org = orgUser.getOrganization();
                     if (org != null) {
@@ -156,7 +174,8 @@ public class LeadService {
                     }
                 });
 
-                // Automatically ensure a client User exists and has a pending Consultation scheduled
+                // Automatically ensure a client User exists and has a pending Consultation
+                // scheduled
                 User clientUser = userRepository.findByEmailIgnoreCase(lead.getEmail()).orElseGet(() -> {
                     User u = new User();
                     u.setName(lead.getName());
@@ -164,13 +183,15 @@ public class LeadService {
                     u.setPhone(lead.getPhone());
                     u.setRole("client");
                     u.setDepartment(lead.getDepartment());
-                    u.setPassword(passwordEncoder.encode("FB" + java.util.UUID.randomUUID().toString().substring(0, 8)));
+                    u.setPassword(
+                            passwordEncoder.encode("FB" + java.util.UUID.randomUUID().toString().substring(0, 8)));
                     return userRepository.save(u);
                 });
 
                 boolean hasConsultation = consultationRepository.findByClientIdOrderByCreatedAtDesc(clientUser.getId())
                         .stream()
-                        .anyMatch(c -> c.getDepartment() != null && c.getDepartment().equalsIgnoreCase(lead.getDepartment()));
+                        .anyMatch(c -> c.getDepartment() != null
+                                && c.getDepartment().equalsIgnoreCase(lead.getDepartment()));
 
                 if (!hasConsultation) {
                     Consultation consultation = new Consultation();
@@ -181,20 +202,29 @@ public class LeadService {
                     consultation.setStatus("pending");
                     consultation.setClientNotes(lead.getRequirement() != null ? lead.getRequirement() : "");
                     consultationRepository.save(consultation);
-                    log.info("Created pending Consultation for client {} and consultant {}", clientUser.getEmail(), consultant.getName());
+                    log.info("Created pending Consultation for client {} and consultant {}", clientUser.getEmail(),
+                            consultant.getName());
                 } else {
                     consultationRepository.findByClientIdOrderByCreatedAtDesc(clientUser.getId()).stream()
-                            .filter(c -> c.getDepartment() != null && c.getDepartment().equalsIgnoreCase(lead.getDepartment()))
+                            .filter(c -> c.getDepartment() != null
+                                    && c.getDepartment().equalsIgnoreCase(lead.getDepartment()))
                             .forEach(c -> {
                                 c.setConsultant(consultant);
                                 if (!"accepted".equalsIgnoreCase(c.getStatus())) {
                                     c.setStatus("pending");
                                 }
                                 consultationRepository.save(c);
-                                log.info("Updated Consultation consultant to {} for client {}", consultant.getName(), clientUser.getEmail());
+                                log.info("Updated Consultation consultant to {} for client {}", consultant.getName(),
+                                        clientUser.getEmail());
                             });
                 }
             });
+
+            // Send email notification to client about assigned consultant
+            emailService.sendConsultantAssigned(
+                    lead.getEmail(), lead.getName(),
+                    userRepository.findById(patch.assignedConsultant()).map(User::getName).orElse("Your Consultant"),
+                    lead.getDepartment(), lead.getId());
         }
         if (patch.followUpDate() != null)
             lead.setFollowUpDate(patch.followUpDate());
@@ -219,14 +249,15 @@ public class LeadService {
      */
     @Transactional
     public Lead sendToDepartment(UUID id, String department, String notes, String actorName) {
+        String normalizedDept = normalizeDepartment(department);
         Lead lead = getById(id);
-        lead.setDepartment(department);
+        lead.setDepartment(normalizedDept);
         if (!"won".equals(lead.getStatus()))
             lead.setStatus("assigned");
         if (notes != null && !notes.isBlank()) {
             LeadNote note = new LeadNote();
             note.setLead(lead);
-            note.setText("Routed to " + department + ": " + notes);
+            note.setText("Routed to " + normalizedDept + ": " + notes);
             note.setAddedBy(actorName != null ? actorName : "CRM");
             note.setAddedAt(Instant.now());
             lead.getNotes().add(note);
@@ -234,12 +265,12 @@ public class LeadService {
         Lead saved = leadRepository.save(lead);
 
         // Notify every department admin for this department.
-        for (User admin : userRepository.findByRoleAndDepartmentAndActiveTrue("department-admin", department)) {
+        for (User admin : userRepository.findByRoleAndDepartmentAndActiveTrue("department-admin", normalizedDept)) {
             notificationService.create(admin, "lead",
-                    "New lead routed to " + department,
+                    "New lead routed to " + normalizedDept,
                     "Lead " + lead.getName() + " (" + lead.getLeadId() + ") has been assigned to your department.");
         }
-        log.info("Lead {} routed to department {}", lead.getLeadId(), department);
+        log.info("Lead {} routed to department {}", lead.getLeadId(), normalizedDept);
         return saved;
     }
 
@@ -359,9 +390,10 @@ public class LeadService {
     @Transactional
     public Lead sendFeeProposal(UUID id, User deptAdmin) {
         Lead lead = getById(id);
-        
+
         OrganizationUser orgUser = organizationUserRepository.findByEmailIgnoreCase(lead.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("B2B Organization user not found for lead email: " + lead.getEmail()));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "B2B Organization user not found for lead email: " + lead.getEmail()));
         Organization org = orgUser.getOrganization();
         if (org == null) {
             throw new ResourceNotFoundException("Organization not found for user: " + orgUser.getEmail());
@@ -374,7 +406,8 @@ public class LeadService {
         List<ServiceRequest> requests = serviceRequestRepository.findByOrganizationIdAndActiveTrue(org.getId());
         for (ServiceRequest sr : requests) {
             if (sr.getDepartmentId() != null && sr.getDepartmentId().equalsIgnoreCase(lead.getDepartment())) {
-                if (matchedSr == null || (sr.getCreatedAt() != null && matchedSr.getCreatedAt() != null && sr.getCreatedAt().isAfter(matchedSr.getCreatedAt()))) {
+                if (matchedSr == null || (sr.getCreatedAt() != null && matchedSr.getCreatedAt() != null
+                        && sr.getCreatedAt().isAfter(matchedSr.getCreatedAt()))) {
                     matchedSr = sr;
                 }
             }
@@ -405,12 +438,21 @@ public class LeadService {
             log.info("ServiceRequest {} status updated to pending_payment", matchedSr.getRequestNumber());
         }
 
+        // Send email notification to client about the fee proposal
+        if (orgUser.getEmail() != null) {
+            emailService.sendProposalCreated(
+                    orgUser.getEmail(), orgUser.getName(),
+                    proposal.getTitle(), proposal.getDepartment(), proposal.getId());
+            log.info("Sent proposal email to {} for organization {}", orgUser.getEmail(), org.getCompanyName());
+        }
+
         log.info("Sent fee proposal of {} for lead {}, organization {}", fee, lead.getLeadId(), org.getCompanyName());
         return lead;
     }
 
     private BigDecimal getFeeForDepartment(String dept) {
-        if (dept == null) return new BigDecimal("2000");
+        if (dept == null)
+            return new BigDecimal("2000");
         return switch (dept.toLowerCase()) {
             case "loans" -> new BigDecimal("5000");
             case "tax" -> new BigDecimal("2000");
@@ -421,8 +463,18 @@ public class LeadService {
         };
     }
 
+    private String normalizeDepartment(String dept) {
+        if (dept == null)
+            return null;
+        return switch (dept.toLowerCase()) {
+            case "investment" -> "investments";
+            default -> dept;
+        };
+    }
+
     private String getDepartmentName(String dept) {
-        if (dept == null) return "Consultation";
+        if (dept == null)
+            return "Consultation";
         return switch (dept.toLowerCase()) {
             case "loans" -> "Loans";
             case "tax" -> "Tax Planning / Filing";

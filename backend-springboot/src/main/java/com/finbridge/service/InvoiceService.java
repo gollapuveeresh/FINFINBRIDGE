@@ -36,6 +36,8 @@ public class InvoiceService {
     private final PaymentService paymentService;
     private final OrganizationUserRepository organizationUserRepository;
     private final OrganizationPaymentRepository organizationPaymentRepository;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Transactional(readOnly = true)
     public List<InvoiceResponse> getAll() {
@@ -96,6 +98,32 @@ public class InvoiceService {
         log.info("Invoice created: {} total={}", saved.getInvoiceNumber(), saved.getTotalAmount());
         // Mirror to the client's B2B portal if the client is an organization user (so they can pay it).
         syncToOrgPayment(saved);
+
+        // Email the client about the new invoice
+        if (client.getEmail() != null) {
+            emailService.sendPaymentRequested(client.getEmail(), client.getName(),
+                    saved.getInvoiceNumber(), saved.getTotalAmount(), saved.getDueDate(), saved.getId());
+        }
+
+        // Notify consultant and department admins when invoice is created
+        try {
+            String title = "Invoice Generated";
+            String message = "A new invoice " + saved.getInvoiceNumber() + " has been generated for client " + saved.getClient().getName() + 
+                    " for amount ₹" + saved.getTotalAmount() + ".";
+            
+            // 1. Notify consultant
+            if (saved.getConsultant() != null) {
+                notificationService.create(saved.getConsultant(), "invoice", title, message);
+            }
+            
+            // 2. Notify department admins
+            for (User admin : userRepository.findByRoleAndDepartmentAndActiveTrue("department-admin", saved.getDepartment())) {
+                notificationService.create(admin, "invoice", title, message + " (Dept: " + saved.getDepartment() + ")");
+            }
+        } catch (Exception e) {
+            log.error("Failed to notify staff of invoice generation: {}", e.getMessage());
+        }
+
         return toResponse(saved);
     }
 

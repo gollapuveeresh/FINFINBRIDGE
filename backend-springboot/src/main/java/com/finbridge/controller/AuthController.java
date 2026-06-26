@@ -165,8 +165,14 @@ public class AuthController {
     @PreAuthorize(SecurityRoles.STAFF)
     @Operation(summary = "List clients for the authenticated consultant")
     public ResponseEntity<Map<String, Object>> consultantClients(@AuthenticationPrincipal User user) {
+        List<User> clients;
+        if (user != null && "consultant".equalsIgnoreCase(user.getRole()) && user.getDepartment() != null && !user.getDepartment().isBlank()) {
+            clients = userService.getClientsByDepartment(user.getDepartment());
+        } else {
+            clients = userService.getClients();
+        }
         return ResponseEntity.ok(Map.of("clients",
-                userService.getClients().stream().map(mapper::toStaffResponse).toList()));
+                clients.stream().map(mapper::toStaffResponse).toList()));
     }
 
     @GetMapping("/users")

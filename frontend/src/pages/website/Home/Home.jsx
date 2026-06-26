@@ -1,14 +1,39 @@
 // src/pages/Home.jsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+
+// Only mounts children when scrolled into view, skips entirely on mobile
+const LazyCanvas = ({ children }) => {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mobile = window.innerWidth < 768;
+    setIsMobile(mobile);
+    if (mobile) return;
+
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { rootMargin: '200px' }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  if (isMobile) return <div ref={ref} />;
+  return <div ref={ref} className="absolute inset-0">{visible ? children : null}</div>;
+};
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Award, Users, TrendingUp, Play, Pause, X, PieChart, Target, Briefcase, Phone, Mail, MapPin, Clock } from 'lucide-react';
 import AnimatedCounter from '../../../components/AnimatedCounter';
 import Timeline from '../../../components/Timeline';
 import CaseStudyCard from '../../../components/CaseStudyCard';
-import ThreeWays from '../Services/ThreeWays';
-import ServicesWeOffer from '../Services/ServicesWeOffer';
-import LeadCaptureForm from '../../../components/LeadCaptureForm';
+const ThreeWays = React.lazy(() => import('../Services/ThreeWays'));
+const ServicesWeOffer = React.lazy(() => import('../Services/ServicesWeOffer'));
+const LeadCaptureForm = React.lazy(() => import('../../../components/LeadCaptureForm'));
 const departmentsData = [
   { 
     icon: '📋', 
@@ -1278,6 +1303,20 @@ const Home = () => {
   const [isLooping, setIsLooping] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Defer video loading so the 21MB file doesn't block initial paint
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && !video.src) {
+      // Small delay to let critical rendering finish first
+      const timer = setTimeout(() => {
+        video.src = '/assets/videos/hero-video.mp4';
+        video.load();
+        video.play().catch(() => {});
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+
   const toggleLoop = () => {
     if (videoRef.current) {
       if (isLooping) {
@@ -1374,25 +1413,55 @@ const Home = () => {
   return (
     <div className="bg-[#0A192F] text-white">
       {/* Hero Section */}
-      <section className="min-h-[100dvh] pt-20 flex items-center justify-center relative overflow-hidden">
-        {/* Background Video */}
+      <section className="min-h-0 md:min-h-[100dvh] py-12 md:py-0 pt-16 md:pt-20 flex items-center justify-center relative overflow-hidden">
+        {/* Fallback Premium Gradient Background on Mobile/Tablet */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#0A192F] via-[#112240] to-[#0A192F] z-0 md:hidden overflow-hidden">
+          {/* Slow Breathing Ambient Glows */}
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.25, 1],
+              opacity: [0.12, 0.22, 0.12]
+            }}
+            transition={{ 
+              duration: 8, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+            className="absolute top-1/4 left-1/4 w-[250px] h-[250px] bg-[#D4AF37] rounded-full blur-[80px] pointer-events-none"
+          />
+          <motion.div 
+            animate={{ 
+              scale: [1, 1.15, 1],
+              opacity: [0.25, 0.38, 0.25]
+            }}
+            transition={{ 
+              duration: 10, 
+              repeat: Infinity, 
+              ease: "easeInOut",
+              delay: 1.5
+            }}
+            className="absolute bottom-1/4 right-1/4 w-[250px] h-[250px] bg-[#1E3A8A] rounded-full blur-[90px] pointer-events-none"
+          />
+          {/* Canvas removed for mobile performance — gradient glows provide sufficient ambiance */}
+        </div>
+
+        {/* Background Video (Desktop only) — src loaded via useEffect to defer 21MB download */}
         <video
           ref={videoRef}
-          src="/assets/videos/hero-video.mp4"
-          autoPlay
           loop
           muted
           playsInline
-          className="absolute inset-0 w-full h-full object-cover z-0 filter brightness-[1.25] contrast-[1.08] saturate-[1.05]"
+          preload="none"
+          className="hidden md:block absolute inset-0 w-full h-full object-cover z-0 filter brightness-[1.25] contrast-[1.08] saturate-[1.05]"
         />
 
-        {/* Minimal ambient overlays to keep the video bright and crisp */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0A192F]/35 via-transparent to-[#0A192F]/40 pointer-events-none z-0" />
+        {/* Contrast Overlay for mobile and desktop readability */}
+        <div className="absolute inset-0 bg-black/20 md:bg-gradient-to-b md:from-[#0A192F]/35 md:via-transparent md:to-[#0A192F]/40 pointer-events-none z-10" />
 
-        {/* Pause/Play Loop Toggle */}
+        {/* Pause/Play Loop Toggle (Visible only on desktop where video is running) */}
         <button
           onClick={toggleLoop}
-          className="absolute top-28 right-6 md:right-12 z-20 flex items-center gap-2 text-white/60 hover:text-white text-[11px] font-medium tracking-widest bg-black/15 hover:bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 opacity-70 hover:opacity-100 transition-all cursor-pointer uppercase shadow-md"
+          className="hidden md:flex absolute top-28 right-6 md:right-12 z-20 items-center gap-2 text-white/60 hover:text-white text-[11px] font-medium tracking-widest bg-black/15 hover:bg-black/40 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-white/10 opacity-70 hover:opacity-100 transition-all cursor-pointer uppercase shadow-md"
         >
           <span>{isLooping ? 'Pause loop' : 'Play loop'}</span>
           {isLooping ? (
@@ -1402,13 +1471,69 @@ const Home = () => {
           )}
         </button>
 
-        {/* Main Hero Container (Empty to allow background video text to be fully visible without overlap) */}
-        <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center text-center h-[20vh] pointer-events-none" />
+        {/* Mobile/Tablet Hero Content (Visible only on screens < md with premium animations) */}
+        <motion.div 
+          initial={{ opacity: 0, y: 25 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+          className="md:hidden max-w-xl mx-auto px-6 text-center relative z-20 flex flex-col items-center justify-center gap-6"
+        >
+          <motion.span 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="text-[#D4AF37] text-xs font-mono tracking-[0.25em] uppercase font-bold bg-[#D4AF37]/10 px-3 py-1.5 rounded-full border border-[#D4AF37]/20"
+          >
+            Strategic Financial Advisory
+          </motion.span>
+          
+          <motion.h1 
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.7 }}
+            className="text-4xl sm:text-5xl font-bold font-serif tracking-tight text-white leading-tight"
+          >
+            Empowering Businesses, <span className="text-[#D4AF37]">Bridging Success.</span>
+          </motion.h1>
+          
+          <motion.p 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5, duration: 0.8 }}
+            className="text-gray-300 text-sm sm:text-base leading-relaxed"
+          >
+            FinBridge supports startups, SMEs, and enterprises through strategic consulting, tax optimization, growth capital assistance, and wealth management.
+          </motion.p>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+            className="flex flex-wrap justify-center gap-3 mt-2"
+          >
+            <Link 
+              to="/b2b/register" 
+              className="bg-[#D4AF37] hover:bg-white text-[#0A192F] px-6 py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all shadow-lg cursor-pointer"
+            >
+              Get Started
+            </Link>
+            <button 
+              onClick={openWatchFilmModal}
+              className="border border-white/20 hover:border-white text-white/80 hover:text-white px-6 py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center gap-1.5 bg-white/5"
+            >
+              <span>Watch Film</span>
+              <Play className="w-2.5 h-2.5 fill-current" />
+            </button>
+          </motion.div>
+        </motion.div>
 
-        {/* Scroll Hint */}
+        {/* Main Hero Container (Empty to allow background video text to be fully visible without overlap on desktop) */}
+        <div className="hidden md:block max-w-7xl mx-auto px-6 md:px-12 relative z-10 flex flex-col items-center text-center h-[20vh] pointer-events-none" />
+
+        {/* Scroll Hint (Desktop only) */}
         <div
           onClick={scrollToNextSection}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 cursor-pointer group opacity-60 hover:opacity-100 transition-opacity"
+          className="hidden md:flex absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex-col items-center gap-2 cursor-pointer group opacity-60 hover:opacity-100 transition-opacity"
         >
           <span className="text-[10px] md:text-xs font-semibold tracking-widest text-white/80 group-hover:text-white uppercase">
             Scroll to explore
@@ -1418,8 +1543,8 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Watch Film Button (Kept but integrated cleanly in the bottom right corner) */}
-        <div className="absolute bottom-8 right-6 md:right-12 z-20 flex flex-col items-end gap-1 opacity-50 hover:opacity-100 transition-all">
+        {/* Watch Film Button (Desktop only) */}
+        <div className="hidden md:flex absolute bottom-8 right-6 md:right-12 z-20 flex flex-col items-end gap-1 opacity-50 hover:opacity-100 transition-all">
           <button
             onClick={openWatchFilmModal}
             className="border border-white/20 hover:border-white text-white/70 hover:text-white px-4 py-2 rounded-full flex items-center gap-2 transition-all tracking-wider text-[9px] font-semibold group cursor-pointer bg-black/20 hover:bg-black/40 backdrop-blur-sm shadow-md uppercase"
@@ -1454,16 +1579,16 @@ const Home = () => {
       )}
       {/* Transform Financial Future Section */}
       <div id="threeways-section" className="scroll-mt-20">
-        <ThreeWays />
+        <React.Suspense fallback={null}><ThreeWays /></React.Suspense>
       </div>
 
       {/* Services We Offer Section */}
-      <ServicesWeOffer />
+      <React.Suspense fallback={null}><ServicesWeOffer /></React.Suspense>
 
       {/* Department Services Section */}
       <section className="pt-10 pb-10 bg-[#0A192F] border-t border-white/10 relative overflow-hidden">
         {/* 3D Geometric Floating Shapes Background */}
-        <DeptCanvasBackground />
+        <LazyCanvas><DeptCanvasBackground /></LazyCanvas>
 
         {/* Ambient Gradient Blobs */}
         <div className="absolute top-[-100px] left-[-50px] w-[400px] h-[400px] bg-gradient-to-tr from-[#D4AF37]/10 to-transparent rounded-full blur-[90px] pointer-events-none z-0 animate-pulse" />
@@ -1516,7 +1641,7 @@ const Home = () => {
       {/* Process Timeline */}
       <section className="pt-10 pb-20 relative overflow-hidden bg-black/10 border-t border-white/5">
         {/* Dynamic drifting background particles */}
-        <TimelineCanvasBackground />
+        <LazyCanvas><TimelineCanvasBackground /></LazyCanvas>
 
         <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
           <motion.div 
@@ -1535,7 +1660,7 @@ const Home = () => {
       {/* Why FinBridge Section */}
       <section className="py-14 bg-[#0A192F] border-t border-b border-white/10 relative overflow-hidden">
         {/* Flowing Sine Wave Ribbon Background */}
-        <WhyFinBridgeCanvas />
+        <LazyCanvas><WhyFinBridgeCanvas /></LazyCanvas>
         
         <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
 
@@ -1616,7 +1741,7 @@ const Home = () => {
             </div>
             <div>
               <div className="text-4xl font-bold text-[#D4AF37] mb-2">
-                4
+                <AnimatedCounter end={4} />
               </div>
               <div className="text-xs text-gray-400 uppercase tracking-wider font-sans font-medium">
                 Service Departments
@@ -1630,7 +1755,7 @@ const Home = () => {
       {/* Industries */}
       <section className="py-16 bg-[#0A192F] border-t border-b border-white/10 relative overflow-hidden">
         {/* Dynamic Connected Network background */}
-        <IndustriesCanvasBackground />
+        <LazyCanvas><IndustriesCanvasBackground /></LazyCanvas>
 
         {/* Ambient Gradient Blobs */}
         <div className="absolute top-[-100px] left-[-50px] w-[400px] h-[400px] bg-gradient-to-tr from-[#D4AF37]/8 to-transparent rounded-full blur-[100px] pointer-events-none z-0 animate-pulse" />
@@ -1710,7 +1835,7 @@ const Home = () => {
       {/* CTA */}
       <section className="py-28 bg-gradient-to-br from-[#0A192F] to-black border-t border-[#D4AF37]/20 relative overflow-hidden">
         {/* Animated Gold Space Dust background */}
-        <CTACanvasBackground />
+        <LazyCanvas><CTACanvasBackground /></LazyCanvas>
 
         {/* Ambient Gradient Radial overlay */}
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.05),transparent_65%)] pointer-events-none z-0" />
@@ -1730,7 +1855,7 @@ const Home = () => {
                 const contactSection = document.getElementById('contact-section');
                 if (contactSection) contactSection.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="inline-flex items-center gap-4 bg-[#D4AF37] hover:bg-white text-[#0A192F] px-12 py-5 rounded-3xl font-semibold text-xl transition-all group cursor-pointer"
+              className="inline-flex items-center gap-4 border border-[#D4AF37] text-[#D4AF37] hover:bg-[#D4AF37] hover:text-[#0A192F] px-12 py-5 rounded-3xl font-semibold text-xl transition-all group cursor-pointer"
             >
               SCHEDULE CONSULTATION
               <ArrowRight className="group-hover:translate-x-2 transition" />
@@ -1748,7 +1873,7 @@ const Home = () => {
       {/* Contact Section */}
       <section id="contact-section" className="py-24 bg-[#0A192F] border-t border-white/10 scroll-mt-20 relative overflow-hidden">
         {/* Curved communication grid background */}
-        <ContactCanvasBackground />
+        <LazyCanvas><ContactCanvasBackground /></LazyCanvas>
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid lg:grid-cols-12 gap-12">
             {/* Get In Touch Redirect & Office Info */}
@@ -1842,17 +1967,42 @@ const Home = () => {
                       whileInView={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.1 }}
                       viewport={{ once: true }}
-                      className="border-l-4 border-[#D4AF37] pl-8"
+                      className="border-l-4 border-[#D4AF37] pl-6 space-y-4"
                     >
-                      <div className="font-semibold text-xl mb-3">{office.city}</div>
-                      <div className="text-gray-400 text-sm leading-relaxed mb-4">{office.address}</div>
-                      <div className="flex flex-col gap-2 text-sm">
-                        <a href={`tel:${office.phone}`} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2">
-                          <Phone className="w-4 h-4" /> {office.phone}
+                      <div className="font-semibold text-xl text-white">{office.city}</div>
+                      
+                      <div className="space-y-3 text-sm">
+                        <div className="flex items-start gap-3 text-gray-400">
+                          <MapPin className="w-4 h-4 text-[#D4AF37]/80 shrink-0 mt-0.5" />
+                          <span>{office.address}</span>
+                        </div>
+                        
+                        <a 
+                          href={`tel:${office.phone}`} 
+                          className="flex items-center gap-3 text-gray-300 hover:text-[#D4AF37] transition-colors"
+                        >
+                          <Phone className="w-4 h-4 text-[#D4AF37]/80 shrink-0" />
+                          <span>{office.phone}</span>
                         </a>
-                        <a href={`mailto:${office.email}`} className="hover:text-[#D4AF37] transition-colors flex items-center gap-2">
-                          <Mail className="w-4 h-4" /> {office.email}
+                        
+                        <a 
+                          href={`mailto:${office.email}`} 
+                          className="flex items-center gap-3 text-gray-300 hover:text-[#D4AF37] transition-colors"
+                        >
+                          <Mail className="w-4 h-4 text-[#D4AF37]/80 shrink-0" />
+                          <span>{office.email}</span>
                         </a>
+                      </div>
+
+                      {/* Office Map */}
+                      <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 hover:border-[#D4AF37]/30 transition-all duration-300 shadow-md">
+                        <iframe 
+                          title="Office Map"
+                          src="https://maps.google.com/maps?q=Chittagong,%20Bangladesh&t=&z=14&ie=UTF8&iwloc=&output=embed" 
+                          className="w-full h-44 border-0 filter grayscale-[0.6] contrast-[1.15] hover:grayscale-0 transition-all duration-500"
+                          allowFullScreen="" 
+                          loading="lazy"
+                        />
                       </div>
                     </motion.div>
                   ))}

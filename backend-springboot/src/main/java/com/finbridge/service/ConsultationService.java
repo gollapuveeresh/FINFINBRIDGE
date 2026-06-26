@@ -34,6 +34,7 @@ public class ConsultationService {
     private final ConsultantPaymentRepository consultantPaymentRepository;
     private final OrganizationUserRepository organizationUserRepository;
     private final ServiceRequestRepository serviceRequestRepository;
+    private final com.finbridge.repository.ConsultationRecordingRepository consultationRecordingRepository;
 
     /** Returns consultations relevant to the given user based on their role. */
     @Transactional(readOnly = true)
@@ -62,13 +63,22 @@ public class ConsultationService {
     }
 
     @Transactional
-    public ConsultationResponse accept(@NonNull UUID id, String confirmedDate, String confirmedTime, User actor) {
+    public ConsultationResponse accept(@NonNull UUID id, String confirmedDate, String confirmedTime, Boolean recordingEnabled, User actor) {
         Consultation c = load(id);
         OwnershipGuard.assertConsultationAccess(actor, c.getClient(), c.getConsultant(), "consultation");
         c.setStatus("accepted");
         validateScheduleDateTime(c, confirmedDate, confirmedTime);
         if (confirmedDate != null) c.setConfirmedDate(confirmedDate);
         if (confirmedTime != null) c.setConfirmedTime(confirmedTime);
+        if (recordingEnabled != null) {
+            com.finbridge.entity.ConsultationRecording rec = consultationRecordingRepository.findById(c.getId()).orElseGet(() -> {
+                com.finbridge.entity.ConsultationRecording r = new com.finbridge.entity.ConsultationRecording();
+                r.setConsultationId(c.getId());
+                return r;
+            });
+            rec.setRecordingEnabled(recordingEnabled);
+            consultationRecordingRepository.save(rec);
+        }
         if (c.getMeetingLink() == null || c.getMeetingLink().isBlank()) {
             c.setMeetingLink("https://zoom.us/j/" + (1000000000L + new java.util.Random().nextLong(900000000L)));
         }
@@ -106,7 +116,7 @@ public class ConsultationService {
     }
 
     @Transactional
-    public ConsultationResponse schedule(@NonNull UUID id, String confirmedDate, String confirmedTime, String meetingLink, User actor) {
+    public ConsultationResponse schedule(@NonNull UUID id, String confirmedDate, String confirmedTime, String meetingLink, Boolean recordingEnabled, User actor) {
         Consultation c = load(id);
         OwnershipGuard.assertConsultationAccess(actor, c.getClient(), c.getConsultant(), "consultation");
         c.setStatus("scheduled");
@@ -114,6 +124,15 @@ public class ConsultationService {
         if (confirmedDate != null) c.setConfirmedDate(confirmedDate);
         if (confirmedTime != null) c.setConfirmedTime(confirmedTime);
         if (meetingLink != null) c.setMeetingLink(meetingLink);
+        if (recordingEnabled != null) {
+            com.finbridge.entity.ConsultationRecording rec = consultationRecordingRepository.findById(c.getId()).orElseGet(() -> {
+                com.finbridge.entity.ConsultationRecording r = new com.finbridge.entity.ConsultationRecording();
+                r.setConsultationId(c.getId());
+                return r;
+            });
+            rec.setRecordingEnabled(recordingEnabled);
+            consultationRecordingRepository.save(rec);
+        }
         return toResponse(consultationRepository.save(c));
     }
 
@@ -138,6 +157,11 @@ public class ConsultationService {
         Consultation c = load(id);
         OwnershipGuard.assertConsultationAccess(actor, c.getClient(), c.getConsultant(), "consultation");
         c.setStatus("completed_by_consultant");
+        com.finbridge.entity.ConsultationRecording rec = consultationRecordingRepository.findById(c.getId()).orElse(null);
+        if (rec != null && Boolean.TRUE.equals(rec.getRecordingEnabled())) {
+            rec.setVideoUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4");
+            consultationRecordingRepository.save(rec);
+        }
         Consultation saved = consultationRepository.save(c);
 
         // Notify every department admin for this department.
@@ -156,6 +180,9 @@ public class ConsultationService {
             throw new AccessDeniedException("You do not have access to verify this consultation");
         
         Consultation c = load(id);
+        if (c.getConsultant() == null) {
+            throw new com.finbridge.exception.BadRequestException("Cannot verify consultation: No consultant assigned to this consultation.");
+        }
         c.setStatus("completed");
         Consultation saved = consultationRepository.save(c);
 
@@ -278,10 +305,13 @@ public class ConsultationService {
         ConsultationResponse.Ref consultant = c.getConsultant() != null
                 ? new ConsultationResponse.Ref(c.getConsultant().getId(), c.getConsultant().getName(),
                     c.getConsultant().getEmail(), c.getConsultant().getCompanyName()) : null;
+        com.finbridge.entity.ConsultationRecording rec = consultationRecordingRepository.findById(c.getId()).orElse(null);
+        Boolean recordingEnabled = rec != null ? rec.getRecordingEnabled() : false;
+        String videoUrl = rec != null ? rec.getVideoUrl() : "";
         return new ConsultationResponse(
                 c.getId(), client, consultant, c.getDepartment(), c.getCategory(),
                 c.getStatus(), c.getClientNotes(), c.getConfirmedDate(), c.getConfirmedTime(),
-                c.getMeetingLink(), c.getCreatedAt()
+                c.getMeetingLink(), c.getCreatedAt(), recordingEnabled, videoUrl
         );
     }
 
