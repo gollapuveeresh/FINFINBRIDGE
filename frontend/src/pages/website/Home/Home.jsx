@@ -1301,7 +1301,6 @@ const ContactCanvasBackground = () => {
 const Home = () => {
   const videoRef = useRef(null);
   const [isLooping, setIsLooping] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Defer video loading so the 21MB file doesn't block initial paint
   useEffect(() => {
@@ -1325,20 +1324,6 @@ const Home = () => {
         videoRef.current.play().catch(err => console.log("Video play failed:", err));
       }
       setIsLooping(!isLooping);
-    }
-  };
-
-  const openWatchFilmModal = () => {
-    setIsModalOpen(true);
-    if (videoRef.current && isLooping) {
-      videoRef.current.pause();
-    }
-  };
-
-  const closeWatchFilmModal = () => {
-    setIsModalOpen(false);
-    if (videoRef.current && isLooping) {
-      videoRef.current.play().catch(err => console.log("Video play failed:", err));
     }
   };
 
@@ -1517,13 +1502,6 @@ const Home = () => {
             >
               Get Started
             </Link>
-            <button 
-              onClick={openWatchFilmModal}
-              className="border border-white/20 hover:border-white text-white/80 hover:text-white px-6 py-3 rounded-xl font-bold text-xs tracking-wider uppercase transition-all cursor-pointer flex items-center gap-1.5 bg-white/5"
-            >
-              <span>Watch Film</span>
-              <Play className="w-2.5 h-2.5 fill-current" />
-            </button>
           </motion.div>
         </motion.div>
 
@@ -1542,41 +1520,7 @@ const Home = () => {
             <ArrowRight className="w-3.5 h-3.5 text-[#D4AF37] rotate-90 group-hover:translate-y-0.5 transition-transform" />
           </div>
         </div>
-
-        {/* Watch Film Button (Desktop only) */}
-        <div className="hidden md:flex absolute bottom-8 right-6 md:right-12 z-20 flex flex-col items-end gap-1 opacity-50 hover:opacity-100 transition-all">
-          <button
-            onClick={openWatchFilmModal}
-            className="border border-white/20 hover:border-white text-white/70 hover:text-white px-4 py-2 rounded-full flex items-center gap-2 transition-all tracking-wider text-[9px] font-semibold group cursor-pointer bg-black/20 hover:bg-black/40 backdrop-blur-sm shadow-md uppercase"
-          >
-            <span>Watch film</span>
-            <Play className="w-2.5 h-2.5 fill-current group-hover:scale-105 transition" />
-          </button>
-        </div>
       </section>
-
-      {/* Watch Film Modal */}
-      {isModalOpen && (
-        <div className="fixed top-20 left-0 right-0 bottom-0 z-[990] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 md:p-12">
-          <div className="relative w-[90%] md:w-[80%] max-w-4xl aspect-video rounded-sm overflow-hidden shadow-2xl border border-white/10 bg-black">
-            {/* Close button - white square box with thick black X */}
-            <button
-              onClick={closeWatchFilmModal}
-              className="absolute top-0 right-0 bg-white hover:bg-gray-200 text-black hover:text-gray-800 transition cursor-pointer w-10 h-10 flex items-center justify-center z-50 shadow-md"
-              aria-label="Close video"
-            >
-              <X className="w-5 h-5 stroke-[3.5]" />
-            </button>
-            <video
-              src="/assets/videos/finbridge-solutions-1.mp4"
-              controls
-              autoPlay
-              playsInline
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-      )}
       {/* Transform Financial Future Section */}
       <div id="threeways-section" className="scroll-mt-20">
         <React.Suspense fallback={null}><ThreeWays /></React.Suspense>
