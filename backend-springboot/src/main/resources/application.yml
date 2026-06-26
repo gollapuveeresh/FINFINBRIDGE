@@ -42,6 +42,9 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
         default_batch_fetch_size: 16
+
+
+
         jdbc:
           batch_size: 50
         order_inserts: true

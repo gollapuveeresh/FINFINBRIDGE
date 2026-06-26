@@ -33,6 +33,7 @@ const PageLoader = () => (
 );
 
 // ── Website pages (lazy) ──
+
 const About = lazy(() => import('../pages/website/About/About'));
 const PrivacyPolicy = lazy(() => import('../pages/website/Legal/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('../pages/website/Legal/TermsOfService'));
@@ -52,6 +53,7 @@ const ServicesWeOffer = lazy(() => import('../pages/website/Services/ServicesWeO
 const ThreeWays = lazy(() => import('../pages/website/Services/ThreeWays'));
 
 // ── Auth pages (lazy) ──
+
 const B2BRegister = lazy(() => import('../pages/b2b/Register'));
 const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/public/ResetPassword'));
@@ -70,12 +72,14 @@ const B2BSupport = lazy(() => import('../pages/b2b/Support'));
 const B2BSettings = lazy(() => import('../pages/b2b/Settings'));
 
 // ── CRM Admin (lazy) ──
+
 const CRMDashboard = lazy(() => import('../pages/crm-admin/Dashboard'));
 const CRMLeads = lazy(() => import('../pages/crm-admin/Leads'));
 const CRMClients = lazy(() => import('../pages/crm-admin/Clients'));
 const CRMAdminPipeline = lazy(() => import('../pages/crm-admin/Pipeline'));
 
 // ── Internal Admin (lazy) ──
+
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
 const UserManagement = lazy(() => import('../pages/admin/UserManagement'));
 const ConsultantManagement = lazy(() => import('../pages/admin/ConsultantManagement'));
@@ -92,6 +96,7 @@ const RevenueAnalytics = lazy(() => import('../pages/admin/RevenueAnalytics'));
 const ApiManagement = lazy(() => import('../pages/admin/ApiManagement'));
 
 // ── Department Admin (lazy) ──
+
 const DepartmentAdminDashboard = lazy(() => import('../pages/department-admin/Dashboard'));
 const DepartmentAdminClients = lazy(() => import('../pages/department-admin/Clients'));
 const DepartmentLeadReview = lazy(() => import('../pages/department-admin/LeadReview'));
@@ -105,6 +110,7 @@ const CompletedMeetings = lazy(() => import('../pages/department-admin/Completed
 const DepartmentAdminPayments = lazy(() => import('../pages/department-admin/Payments'));
 
 // ── Consultants (lazy) ──
+
 const ConsultantDashboard = lazy(() => import('../pages/consultant/Dashboard'));
 const MyClients = lazy(() => import('../pages/consultant/ClientList'));
 const ClientDetail = lazy(() => import('../pages/consultant/ClientDetail'));

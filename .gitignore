@@ -12,3 +12,7 @@
 # Bundled Maven / wrapper
 **/.maven/
 **/.mvn/wrapper/maven-wrapper.jar
+
+# Local scratch directory
+scratch/
+
