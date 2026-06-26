@@ -6,6 +6,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
+    chunkSizeWarningLimit: 1000,
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -24,5 +26,8 @@ export default defineConfig({
         },
       },
     },
+  },
+  esbuild: {
+    drop: ['console', 'debugger'],
   },
 })

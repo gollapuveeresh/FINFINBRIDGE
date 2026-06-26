@@ -7,6 +7,15 @@ import RoleBasedRoute from '../components/RoleBasedRoute';
 import B2BProtectedRoute from '../components/B2BProtectedRoute';
 import { useAuth } from '../context/AuthContext';
 
+// Eagerly load critical landing and login routes for instant FCP/LCP
+import Home from '../pages/website/Home/Home';
+import LandingPage from '../pages/public/LandingPage';
+import B2BLogin from '../pages/b2b/Login';
+import CRMAdminLogin from '../pages/public/CRMAdminLogin';
+import AdminLogin from '../pages/public/AdminLogin';
+import DepartmentAdminLogin from '../pages/public/DepartmentAdminLogin';
+import ConsultantLogin from '../pages/public/ConsultantLogin';
+
 // Lazy-load non-critical shell components
 const Navbar = lazy(() => import('../components/Navbar/Navbar'));
 const Footer = lazy(() => import('../components/Footer'));
@@ -24,7 +33,6 @@ const PageLoader = () => (
 );
 
 // ── Website pages (lazy) ──
-const Home = lazy(() => import('../pages/website/Home/Home'));
 const About = lazy(() => import('../pages/website/About/About'));
 const PrivacyPolicy = lazy(() => import('../pages/website/Legal/PrivacyPolicy'));
 const TermsOfService = lazy(() => import('../pages/website/Legal/TermsOfService'));
@@ -42,10 +50,8 @@ const TaxAdvisory = lazy(() => import('../pages/website/Services/TaxAdvisory'));
 const DynamicDetail = lazy(() => import('../pages/website/Services/DynamicDetail'));
 const ServicesWeOffer = lazy(() => import('../pages/website/Services/ServicesWeOffer'));
 const ThreeWays = lazy(() => import('../pages/website/Services/ThreeWays'));
-const LandingPage = lazy(() => import('../pages/public/LandingPage'));
 
 // ── Auth pages (lazy) ──
-const B2BLogin = lazy(() => import('../pages/b2b/Login'));
 const B2BRegister = lazy(() => import('../pages/b2b/Register'));
 const ForgotPassword = lazy(() => import('../pages/public/ForgotPassword'));
 const ResetPassword = lazy(() => import('../pages/public/ResetPassword'));
@@ -64,14 +70,12 @@ const B2BSupport = lazy(() => import('../pages/b2b/Support'));
 const B2BSettings = lazy(() => import('../pages/b2b/Settings'));
 
 // ── CRM Admin (lazy) ──
-const CRMAdminLogin = lazy(() => import('../pages/public/CRMAdminLogin'));
 const CRMDashboard = lazy(() => import('../pages/crm-admin/Dashboard'));
 const CRMLeads = lazy(() => import('../pages/crm-admin/Leads'));
 const CRMClients = lazy(() => import('../pages/crm-admin/Clients'));
 const CRMAdminPipeline = lazy(() => import('../pages/crm-admin/Pipeline'));
 
 // ── Internal Admin (lazy) ──
-const AdminLogin = lazy(() => import('../pages/public/AdminLogin'));
 const AdminDashboard = lazy(() => import('../pages/admin/Dashboard'));
 const UserManagement = lazy(() => import('../pages/admin/UserManagement'));
 const ConsultantManagement = lazy(() => import('../pages/admin/ConsultantManagement'));
@@ -88,7 +92,6 @@ const RevenueAnalytics = lazy(() => import('../pages/admin/RevenueAnalytics'));
 const ApiManagement = lazy(() => import('../pages/admin/ApiManagement'));
 
 // ── Department Admin (lazy) ──
-const DepartmentAdminLogin = lazy(() => import('../pages/public/DepartmentAdminLogin'));
 const DepartmentAdminDashboard = lazy(() => import('../pages/department-admin/Dashboard'));
 const DepartmentAdminClients = lazy(() => import('../pages/department-admin/Clients'));
 const DepartmentLeadReview = lazy(() => import('../pages/department-admin/LeadReview'));
@@ -102,7 +105,6 @@ const CompletedMeetings = lazy(() => import('../pages/department-admin/Completed
 const DepartmentAdminPayments = lazy(() => import('../pages/department-admin/Payments'));
 
 // ── Consultants (lazy) ──
-const ConsultantLogin = lazy(() => import('../pages/public/ConsultantLogin'));
 const ConsultantDashboard = lazy(() => import('../pages/consultant/Dashboard'));
 const MyClients = lazy(() => import('../pages/consultant/ClientList'));
 const ClientDetail = lazy(() => import('../pages/consultant/ClientDetail'));
