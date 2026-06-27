@@ -3,7 +3,6 @@ import ConsultantLayout from '../../layouts/ConsultantLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 import { KPI, Modal, StageBar, CaseNotes, DocumentChecklist, ClientDecisionPanel, useDeptWorkflow, resolveClientField } from './WorkflowShared';
-import RecommendationsModal from '../../components/RecommendationsModal';
 
 const DEPT = 'tax';
 const STAGES = [
@@ -290,7 +289,6 @@ function Completion({ lc }) {
 export default function TaxWorkflow() {
   const { cases, clientOptions, loading, activeCaseId, setActiveCaseId, activeCase, fetchCases, refreshCases } = useDeptWorkflow(DEPT);
   const [showCreate, setShowCreate] = useState(false);
-  const [showRecommendations, setShowRecommendations] = useState(false);
   const [form, setForm] = useState({ clientId:'', financialYear:'FY 2024-25', filingType:'ITR-1' });
   const [creating, setCreating] = useState(false);
   const [mobileShowList, setMobileShowList] = useState(true);
@@ -345,9 +343,6 @@ export default function TaxWorkflow() {
           <p className="text-text-muted text-sm mt-1">End-to-end tax return filing management</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
-            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
-          </button>
           <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
             <span className="material-symbols-outlined text-base">add_circle</span> New Tax Case
           </button>
@@ -364,9 +359,6 @@ export default function TaxWorkflow() {
           <span className="material-symbols-outlined text-5xl text-text-muted">calculate</span>
           <p className="font-bold text-accent mt-4 text-xl">No tax cases yet</p>
           <div className="flex justify-center gap-3 mt-6">
-            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
-              View Recommendations
-            </button>
             <button onClick={() => setShowCreate(true)} className="btn-primary px-8 py-3">
               Create Tax Case
             </button>
@@ -448,10 +440,6 @@ export default function TaxWorkflow() {
             </button>
           </div>
         </Modal>
-      )}
-
-      {showRecommendations && (
-        <RecommendationsModal department="tax" onClose={() => setShowRecommendations(false)} />
       )}
     </ConsultantLayout>
   );
