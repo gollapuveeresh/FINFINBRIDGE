@@ -43,11 +43,28 @@ public class KycService {
     /** All uploaded organization documents awaiting / completed review, newest first. */
     @Transactional(readOnly = true)
     public List<Map<String, Object>> reviewQueue() {
-        return docRepo.findAll().stream()
-                .sorted(Comparator.comparing(OrganizationDocument::getCreatedAt,
+        return docRepo.findAllSummaries().stream()
+                .sorted(Comparator.comparing(com.finbridge.repository.DocumentSummaryProjection::getCreatedAt,
                         Comparator.nullsLast(Comparator.reverseOrder())))
-                .map(this::toDto)
+                .map(this::projectionToDto)
                 .toList();
+    }
+
+    private Map<String, Object> projectionToDto(com.finbridge.repository.DocumentSummaryProjection d) {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("id", d.getId());
+        m.put("_id", d.getId());
+        m.put("organizationId", d.getOrganizationId());
+        m.put("companyName", d.getCompanyName() != null ? d.getCompanyName() : "Organization");
+        m.put("documentType", d.getDocumentType());
+        m.put("required", REQUIRED.contains(d.getDocumentType()));
+        m.put("fileName", d.getFileName());
+        m.put("status", d.getStatus());
+        m.put("reviewerNote", d.getReviewerNote());
+        m.put("reviewedAt", d.getReviewedAt());
+        m.put("createdAt", d.getCreatedAt());
+        m.put("kycVerified", d.getKycVerified() != null && d.getKycVerified());
+        return m;
     }
 
     @Transactional(readOnly = true)

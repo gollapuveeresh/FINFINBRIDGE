@@ -60,21 +60,12 @@ public class GlobalExceptionHandler {
 
     /** Catch-all: log full detail server-side, return an opaque message + reference id to the client. */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneral(Exception ex) {
+    public ResponseEntity<Map<String, String>> handleGeneral(Exception ex) {
         String ref = UUID.randomUUID().toString();
         log.error("Unhandled exception [ref={}]", ref, ex);
-        
-        java.io.StringWriter sw = new java.io.StringWriter();
-        ex.printStackTrace(new java.io.PrintWriter(sw));
-        String stackTrace = sw.toString();
-        
-        Map<String, Object> body = new HashMap<>();
-        body.put("status", "error");
-        body.put("message", ex.getMessage());
-        body.put("exceptionClass", ex.getClass().getName());
-        body.put("stackTrace", stackTrace.substring(0, Math.min(stackTrace.length(), 2000)));
-        body.put("ref", ref);
-        
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(body);
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("status", "error",
+                        "message", "An unexpected error occurred. Please contact support with this reference.",
+                        "ref", ref));
     }
 }
