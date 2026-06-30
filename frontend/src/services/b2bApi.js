@@ -4,7 +4,10 @@ const getBaseURL = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL;
   const h = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
   const p = typeof window !== 'undefined' ? window.location.protocol : 'http:';
-  return `${p}//${h}:5000/api`;
+  if (h === 'localhost' || h === '127.0.0.1') {
+    return `${p}//${h}:5000/api`;
+  }
+  return 'https://finbridge-backend-v2.onrender.com/api';
 };
 
 // Public B2B endpoints that should NOT get an Authorization header
