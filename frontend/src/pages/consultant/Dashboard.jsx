@@ -48,10 +48,10 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
         priority: c.lead?.priority || 'Medium',
         status: c.stage?.replace(/_/g, ' ') || 'Active'
       }))
-    : deptData.clients;
+    : [];
 
-  const totalClientsCount = clients && clients.length > 0 ? String(clients.length) : data.totalClients;
-  const activeClientsCount = clients && clients.length > 0 ? String(clients.filter(c => c.active !== false).length) : data.activeClients;
+  const totalClientsCount = String(clients?.length || 0);
+  const activeClientsCount = String(clients?.filter(c => c.active !== false).length || 0);
 
   return (
     <div className="space-y-gutter">
@@ -127,18 +127,22 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
           <h3 className="font-bold text-accent">{deptData.name} Consultation Request</h3>
         </div>
         <div className="divide-y divide-border">
-          {displayCases.map((c, i) => (
-            <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
-              <div>
-                <p className="font-semibold text-text text-sm">{c.name}</p>
-                <p className="text-xs text-text-muted capitalize">{c.service}</p>
+          {displayCases.length === 0 ? (
+            <div className="py-10 text-center text-text-muted text-sm">No active cases assigned yet.</div>
+          ) : (
+            displayCases.map((c, i) => (
+              <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
+                <div>
+                  <p className="font-semibold text-text text-sm">{c.name}</p>
+                  <p className="text-xs text-text-muted capitalize">{c.service}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${PRIORITY_COLOR[c.priority] || 'bg-surface text-text-muted'}`}>{c.priority}</span>
+                  <span className="text-xs text-text-muted capitalize">{c.status}</span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${PRIORITY_COLOR[c.priority] || 'bg-surface text-text-muted'}`}>{c.priority}</span>
-                <span className="text-xs text-text-muted capitalize">{c.status}</span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
         <div className="px-6 py-3 border-t border-border">
           <Link to="/consultant/clients" className="text-xs text-secondary hover:underline font-semibold">View full client portfolio →</Link>
@@ -161,7 +165,7 @@ const INITIAL_TASKS = [
 const CATEGORIES = ['All', 'Proposal', 'Follow-up', 'Document', 'Appointment', 'Compliance'];
 
 function TasksTab() {
-  const [tasks, setTasks]       = useState(INITIAL_TASKS);
+  const [tasks, setTasks]       = useState([]);
   const [filter, setFilter]     = useState('All');
   const [catFilter, setCatFilter] = useState('All');
   const [showAdd, setShowAdd]   = useState(false);
@@ -525,15 +529,15 @@ function CommunicationTab({ notifications }) {
         if (list.length > 0) {
           setActiveContact(list[0].id);
         } else {
-          setContacts(CHAT_CONTACTS);
-          setActiveContact('dept');
-          setMessages(INITIAL_MSGS);
+          setContacts([]);
+          setActiveContact(null);
+          setMessages({});
         }
       })
       .catch(() => {
-        setContacts(CHAT_CONTACTS);
-        setActiveContact('dept');
-        setMessages(INITIAL_MSGS);
+        setContacts([]);
+        setActiveContact(null);
+        setMessages({});
       })
       .finally(() => setLoadingContacts(false));
   }, []);
