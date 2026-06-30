@@ -86,6 +86,15 @@ public class B2BService {
         org.setPincode(req.getPincode());
         org.setWebsite(cleanWebsite);
         org.setSelectedPackage(req.getSelectedPackage());
+        if ("Custom Consultation Request".equals(req.getSelectedPackage())) {
+            String cr = req.getCustomRequirement();
+            if (cr == null || cr.trim().length() < 20 || cr.trim().length() > 1000) {
+                throw new BadRequestException("Describe Your Requirements must be between 20 and 1000 characters.");
+            }
+            org.setCustomRequirement(cr.trim());
+        } else {
+            org.setCustomRequirement(null);
+        }
         if (req.getServices() != null)
             org.setServices(req.getServices().toArray(new String[0]));
         org.setStatus("pending");
@@ -143,7 +152,13 @@ public class B2BService {
         lead.setIncome(org.getAnnualTurnover());
         lead.setServiceType(req.getServices() != null ? String.join(", ", req.getServices()) : null);
         lead.setDepartment(primaryDepartment(req.getServices()));
-        lead.setRequirement(buildRequirement(org, req));
+        if ("Custom Consultation Request".equals(req.getSelectedPackage())) {
+            lead.setRequirement(org.getCustomRequirement());
+            lead.setCustomRequirement(org.getCustomRequirement());
+        } else {
+            lead.setRequirement(buildRequirement(org, req));
+            lead.setCustomRequirement(null);
+        }
         lead.setSelectedPackage(req.getSelectedPackage());
         leadService.create(lead);
     }

@@ -134,7 +134,8 @@ export default function ClientDetail() {
               dbNotes: lead.notes || [],
               convertedClientId: lead.convertedClientId,
               department: lead.department,
-              selectedPackage: lead.selectedPackage
+              selectedPackage: lead.selectedPackage,
+              customRequirement: lead.customRequirement
             });
           }
         })
@@ -453,6 +454,12 @@ export default function ClientDetail() {
                 <div className="flex items-center gap-3 text-body-sm text-[#D4AF37] font-semibold">
                   <span className="material-symbols-outlined text-[#D4AF37] text-base">workspace_premium</span>
                   <span>Package: <strong>{client.selectedPackage}</strong></span>
+                </div>
+              )}
+              {client.selectedPackage === 'Custom Consultation Request' && client.customRequirement && (
+                <div className="mt-1 p-3 rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/5 text-body-sm text-[#D4AF37]">
+                  <p className="font-semibold text-xs uppercase tracking-wider mb-1">Requirement Details:</p>
+                  <p className="italic text-text-muted leading-relaxed font-normal">"{client.customRequirement}"</p>
                 </div>
               )}
               {client.department && (

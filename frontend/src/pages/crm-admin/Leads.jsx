@@ -198,6 +198,18 @@ export default function CRMLeads() {
               {selected.requirement && (
                 <div className="col-span-2 p-3 bg-bg rounded-xl"><p className="text-xs text-text-muted mb-1">Requirement</p><p className="text-sm">{selected.requirement}</p></div>
               )}
+              {selected.selectedPackage && (
+                <div className="col-span-2 p-3 bg-bg rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+                  <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider mb-1">Selected Package</p>
+                  <p className="text-sm font-semibold text-[#D4AF37]">{selected.selectedPackage}</p>
+                  {selected.selectedPackage === 'Custom Consultation Request' && selected.customRequirement && (
+                    <div className="mt-2 pt-2 border-t border-[#D4AF37]/10">
+                      <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Custom Requirement</p>
+                      <p className="text-xs text-text italic">"{selected.customRequirement}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* CRM Actions Row */}

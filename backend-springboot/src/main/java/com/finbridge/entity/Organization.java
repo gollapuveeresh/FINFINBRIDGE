@@ -46,6 +46,9 @@ public class Organization {
     @Column(table = "organization_packages", name = "selected_package")
     private String selectedPackage;
 
+    @Column(name = "custom_requirement")
+    private String customRequirement;
+
     @Column(name = "kyc_verified", nullable = false)
     private boolean kycVerified = false;
 

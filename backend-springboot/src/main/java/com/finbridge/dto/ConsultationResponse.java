@@ -17,7 +17,9 @@ public record ConsultationResponse(
     String meetingLink,
     Instant createdAt,
     Boolean recordingEnabled,
-    String videoUrl
+    String videoUrl,
+    String selectedPackage,
+    String customRequirement
 ) {
     public record Ref(UUID id, String name, String email, String companyName) {}
 }

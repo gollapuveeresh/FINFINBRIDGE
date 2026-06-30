@@ -5,6 +5,7 @@ import com.finbridge.entity.Consultation;
 import com.finbridge.entity.User;
 import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.ConsultationRepository;
+import com.finbridge.repository.LeadRepository;
 import com.finbridge.repository.UserRepository;
 import com.finbridge.security.OwnershipGuard;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ConsultationService {
     private final ConsultationRepository consultationRepository;
+    private final LeadRepository leadRepository;
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ConsultantPaymentRepository consultantPaymentRepository;
@@ -308,10 +310,23 @@ public class ConsultationService {
         com.finbridge.entity.ConsultationRecording rec = consultationRecordingRepository.findById(c.getId()).orElse(null);
         Boolean recordingEnabled = rec != null ? rec.getRecordingEnabled() : false;
         String videoUrl = rec != null ? rec.getVideoUrl() : "";
+
+        String selectedPackage = null;
+        String customRequirement = null;
+        if (c.getClient() != null) {
+            java.util.List<com.finbridge.entity.Lead> leads = leadRepository.findByEmailIgnoreCase(c.getClient().getEmail());
+            if (!leads.isEmpty()) {
+                com.finbridge.entity.Lead lead = leads.get(0);
+                selectedPackage = lead.getSelectedPackage();
+                customRequirement = lead.getCustomRequirement();
+            }
+        }
+
         return new ConsultationResponse(
                 c.getId(), client, consultant, c.getDepartment(), c.getCategory(),
                 c.getStatus(), c.getClientNotes(), c.getConfirmedDate(), c.getConfirmedTime(),
-                c.getMeetingLink(), c.getCreatedAt(), recordingEnabled, videoUrl
+                c.getMeetingLink(), c.getCreatedAt(), recordingEnabled, videoUrl,
+                selectedPackage, customRequirement
         );
     }
 

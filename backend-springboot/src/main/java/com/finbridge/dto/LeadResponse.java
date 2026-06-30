@@ -26,6 +26,7 @@ public record LeadResponse(
     List<LeadNoteDto> notes,
     Instant followUpDate,
     String selectedPackage,
+    String customRequirement,
     boolean isActive,
     Instant createdAt
 ) {}

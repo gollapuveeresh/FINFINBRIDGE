@@ -89,10 +89,25 @@ export default function ConsultationQueue() {
                     <td className="px-5 py-4">
                       <p className="font-semibold text-text">{c.clientId?.name || '—'}</p>
                       <p className="text-text-muted text-xs">{c.clientId?.email}</p>
+                      {c.selectedPackage && (
+                        <div className="mt-1">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#D4AF37] bg-[#D4AF37]/10 px-1.5 py-0.5 rounded border border-[#D4AF37]/20 uppercase tracking-wider">
+                            <span className="material-symbols-outlined text-[10px]">workspace_premium</span>
+                            {c.selectedPackage}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-text-muted text-xs">{c.category}</td>
                     <td className="px-5 py-4 text-text-muted text-xs max-w-[180px]">
-                      <span className="line-clamp-2">{c.clientNotes || '—'}</span>
+                      {c.selectedPackage === 'Custom Consultation Request' && c.customRequirement ? (
+                        <div className="p-2 rounded border border-[#D4AF37]/15 bg-[#D4AF37]/5 text-text">
+                          <p className="text-[9px] font-bold text-[#D4AF37] uppercase tracking-wider mb-0.5">Custom Req:</p>
+                          <span className="line-clamp-3 italic font-normal">"{c.customRequirement}"</span>
+                        </div>
+                      ) : (
+                        <span className="line-clamp-2">{c.clientNotes || '—'}</span>
+                      )}
                     </td>
                     <td className="px-5 py-4 text-text-muted text-xs">
                       {new Date(c.createdAt).toLocaleDateString()}

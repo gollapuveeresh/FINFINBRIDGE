@@ -45,6 +45,7 @@ public class LeadController {
     public ResponseEntity<Map<String, Object>> getAll(
             @RequestParam(required = false) String department,
             @RequestParam(required = false) String status,
+            @RequestParam(required = false) String selectedPackage,
             @AuthenticationPrincipal User user) {
         String finalDepartment = department;
         if (user != null && ("consultant".equalsIgnoreCase(user.getRole()) || "department-admin".equalsIgnoreCase(user.getRole()))) {
@@ -52,7 +53,7 @@ public class LeadController {
                 finalDepartment = user.getDepartment();
             }
         }
-        List<LeadResponse> leads = leadService.getFiltered(finalDepartment, status)
+        List<LeadResponse> leads = leadService.getFiltered(finalDepartment, status, selectedPackage)
                 .stream().map(mapper::toLeadResponse).toList();
         return ResponseEntity.ok(Map.of("leads", leads));
     }

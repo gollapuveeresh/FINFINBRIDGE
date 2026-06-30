@@ -65,6 +65,9 @@ public class Lead {
     @Column(table = "lead_packages", name = "selected_package")
     private String selectedPackage;
 
+    @Column(name = "custom_requirement")
+    private String customRequirement;
+
     @CreationTimestamp @Column(name = "created_at", updatable = false) private Instant createdAt;
     @UpdateTimestamp @Column(name = "updated_at") private Instant updatedAt;
 }

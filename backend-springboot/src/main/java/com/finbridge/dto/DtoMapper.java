@@ -61,6 +61,7 @@ public class DtoMapper {
                 .toList(),
             l.getFollowUpDate(),
             l.getSelectedPackage(),
+            l.getCustomRequirement(),
             l.isActive(),
             l.getCreatedAt()
         );

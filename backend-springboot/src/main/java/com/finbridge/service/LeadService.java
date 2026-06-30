@@ -72,10 +72,11 @@ public class LeadService {
 
     /** Filtered, non-paginated list for the CRM/department views. */
     @Transactional(readOnly = true)
-    public List<Lead> getFiltered(String department, String status) {
+    public List<Lead> getFiltered(String department, String status, String selectedPackage) {
         return leadRepository.findByActiveTrueOrderByCreatedAtDesc().stream()
                 .filter(l -> department == null || department.equalsIgnoreCase(l.getDepartment()))
                 .filter(l -> status == null || status.equalsIgnoreCase(l.getStatus()))
+                .filter(l -> selectedPackage == null || selectedPackage.equalsIgnoreCase(l.getSelectedPackage()))
                 .toList();
     }
 

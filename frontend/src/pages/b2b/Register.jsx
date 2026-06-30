@@ -80,6 +80,7 @@ export default function B2BRegister() {
     adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+880', adminPassword:'', confirmPassword:'',
     services:[],
     selectedPackage:'',
+    customRequirement:'',
   });
 
   const [packages, setPackages] = useState([]);
@@ -88,14 +89,27 @@ export default function B2BRegister() {
   useEffect(() => {
     if (form.services.length === 0) {
       setPackages([]);
-      setForm(p => ({ ...p, selectedPackage: '' }));
+      setForm(p => ({ ...p, selectedPackage: '', customRequirement: '' }));
       return;
     }
     const dept = form.services[0];
     setLoadingPackages(true);
     api.get(`/packages/${dept.toLowerCase()}`)
       .then(res => {
-        setPackages(res.data || []);
+        const fetched = res.data || [];
+        const customPkg = {
+          id: 'custom-consultation-pkg-' + dept.toLowerCase(),
+          name: 'Custom Consultation Request',
+          description: "Can't find the right consulting package? Submit your business or financial requirements, and our experts will recommend the most suitable solution.",
+          features: [
+            'Personalized Financial Advisory',
+            'Business-Specific Solutions',
+            'Dedicated Consultant Assignment'
+          ],
+          duration: 'Flexible',
+          price: null
+        };
+        setPackages([...fetched, customPkg]);
       })
       .catch(err => {
         console.error('Failed to fetch packages:', err);
@@ -181,6 +195,15 @@ export default function B2BRegister() {
       services: form.services.length ? null : 'Select a service',
     });
     if (err) { toast.error(err); return; }
+
+    if (form.selectedPackage === 'Custom Consultation Request') {
+      const cr = form.customRequirement || '';
+      if (cr.trim().length < 20 || cr.trim().length > 1000) {
+        toast.error('Describe Your Requirements must be between 20 and 1000 characters');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       const { adminPhoneOnly, countryCode, ...rest } = form;
@@ -371,6 +394,28 @@ export default function B2BRegister() {
                         })}
                       </div>
                     )}
+                  </div>
+                )}
+
+                {form.selectedPackage === 'Custom Consultation Request' && (
+                  <div className="mt-4 fade-in">
+                    <label className="text-xs text-[#D4AF37] font-semibold block mb-1">
+                      Describe Your Requirements *
+                    </label>
+                    <textarea
+                      value={form.customRequirement || ''}
+                      onChange={(e) => setForm(p => ({ ...p, customRequirement: e.target.value }))}
+                      rows={4}
+                      className="w-full p-3 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:border-secondary text-white placeholder:text-text-muted"
+                      placeholder="Briefly describe your financial, tax, investment, loan, insurance, or business consulting needs..."
+                      required
+                      minLength={20}
+                      maxLength={1000}
+                    />
+                    <div className="flex justify-between text-[10px] text-text-muted mt-1">
+                      <span>Minimum 20 characters</span>
+                      <span>{(form.customRequirement || '').length}/1000</span>
+                    </div>
                   </div>
                 )}
 

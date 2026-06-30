@@ -13,7 +13,7 @@ export default function LeadManagement() {
   const [leads, setLeads] = useState([]);
   const [stats, setStats] = useState({ pipeline: [], bySource: [], byPriority: [] });
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ status: '', priority: '', department: '', source: '' });
+  const [filters, setFilters] = useState({ status: '', priority: '', department: '', source: '', selectedPackage: '' });
   const [selected, setSelected] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [noteText, setNoteText] = useState('');
@@ -137,7 +137,12 @@ export default function LeadManagement() {
             {f.options.map(o => <option key={o} value={o}>{o.replace(/_/g, ' ')}</option>)}
           </select>
         ))}
-        <button onClick={() => setFilters({ status: '', priority: '', department: '', source: '' })}
+        <select value={filters.selectedPackage} onChange={e => setFilters(p => ({ ...p, selectedPackage: e.target.value }))}
+          className="px-3 py-2 rounded-xl border border-border bg-bg text-sm text-text flex-1 min-w-[200px]">
+          <option value="">All Packages</option>
+          <option value="Custom Consultation Request">Custom Consultation Request</option>
+        </select>
+        <button onClick={() => setFilters({ status: '', priority: '', department: '', source: '', selectedPackage: '' })}
           className="px-4 py-2 rounded-xl border border-border text-text-muted hover:text-text text-sm">Reset</button>
       </div>
 
@@ -218,6 +223,18 @@ export default function LeadManagement() {
                 <p className="text-xs text-text-muted mb-1">Requirement</p>
                 <p className="font-semibold text-text">{selected.requirement || '—'}</p>
               </div>
+              {selected.selectedPackage && (
+                <div className="p-4 rounded-2xl bg-bg col-span-2 border border-[#D4AF37]/20 bg-[#D4AF37]/5">
+                  <p className="text-xs text-[#D4AF37] font-bold uppercase tracking-wider mb-1">Selected Package</p>
+                  <p className="font-semibold text-[#D4AF37]">{selected.selectedPackage}</p>
+                  {selected.selectedPackage === 'Custom Consultation Request' && selected.customRequirement && (
+                    <div className="mt-2 pt-2 border-t border-[#D4AF37]/10">
+                      <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider mb-0.5">Custom Requirement</p>
+                      <p className="text-xs text-text italic">"{selected.customRequirement}"</p>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
