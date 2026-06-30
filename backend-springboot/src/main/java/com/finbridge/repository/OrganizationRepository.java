@@ -13,4 +13,7 @@ public interface OrganizationRepository extends JpaRepository<Organization, UUID
     Optional<Organization> findByGstin(String gstin);
     List<Organization> findByStatus(String status);
     List<Organization> findByIndustry(String industry);
+
+    @org.springframework.data.jpa.repository.Query("SELECT o.selectedPackage, COUNT(o) FROM Organization o WHERE o.selectedPackage IS NOT NULL GROUP BY o.selectedPackage")
+    List<Object[]> countBySelectedPackage();
 }

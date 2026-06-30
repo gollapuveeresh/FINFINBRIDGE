@@ -81,6 +81,38 @@ export default function B2BDashboard() {
         <KPI icon="verified_user" label="KYC Status"         value={company?.kycVerified ? 'Verified' : 'Pending'} color={company?.kycVerified ? 'bg-green-600' : 'bg-amber-500'} />
       </div>
 
+      {/* Consulting Package & Advisor details */}
+      <div className="card p-6 bg-surface border border-[#D4AF37]/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-md shadow-[#D4AF37]/5">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#D4AF37]/10 flex items-center justify-center border border-[#D4AF37]/20 shrink-0">
+            <span className="material-symbols-outlined text-[#D4AF37] text-2xl">workspace_premium</span>
+          </div>
+          <div>
+            <p className="text-text-muted text-xs font-semibold uppercase tracking-wider">Active Consulting Package</p>
+            <p className="text-xl font-bold text-accent mt-0.5">{stats?.selectedPackage || 'None Selected'}</p>
+            <p className="text-xs text-text-muted mt-0.5">Department: <span className="font-semibold text-secondary capitalize">{stats?.selectedDepartment || 'Not Assigned'}</span></p>
+          </div>
+        </div>
+
+        <div className="flex gap-4 flex-wrap w-full md:w-auto">
+          <div className="card p-3 bg-bg/50 border border-border/40 min-w-[140px]">
+            <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Booking Status</p>
+            <span className={`inline-block text-[11px] font-bold px-2.5 py-0.5 rounded-full mt-1.5 capitalize
+              ${stats?.bookingStatus === 'Active' || stats?.bookingStatus === 'completed' ? 'bg-green-500/15 text-green-400' : 'bg-amber-500/15 text-amber-400'}`}>
+              {stats?.bookingStatus?.replace(/_/g,' ') || 'Pending'}
+            </span>
+          </div>
+
+          <div className="card p-3 bg-bg/50 border border-border/40 min-w-[160px]">
+            <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">Assigned Advisor</p>
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="material-symbols-outlined text-secondary text-sm">support_agent</span>
+              <span className="text-xs font-bold text-accent">{stats?.assignedConsultant || 'Assigning soon...'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Service Requests */}
         <div className="card p-5">

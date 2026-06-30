@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Getter @Setter @NoArgsConstructor
 @Entity @Table(name = "organizations")
+@SecondaryTable(name = "organization_packages", pkJoinColumns = @PrimaryKeyJoinColumn(name = "organization_id"))
 public class Organization {
 
     @Id @GeneratedValue
@@ -41,6 +42,9 @@ public class Organization {
 
     @Column(nullable = false)
     private String status = "pending";
+
+    @Column(table = "organization_packages", name = "selected_package")
+    private String selectedPackage;
 
     @Column(name = "kyc_verified", nullable = false)
     private boolean kycVerified = false;

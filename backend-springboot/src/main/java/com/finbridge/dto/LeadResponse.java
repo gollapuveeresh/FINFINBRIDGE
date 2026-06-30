@@ -25,6 +25,7 @@ public record LeadResponse(
     UUID convertedClientId,
     List<LeadNoteDto> notes,
     Instant followUpDate,
+    String selectedPackage,
     boolean isActive,
     Instant createdAt
 ) {}

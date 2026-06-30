@@ -26,6 +26,7 @@ public class OrgRegisterRequest {
     private String pincode;
     private String website;
     private List<String> services;
+    private String selectedPackage;
 
     // Primary contact / admin user
     @NotBlank(message = "Contact name is required")

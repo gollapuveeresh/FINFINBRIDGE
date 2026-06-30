@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useB2BAuth } from '../../context/B2BAuthContext';
+import api from '../../services/api';
 import { isEmail, isPincode, isMobile, minLen, required, firstError, apiErrorMessage } from '../../utils/validators';
 
 const INDUSTRIES = ['Technology','Healthcare','Manufacturing','Retail','Education','Construction','Finance','Logistics','Real Estate','Other'];
@@ -78,7 +79,32 @@ export default function B2BRegister() {
     address:'', city:'', state:'', pincode:'', website:'',
     adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+880', adminPassword:'', confirmPassword:'',
     services:[],
+    selectedPackage:'',
   });
+
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
+
+  useEffect(() => {
+    if (form.services.length === 0) {
+      setPackages([]);
+      setForm(p => ({ ...p, selectedPackage: '' }));
+      return;
+    }
+    const dept = form.services[0];
+    setLoadingPackages(true);
+    api.get(`/packages/${dept.toLowerCase()}`)
+      .then(res => {
+        setPackages(res.data || []);
+      })
+      .catch(err => {
+        console.error('Failed to fetch packages:', err);
+        setPackages([]);
+      })
+      .finally(() => {
+        setLoadingPackages(false);
+      });
+  }, [form.services]);
 
   const set = (k) => (e) => setForm(p => ({ ...p, [k]: e.target.value }));
   const toggleService = (s) => setForm(p => ({
@@ -289,7 +315,66 @@ export default function B2BRegister() {
                     );
                   })}
                 </div>
-                <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/20 text-xs text-text-muted">
+
+                {/* Available Consulting Packages */}
+                {form.services.length > 0 && (
+                  <div className="space-y-4 mt-6 fade-in">
+                    <h3 className="font-bold text-[#D4AF37]">Available Consulting Packages</h3>
+                    <p className="text-text-muted text-sm">Choose a consulting package (optional but recommended):</p>
+                    
+                    {loadingPackages ? (
+                      <div className="py-8 text-center text-text-muted text-sm flex items-center justify-center gap-2">
+                        <div className="w-4 h-4 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
+                        Loading packages...
+                      </div>
+                    ) : packages.length === 0 ? (
+                      <p className="text-text-muted text-xs italic">No packages currently available for this service.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {packages.map((pkg) => {
+                          const active = form.selectedPackage === pkg.name;
+                          return (
+                            <button
+                              key={pkg.id}
+                              type="button"
+                              onClick={() => setForm(p => ({ ...p, selectedPackage: active ? '' : pkg.name }))}
+                              className={`p-5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between h-full bg-surface-hover/10
+                                ${active ? 'border-[#D4AF37] bg-[#D4AF37]/5 shadow-lg shadow-[#D4AF37]/5' : 'border-border hover:border-border/80'}`}
+                            >
+                              <div className="w-full">
+                                <div className="flex items-center justify-between">
+                                  <span className={`font-bold text-sm ${active ? 'text-[#D4AF37]' : 'text-accent'}`}>{pkg.name}</span>
+                                  <span className={`material-symbols-outlined text-base ${active ? 'text-[#D4AF37]' : 'text-text-muted'}`}>
+                                    {active ? 'radio_button_checked' : 'radio_button_unchecked'}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-text-muted mt-2 leading-relaxed">{pkg.description}</p>
+                                {pkg.features && pkg.features.length > 0 && (
+                                  <ul className="mt-3 space-y-1">
+                                    {pkg.features.map((feat, idx) => (
+                                      <li key={idx} className="text-[11px] text-text-muted flex items-center gap-1.5">
+                                        <span className="w-1.5 h-1.5 rounded-full bg-secondary shrink-0" />
+                                        {feat}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
+                              </div>
+                              <div className="mt-4 pt-3 border-t border-border/30 w-full flex items-center justify-between">
+                                <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">{pkg.duration}</span>
+                                {pkg.price && (
+                                  <span className="text-xs font-bold text-secondary">₹{Number(pkg.price).toLocaleString('en-IN')}</span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="p-4 rounded-2xl bg-secondary/5 border border-secondary/20 text-xs text-text-muted mt-4">
                   <span className="font-semibold text-secondary">After registration: </span>
                   Our compliance team verifies documents within 24 hours, then assigns a dedicated consultant.
                 </div>

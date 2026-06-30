@@ -103,7 +103,7 @@ function Modal({ title, onClose, children }) {
 }
 
 // ─── Tab: Overview (Revenue Dashboard) ───────────────────────────────────────
-function OverviewTab({ leadStats, liveStats }) {
+function OverviewTab({ leadStats, liveStats, dashboardStats }) {
   const total   = leadStats?.pipeline?.reduce((s, p) => s + p.count, 0) || 0;
   const won     = leadStats?.pipeline?.find(p => p.status === 'won')?.count || 0;
   const hot     = leadStats?.byPriority?.find(p => p._id === 'hot')?.count || 0;
@@ -150,8 +150,8 @@ function OverviewTab({ leadStats, liveStats }) {
         </div>
       </div>
 
-      {/* Dept breakdown + pipeline */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+      {/* Dept breakdown + pipeline + package stats */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
         <div className="card p-6">
           <h3 className="font-bold text-accent mb-4">Department Revenue Split</h3>
           <div className="space-y-3">
@@ -190,6 +190,30 @@ function OverviewTab({ leadStats, liveStats }) {
             </div>
           </div>
         )}
+
+        <div className="card p-6">
+          <h3 className="font-bold text-accent mb-4">Registrations by Package</h3>
+          {dashboardStats?.packageStats && dashboardStats.packageStats.length > 0 ? (
+            <div className="space-y-3.5 max-h-[250px] overflow-y-auto pr-1">
+              {dashboardStats.packageStats.map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between border-b border-border/20 pb-2 last:border-b-0 last:pb-0">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="material-symbols-outlined text-[#D4AF37] text-base shrink-0">workspace_premium</span>
+                    <span className="font-semibold text-text text-xs truncate" title={item.packageName}>{item.packageName}</span>
+                  </div>
+                  <span className="font-bold text-accent bg-accent/10 border border-accent/10 px-2 py-0.5 rounded-full text-2xs shrink-0">
+                    {item.count} {item.count === 1 ? 'reg' : 'regs'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="py-8 text-center text-text-muted text-xs italic flex flex-col items-center justify-center gap-2">
+              <span className="material-symbols-outlined text-text-faint text-2xl">grid_view</span>
+              No active package registrations recorded yet.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1135,9 +1159,11 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [leadStats, setLeadStats] = useState(null);
   const [liveStats, setLiveStats] = useState(null);
+  const [dashboardStats, setDashboardStats] = useState(null);
 
   useEffect(() => {
     api.get('/leads/stats').then(r => setLeadStats(r.data)).catch(() => {});
+    api.get('/dashboard').then(r => setDashboardStats(r.data)).catch(() => {});
     // Fetch live counts for overview
     Promise.all([
       api.get('/auth/clients'),
@@ -1154,7 +1180,7 @@ export default function AdminDashboard() {
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'overview':      return <OverviewTab leadStats={leadStats} liveStats={liveStats} />;
+      case 'overview':      return <OverviewTab leadStats={leadStats} liveStats={liveStats} dashboardStats={dashboardStats} />;
       case 'users':         return <UserManagementTab />;
       case 'departments':   return <DepartmentManagementTab />;
       case 'compliance':    return <ComplianceTab />;

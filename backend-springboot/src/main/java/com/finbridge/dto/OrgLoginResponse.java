@@ -14,6 +14,7 @@ public class OrgLoginResponse {
     private String gstin;
     private String status;
     private boolean kycVerified;
+    private String selectedPackage;
     private String userName;
     private String email;
     private String role;

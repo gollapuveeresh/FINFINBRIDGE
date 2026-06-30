@@ -59,7 +59,10 @@ public class DtoMapper {
             l.getNotes().stream()
                 .map(n -> new LeadNoteDto(n.getText(), n.getAddedBy(), n.getAddedAt()))
                 .toList(),
-            l.getFollowUpDate(), l.isActive(), l.getCreatedAt()
+            l.getFollowUpDate(),
+            l.getSelectedPackage(),
+            l.isActive(),
+            l.getCreatedAt()
         );
     }
 

@@ -57,6 +57,7 @@ public class B2BController {
         out.put("gstin", org.getGstin());
         out.put("status", org.getStatus());
         out.put("kycVerified", org.isKycVerified());
+        out.put("selectedPackage", org.getSelectedPackage());
         return ResponseEntity.ok(out);
     }
 

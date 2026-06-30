@@ -133,7 +133,8 @@ export default function ClientDetail() {
               leadStatus: lead.status,
               dbNotes: lead.notes || [],
               convertedClientId: lead.convertedClientId,
-              department: lead.department
+              department: lead.department,
+              selectedPackage: lead.selectedPackage
             });
           }
         })
@@ -448,6 +449,18 @@ export default function ClientDetail() {
                 <span className="material-symbols-outlined text-text-faint text-base">tune</span>
                 <span>Risk tolerance: <strong>{client.riskProfile}</strong></span>
               </div>
+              {client.selectedPackage && (
+                <div className="flex items-center gap-3 text-body-sm text-[#D4AF37] font-semibold">
+                  <span className="material-symbols-outlined text-[#D4AF37] text-base">workspace_premium</span>
+                  <span>Package: <strong>{client.selectedPackage}</strong></span>
+                </div>
+              )}
+              {client.department && (
+                <div className="flex items-center gap-3 text-body-sm text-text-muted">
+                  <span className="material-symbols-outlined text-text-faint text-base">schema</span>
+                  <span>Department: <strong className="capitalize">{client.department}</strong></span>
+                </div>
+              )}
             </div>
           </div>
 

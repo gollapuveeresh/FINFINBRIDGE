@@ -75,7 +75,8 @@ public class SecurityConfig {
                         // Public APIs
                         .requestMatchers(
                                 "/api/leads/capture",
-                                "/api/health"
+                                "/api/health",
+                                "/api/packages/**"
                         ).permitAll()
 
                         // Swagger/OpenAPI

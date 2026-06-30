@@ -18,6 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "leads")
+@SecondaryTable(name = "lead_packages", pkJoinColumns = @PrimaryKeyJoinColumn(name = "lead_id"))
 public class Lead {
 
     @Id @GeneratedValue private UUID id;
@@ -60,6 +61,9 @@ public class Lead {
     private List<LeadNote> notes = new ArrayList<>();
 
     @Column(name = "is_active") private boolean active = true;
+
+    @Column(table = "lead_packages", name = "selected_package")
+    private String selectedPackage;
 
     @CreationTimestamp @Column(name = "created_at", updatable = false) private Instant createdAt;
     @UpdateTimestamp @Column(name = "updated_at") private Instant updatedAt;

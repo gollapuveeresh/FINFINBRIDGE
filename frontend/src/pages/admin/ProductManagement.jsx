@@ -1,5 +1,7 @@
 import AdminLayout from '../../layouts/AdminLayout';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import api from '../../services/api';
+import toast from 'react-hot-toast';
 
 const initialLoans = [
   { id: 'l-1', name: 'Commercial Mortgate Refinance', rate: '5.40%', tenure: '15 Years', criteria: 'Portfolios over $1M, clean credit history', status: 'Active' },
@@ -17,6 +19,10 @@ export default function ProductManagement() {
   const [activeTab, setActiveTab] = useState('loans');
   const [loans, setLoans] = useState(initialLoans);
   const [investments, setInvestments] = useState(initialInvestments);
+  
+  // Consulting Packages dynamic state
+  const [packages, setPackages] = useState([]);
+  const [loadingPackages, setLoadingPackages] = useState(false);
 
   // Form modal states
   const [formOpen, setFormOpen] = useState(false);
@@ -30,6 +36,31 @@ export default function ProductManagement() {
   const [prodRisk, setProdRisk] = useState('Medium');
   const [prodStatus, setProdStatus] = useState('Active');
 
+  // Packages fields
+  const [prodDesc, setProdDesc] = useState('');
+  const [prodDept, setProdDept] = useState('loans');
+  const [prodFeatures, setProdFeatures] = useState('');
+  const [prodPrice, setProdPrice] = useState('');
+  const [prodDuration, setProdDuration] = useState('');
+
+  useEffect(() => {
+    if (activeTab === 'packages') {
+      fetchPackages();
+    }
+  }, [activeTab]);
+
+  const fetchPackages = async () => {
+    setLoadingPackages(true);
+    try {
+      const res = await api.get('/packages');
+      setPackages(res.data || []);
+    } catch (e) {
+      toast.error('Failed to load consulting packages');
+    } finally {
+      setLoadingPackages(false);
+    }
+  };
+
   const handleOpenAdd = () => {
     setEditId(null);
     setProdName('');
@@ -38,68 +69,127 @@ export default function ProductManagement() {
     setProdCriteria('');
     setProdRisk('Medium');
     setProdStatus('Active');
+    setProdDesc('');
+    setProdDept('loans');
+    setProdFeatures('');
+    setProdPrice('');
+    setProdDuration('');
     setFormOpen(true);
   };
 
   const handleOpenEdit = (product) => {
-    setEditId(product.id);
+    const idVal = product.id || product._id;
+    setEditId(idVal);
     setProdName(product.name);
-    setProdStatus(product.status);
+    setProdStatus(product.status || 'Active');
     if (activeTab === 'loans') {
       setProdRate(product.rate);
       setProdTenure(product.tenure);
       setProdCriteria(product.criteria);
-    } else {
+    } else if (activeTab === 'investments') {
       setProdRisk(product.risk);
       setProdRate(product.returnRate);
+    } else if (activeTab === 'packages') {
+      setProdDesc(product.description || '');
+      setProdDept(product.department || 'loans');
+      setProdFeatures(product.features ? product.features.join(', ') : '');
+      setProdPrice(product.price != null ? String(product.price) : '');
+      setProdDuration(product.duration || '');
     }
     setFormOpen(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (activeTab === 'loans') {
       setLoans(prev => prev.filter(p => p.id !== id));
-    } else {
+    } else if (activeTab === 'investments') {
       setInvestments(prev => prev.filter(p => p.id !== id));
+    } else if (activeTab === 'packages') {
+      try {
+        await api.delete(`/packages/${id}`);
+        toast.success('Consulting package deleted');
+        fetchPackages();
+      } catch (e) {
+        toast.error('Failed to delete consulting package');
+      }
     }
   };
 
-  const handleToggleStatus = (id) => {
+  const handleToggleStatus = async (product) => {
+    const idVal = product.id || product._id;
     if (activeTab === 'loans') {
-      setLoans(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'Active' ? 'Suspended' : 'Active' } : p));
-    } else {
-      setInvestments(prev => prev.map(p => p.id === id ? { ...p, status: p.status === 'Active' ? 'Suspended' : 'Active' } : p));
+      setLoans(prev => prev.map(p => p.id === idVal ? { ...p, status: p.status === 'Active' ? 'Suspended' : 'Active' } : p));
+    } else if (activeTab === 'investments') {
+      setInvestments(prev => prev.map(p => p.id === idVal ? { ...p, status: p.status === 'Active' ? 'Suspended' : 'Active' } : p));
+    } else if (activeTab === 'packages') {
+      try {
+        const nextStatus = product.status === 'Active' ? 'Suspended' : 'Active';
+        await api.put(`/packages/${idVal}`, {
+          ...product,
+          status: nextStatus
+        });
+        toast.success(`Package status updated to ${nextStatus}`);
+        fetchPackages();
+      } catch (e) {
+        toast.error('Failed to toggle status');
+      }
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!prodName || !prodRate) return;
+    if (!prodName) return;
 
     if (activeTab === 'loans') {
+      if (!prodRate) return;
       if (editId) {
-        // Edit existing loan
         setLoans(prev => prev.map(p => p.id === editId ? { id: editId, name: prodName, rate: prodRate, tenure: prodTenure, criteria: prodCriteria, status: prodStatus } : p));
       } else {
-        // Add new loan
         setLoans(prev => [
           ...prev,
           { id: `l-${Date.now()}`, name: prodName, rate: prodRate, tenure: prodTenure, criteria: prodCriteria, status: prodStatus }
         ]);
       }
-    } else {
+      setFormOpen(false);
+    } else if (activeTab === 'investments') {
+      if (!prodRate) return;
       if (editId) {
-        // Edit existing investment
         setInvestments(prev => prev.map(p => p.id === editId ? { id: editId, name: prodName, risk: prodRisk, returnRate: prodRate, status: prodStatus } : p));
       } else {
-        // Add new investment
         setInvestments(prev => [
           ...prev,
           { id: `i-${Date.now()}`, name: prodName, risk: prodRisk, returnRate: prodRate, status: prodStatus }
         ]);
       }
+      setFormOpen(false);
+    } else if (activeTab === 'packages') {
+      try {
+        const featuresArray = prodFeatures
+          ? prodFeatures.split(',').map(f => f.trim()).filter(Boolean)
+          : [];
+        const payload = {
+          name: prodName,
+          description: prodDesc,
+          department: prodDept,
+          price: prodPrice ? parseFloat(prodPrice) : null,
+          duration: prodDuration,
+          features: featuresArray,
+          status: prodStatus
+        };
+
+        if (editId) {
+          await api.put(`/packages/${editId}`, payload);
+          toast.success('Consulting package updated');
+        } else {
+          await api.post('/packages', payload);
+          toast.success('Consulting package created');
+        }
+        fetchPackages();
+        setFormOpen(false);
+      } catch (e) {
+        toast.error('Failed to save consulting package');
+      }
     }
-    setFormOpen(false);
   };
 
   return (
@@ -115,7 +205,7 @@ export default function ProductManagement() {
           className="btn-primary flex items-center gap-2"
         >
           <span className="material-symbols-outlined">add</span>
-          Add New Product
+          {activeTab === 'packages' ? 'Add Package' : 'Add New Product'}
         </button>
       </div>
 
@@ -125,6 +215,7 @@ export default function ProductManagement() {
           {[
             { id: 'loans', label: 'Loan & Refinancing Products', icon: 'payments' },
             { id: 'investments', label: 'Asset Management Portfolios', icon: 'trending_up' },
+            { id: 'packages', label: 'Consulting Packages', icon: 'workspace_premium' },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -171,7 +262,7 @@ export default function ProductManagement() {
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button onClick={() => handleOpenEdit(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Edit"><span className="material-symbols-outlined text-base">edit</span></button>
-                          <button onClick={() => handleToggleStatus(item.id)} className="text-secondary hover:text-accent transition-colors p-1" title="Toggle Status"><span className="material-symbols-outlined text-base">sync</span></button>
+                          <button onClick={() => handleToggleStatus(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Toggle Status"><span className="material-symbols-outlined text-base">sync</span></button>
                           <button onClick={() => handleDelete(item.id)} className="text-error hover:underline transition-colors p-1" title="Delete"><span className="material-symbols-outlined text-base">delete</span></button>
                         </div>
                       </td>
@@ -185,7 +276,7 @@ export default function ProductManagement() {
                 </tbody>
               </table>
             </div>
-          ) : (
+          ) : activeTab === 'investments' ? (
             <div className="overflow-x-auto fade-in">
               <table className="w-full">
                 <thead>
@@ -215,7 +306,7 @@ export default function ProductManagement() {
                       <td className="px-6 py-4">
                         <div className="flex gap-2">
                           <button onClick={() => handleOpenEdit(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Edit"><span className="material-symbols-outlined text-base">edit</span></button>
-                          <button onClick={() => handleToggleStatus(item.id)} className="text-secondary hover:text-accent transition-colors p-1" title="Toggle Status"><span className="material-symbols-outlined text-base">sync</span></button>
+                          <button onClick={() => handleToggleStatus(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Toggle Status"><span className="material-symbols-outlined text-base">sync</span></button>
                           <button onClick={() => handleDelete(item.id)} className="text-error hover:underline transition-colors p-1" title="Delete"><span className="material-symbols-outlined text-base">delete</span></button>
                         </div>
                       </td>
@@ -229,6 +320,62 @@ export default function ProductManagement() {
                 </tbody>
               </table>
             </div>
+          ) : (
+            <div className="overflow-x-auto fade-in">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-surface text-label-lg text-text-muted uppercase tracking-wider">
+                    <th className="px-6 py-4 text-left">Package Name</th>
+                    <th className="px-6 py-4 text-left">Department</th>
+                    <th className="px-6 py-4 text-right">Price</th>
+                    <th className="px-6 py-4 text-left">Duration</th>
+                    <th className="px-6 py-4 text-left">Features</th>
+                    <th className="px-6 py-4 text-left">Status</th>
+                    <th className="px-6 py-4 text-left">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-outline-variant/40 text-body-md text-text">
+                  {loadingPackages ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-text-muted">Loading packages...</td>
+                    </tr>
+                  ) : packages.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-text-muted">No consulting packages in registry.</td>
+                    </tr>
+                  ) : (
+                    packages.map((item) => (
+                      <tr key={item.id || item._id} className="hover:bg-surface/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="font-bold text-accent">{item.name}</div>
+                          <div className="text-xs text-text-muted mt-0.5 max-w-[220px] truncate" title={item.description}>{item.description}</div>
+                        </td>
+                        <td className="px-6 py-4 capitalize font-semibold text-accent">{item.department}</td>
+                        <td className="px-6 py-4 text-right font-bold text-secondary">
+                          {item.price ? `₹${Number(item.price).toLocaleString('en-IN')}` : 'Free'}
+                        </td>
+                        <td className="px-6 py-4 text-accent font-semibold">{item.duration || 'Flexible'}</td>
+                        <td className="px-6 py-4 text-body-sm text-text-muted max-w-[200px] truncate" title={item.features?.join(', ')}>
+                          {item.features?.join(', ') || 'None'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={`status-badge ${item.status === 'Active' ? 'status-success' : 'bg-outline-variant/40 text-text-muted'}`}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex gap-2">
+                            <button onClick={() => handleOpenEdit(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Edit"><span className="material-symbols-outlined text-base">edit</span></button>
+                            <button onClick={() => handleToggleStatus(item)} className="text-secondary hover:text-accent transition-colors p-1" title="Toggle Status"><span className="material-symbols-outlined text-base">sync</span></button>
+                            <button onClick={() => handleDelete(item.id || item._id)} className="text-error hover:underline transition-colors p-1" title="Delete"><span className="material-symbols-outlined text-base">delete</span></button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       </div>
@@ -238,7 +385,7 @@ export default function ProductManagement() {
         <div className="fixed inset-0 bg-accent/45 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
           <form 
             onSubmit={handleSubmit}
-            className="card w-full max-w-lg p-8 relative shadow-2xl space-y-6 fade-in"
+            className="card w-full max-w-lg p-8 relative shadow-2xl space-y-5 fade-in"
           >
             <button 
               type="button" 
@@ -249,87 +396,168 @@ export default function ProductManagement() {
             </button>
 
             <div>
-              <span className="text-xs text-text-muted font-bold uppercase tracking-widest">{activeTab === 'loans' ? 'Loan Product Config' : 'Advisory Portfolio Config'}</span>
-              <h3 className="text-headline-md font-bold text-accent mt-1">{editId ? 'Edit Product Parameters' : 'Register New Offering'}</h3>
+              <span className="text-xs text-text-muted font-bold uppercase tracking-widest">
+                {activeTab === 'loans' ? 'Loan Product Config' : activeTab === 'investments' ? 'Advisory Portfolio Config' : 'Consulting Package Config'}
+              </span>
+              <h3 className="text-headline-md font-bold text-accent mt-1">{editId ? 'Edit Offering Parameters' : 'Register New Offering'}</h3>
             </div>
 
             <div className="space-y-2">
-              <label className="text-label-lg text-accent font-bold">Product Name</label>
+              <label className="text-label-lg text-accent font-bold">Name</label>
               <input 
                 type="text"
                 value={prodName}
                 onChange={(e) => setProdName(e.target.value)}
-                placeholder="e.g. ESG Focused Index Portfolio"
+                placeholder="e.g. Startup Launch Package"
                 className="form-input"
                 required
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-label-lg text-accent font-bold">Rate / Returns (%)</label>
-                <input 
-                  type="text"
-                  value={prodRate}
-                  onChange={(e) => setProdRate(e.target.value)}
-                  placeholder="e.g. 5.95%"
-                  className="form-input"
-                  required
-                />
-              </div>
+            {activeTab === 'packages' ? (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">Price (₹)</label>
+                    <input 
+                      type="number"
+                      value={prodPrice}
+                      onChange={(e) => setProdPrice(e.target.value)}
+                      placeholder="e.g. 150000"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">Duration</label>
+                    <input 
+                      type="text"
+                      value={prodDuration}
+                      onChange={(e) => setProdDuration(e.target.value)}
+                      placeholder="e.g. 3 Months"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
 
-              {activeTab === 'loans' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">Department</label>
+                    <select 
+                      value={prodDept}
+                      onChange={(e) => setProdDept(e.target.value)}
+                      className="form-input font-bold"
+                    >
+                      <option value="loans">Loans</option>
+                      <option value="tax">Tax</option>
+                      <option value="investment">Investment</option>
+                      <option value="insurance">Insurance</option>
+                      <option value="wealth">Wealth</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">Initial Roster Status</label>
+                    <select 
+                      value={prodStatus}
+                      onChange={(e) => setProdStatus(e.target.value)}
+                      className="form-input font-bold"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <label className="text-label-lg text-accent font-bold">Tenure Term</label>
-                  <input 
-                    type="text"
-                    value={prodTenure}
-                    onChange={(e) => setProdTenure(e.target.value)}
-                    placeholder="e.g. 15 Years"
-                    className="form-input"
-                    required
+                  <label className="text-label-lg text-accent font-bold">Description</label>
+                  <textarea 
+                    value={prodDesc}
+                    onChange={(e) => setProdDesc(e.target.value)}
+                    placeholder="Short description of the consulting package..."
+                    className="form-input min-h-[60px] resize-none text-body-md"
                   />
                 </div>
-              ) : (
+
                 <div className="space-y-2">
-                  <label className="text-label-lg text-accent font-bold">Risk Level</label>
+                  <label className="text-label-lg text-accent font-bold">Features (comma-separated)</label>
+                  <input 
+                    type="text"
+                    value={prodFeatures}
+                    onChange={(e) => setProdFeatures(e.target.value)}
+                    placeholder="e.g. Pitch Deck Review, Funding Strategy"
+                    className="form-input"
+                  />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">{activeTab === 'loans' ? 'Rate / Returns (%)' : 'Expected IRR (%)'}</label>
+                    <input 
+                      type="text"
+                      value={prodRate}
+                      onChange={(e) => setProdRate(e.target.value)}
+                      placeholder="e.g. 5.95%"
+                      className="form-input"
+                      required
+                    />
+                  </div>
+
+                  {activeTab === 'loans' ? (
+                    <div className="space-y-2">
+                      <label className="text-label-lg text-accent font-bold">Tenure Term</label>
+                      <input 
+                        type="text"
+                        value={prodTenure}
+                        onChange={(e) => setProdTenure(e.target.value)}
+                        placeholder="e.g. 15 Years"
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <label className="text-label-lg text-accent font-bold">Risk Level</label>
+                      <select 
+                        value={prodRisk}
+                        onChange={(e) => setProdRisk(e.target.value)}
+                        className="form-input font-bold"
+                      >
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Medium-High">Medium-High</option>
+                        <option value="High">High</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {activeTab === 'loans' && (
+                  <div className="space-y-2">
+                    <label className="text-label-lg text-accent font-bold">Compliance Eligibility Criteria</label>
+                    <textarea 
+                      value={prodCriteria}
+                      onChange={(e) => setProdCriteria(e.target.value)}
+                      placeholder="Qualifications for loan approval..."
+                      className="form-input min-h-[80px] resize-none text-body-md"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-label-lg text-accent font-bold">Initial Roster Status</label>
                   <select 
-                    value={prodRisk}
-                    onChange={(e) => setProdRisk(e.target.value)}
+                    value={prodStatus}
+                    onChange={(e) => setProdStatus(e.target.value)}
                     className="form-input font-bold"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Medium-High">Medium-High</option>
-                    <option value="High">High</option>
+                    <option value="Active">Active</option>
+                    <option value="Suspended">Suspended</option>
                   </select>
                 </div>
-              )}
-            </div>
-
-            {activeTab === 'loans' && (
-              <div className="space-y-2">
-                <label className="text-label-lg text-accent font-bold">Compliance Eligibility Criteria</label>
-                <textarea 
-                  value={prodCriteria}
-                  onChange={(e) => setProdCriteria(e.target.value)}
-                  placeholder="Qualifications for loan approval..."
-                  className="form-input min-h-[80px] resize-none text-body-md"
-                />
-              </div>
+              </>
             )}
-
-            <div className="space-y-2">
-              <label className="text-label-lg text-accent font-bold">Initial Roster Status</label>
-              <select 
-                value={prodStatus}
-                onChange={(e) => setProdStatus(e.target.value)}
-                className="form-input font-bold"
-              >
-                <option value="Active">Active</option>
-                <option value="Suspended">Suspended</option>
-              </select>
-            </div>
 
             <div className="flex gap-3 pt-4 border-t border-border/35">
               <button 

@@ -22,9 +22,20 @@ public class DashboardController {
     private final LeadRepository leadRepository;
     private final LoanRepository loanRepository;
     private final InvoiceRepository invoiceRepository;
+    private final com.finbridge.repository.OrganizationRepository organizationRepository;
 
     @GetMapping
     public ResponseEntity<Map<String, Object>> getDashboard(@AuthenticationPrincipal User user) {
+        java.util.List<Map<String, Object>> packageStats = new java.util.ArrayList<>();
+        for (Object[] row : organizationRepository.countBySelectedPackage()) {
+            if (row[0] != null) {
+                packageStats.add(Map.of(
+                    "packageName", row[0],
+                    "count", row[1]
+                ));
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
             "totalUsers",    userRepository.count(),
             "totalLeads",    leadRepository.countActive(),
@@ -32,6 +43,7 @@ public class DashboardController {
             "wonLeads",      leadRepository.countByStatus("won"),
             "totalLoans",    loanRepository.count(),
             "totalInvoices", invoiceRepository.countByActiveTrue(),
+            "packageStats",  packageStats,
             "role",          user.getRole(),
             "department",    user.getDepartment() != null ? user.getDepartment() : ""
         ));

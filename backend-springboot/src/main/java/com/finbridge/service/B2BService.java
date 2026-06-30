@@ -85,6 +85,7 @@ public class B2BService {
         org.setState(req.getState());
         org.setPincode(req.getPincode());
         org.setWebsite(cleanWebsite);
+        org.setSelectedPackage(req.getSelectedPackage());
         if (req.getServices() != null)
             org.setServices(req.getServices().toArray(new String[0]));
         org.setStatus("pending");
@@ -143,6 +144,7 @@ public class B2BService {
         lead.setServiceType(req.getServices() != null ? String.join(", ", req.getServices()) : null);
         lead.setDepartment(primaryDepartment(req.getServices()));
         lead.setRequirement(buildRequirement(org, req));
+        lead.setSelectedPackage(req.getSelectedPackage());
         leadService.create(lead);
     }
 
@@ -307,15 +309,44 @@ public class B2BService {
         boolean allRequiredUploaded = requiredTypes.stream()
                 .allMatch(type -> docs.stream().anyMatch(d -> type.equals(d.getDocumentType())));
 
-        return java.util.Map.of(
-                "totalRequests", all.size(),
-                "pendingRequests", pending,
-                "completedRequests", completed,
-                "totalDocuments", docs.size(),
-                "pendingDocuments", pendingDocs,
-                "totalPaid", totalPaid,
-                "activeProposals", orgProposalRepo.findByOrganizationIdAndActiveTrue(orgId).size(),
-                "allRequiredUploaded", allRequiredUploaded);
+        String selectedDepartment = null;
+        String bookingStatus = "Pending KYC";
+        String assignedConsultant = "Not Assigned";
+        
+        Organization org = orgRepo.findById(orgId).orElse(null);
+        if (org != null) {
+            if (org.getServices() != null && org.getServices().length > 0) {
+                selectedDepartment = org.getServices()[0];
+            }
+            if ("approved".equalsIgnoreCase(org.getStatus())) {
+                bookingStatus = "Active";
+            } else if ("pending".equalsIgnoreCase(org.getStatus())) {
+                bookingStatus = "Under Review";
+            }
+        }
+        
+        if (!all.isEmpty()) {
+            ServiceRequest firstReq = all.get(0);
+            if (firstReq.getConsultant() != null) {
+                assignedConsultant = firstReq.getConsultant().getName();
+            }
+            bookingStatus = firstReq.getStatus();
+        }
+
+        java.util.Map<String, Object> stats = new java.util.LinkedHashMap<>();
+        stats.put("totalRequests", all.size());
+        stats.put("pendingRequests", pending);
+        stats.put("completedRequests", completed);
+        stats.put("totalDocuments", docs.size());
+        stats.put("pendingDocuments", pendingDocs);
+        stats.put("totalPaid", totalPaid);
+        stats.put("activeProposals", orgProposalRepo.findByOrganizationIdAndActiveTrue(orgId).size());
+        stats.put("allRequiredUploaded", allRequiredUploaded);
+        stats.put("selectedDepartment", selectedDepartment != null ? selectedDepartment : "Not Selected");
+        stats.put("selectedPackage", (org != null && org.getSelectedPackage() != null) ? org.getSelectedPackage() : "None Selected");
+        stats.put("bookingStatus", bookingStatus);
+        stats.put("assignedConsultant", assignedConsultant);
+        return stats;
     }
 
     // ─── Support Tickets ─────────────────────────────────────────────────────
@@ -736,6 +767,7 @@ public class B2BService {
                 .gstin(org.getGstin())
                 .status(org.getStatus())
                 .kycVerified(org.isKycVerified())
+                .selectedPackage(org.getSelectedPackage())
                 .userName(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
