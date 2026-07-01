@@ -62,105 +62,64 @@ const ThreeBackground = () => {
 
       const group = new THREE.Group();
       scene.add(group);
-      const R = 2.3;
 
-      // Globe Wireframe
-      const sphereGeo = new THREE.SphereGeometry(R, mobile ? 20 : 28, mobile ? 14 : 20);
-      const wireframeGeo = new THREE.WireframeGeometry(sphereGeo);
-      const lineMaterial = new THREE.LineBasicMaterial({ color: GOLD, transparent: true, opacity: 0.14 });
-      const lineSegments = new THREE.LineSegments(wireframeGeo, lineMaterial);
-      group.add(lineSegments);
+      // --- LIGHTWEIGHT FLOATING CONSTELLATION NETWORK ---
+      const particleCount = mobile ? 50 : 110;
+      const pos = new Float32Array(particleCount * 3);
+      const particlesData = [];
 
-      // Nodes
-      const N = mobile ? 180 : 340;
-      const pos = new Float32Array(N * 3);
-      const nodes = [];
-      const PHI = Math.PI * (3 - Math.sqrt(5));
+      for (let i = 0; i < particleCount; i++) {
+        const x = (Math.random() - 0.5) * 11;
+        const y = (Math.random() - 0.5) * 8;
+        const z = (Math.random() - 0.5) * 5;
 
-      for (let i = 0; i < N; i++) {
-        const y = 1 - (i / (N - 1)) * 2;
-        const r = Math.sqrt(1 - y * y);
-        const th = PHI * i;
-        const x = Math.cos(th) * r;
-        const z = Math.sin(th) * r;
-        pos[i * 3] = x * R;
-        pos[i * 3 + 1] = y * R;
-        pos[i * 3 + 2] = z * R;
-        nodes.push(new THREE.Vector3(x * R, y * R, z * R));
+        pos[i * 3] = x;
+        pos[i * 3 + 1] = y;
+        pos[i * 3 + 2] = z;
+
+        particlesData.push({
+          velocity: new THREE.Vector3(
+            (Math.random() - 0.5) * 0.002,
+            (Math.random() - 0.5) * 0.002,
+            (Math.random() - 0.5) * 0.002
+          )
+        });
       }
 
-      const pg = new THREE.BufferGeometry();
-      pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const particleGeometry = new THREE.BufferGeometry();
+      particleGeometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
       const pointsMat = new THREE.PointsMaterial({
         map: tex,
         color: GOLD2,
-        size: 0.16,
+        size: 0.12,
         transparent: true,
-        opacity: 0.95,
+        opacity: 0.6,
         blending: THREE.AdditiveBlending,
         depthWrite: false,
       });
-      const points = new THREE.Points(pg, pointsMat);
+
+      const points = new THREE.Points(particleGeometry, pointsMat);
       group.add(points);
 
-      // Connection Arcs
-      const arcGeometries = [];
-      const arcMaterials = [];
-      const maxArcs = mobile ? 10 : 18;
-      for (let k = 0; k < maxArcs; k++) {
-        const a = nodes[Math.floor(Math.random() * N)];
-        const b = nodes[Math.floor(Math.random() * N)];
-        if (a.distanceTo(b) < 1.4) continue;
-        const mid = a.clone().add(b).multiplyScalar(0.5).normalize().multiplyScalar(R * 1.45);
-        const cv = new THREE.QuadraticBezierCurve3(a, mid, b);
-        const g = new THREE.BufferGeometry().setFromPoints(cv.getPoints(26));
-        const mat = new THREE.LineBasicMaterial({
-          color: GOLD2,
-          transparent: true,
-          opacity: 0.26,
-          blending: THREE.AdditiveBlending,
-        });
-        const line = new THREE.Line(g, mat);
-        group.add(line);
-        arcGeometries.push(g);
-        arcMaterials.push(mat);
-      }
+      // Faint connections
+      const maxConnections = mobile ? 50 : 110;
+      const linePositions = new Float32Array(maxConnections * 2 * 3);
+      const lineColors = new Float32Array(maxConnections * 2 * 3);
 
-      // Central Glow Sprite
-      const glowMat = new THREE.SpriteMaterial({
-        map: tex,
-        color: GOLD,
-        transparent: true,
-        opacity: 0.5,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      });
-      const glow = new THREE.Sprite(glowMat);
-      glow.scale.set(9, 9, 1);
-      glow.position.z = -1;
-      scene.add(glow);
+      const lineGeometry = new THREE.BufferGeometry();
+      lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+      lineGeometry.setAttribute('color', new THREE.BufferAttribute(lineColors, 3));
 
-      // Drifting Particles
-      const PN = mobile ? 120 : 260;
-      const pp = new Float32Array(PN * 3);
-      for (let i = 0; i < PN; i++) {
-        pp[i * 3] = (Math.random() - 0.5) * 18;
-        pp[i * 3 + 1] = (Math.random() - 0.5) * 12;
-        pp[i * 3 + 2] = (Math.random() - 0.5) * 8 - 2;
-      }
-      const pgeo = new THREE.BufferGeometry();
-      pgeo.setAttribute('position', new THREE.BufferAttribute(pp, 3));
-      const dustMat = new THREE.PointsMaterial({
-        map: tex,
-        color: GOLD2,
-        size: 0.07,
+      const lineMaterial = new THREE.LineBasicMaterial({
+        vertexColors: true,
         transparent: true,
-        opacity: 0.5,
+        opacity: 0.1,
         blending: THREE.AdditiveBlending,
-        depthWrite: false,
       });
-      const dust = new THREE.Points(pgeo, dustMat);
-      scene.add(dust);
+
+      const lineSegments = new THREE.LineSegments(lineGeometry, lineMaterial);
+      group.add(lineSegments);
 
       group.rotation.x = 0.4;
       const mouse = { x: 0, y: 0 };
@@ -193,23 +152,81 @@ const ThreeBackground = () => {
       let frameId;
       function frame() {
         t += 0.01;
-        group.rotation.y += 0.0018;
-        group.rotation.x += ((0.4 + mouse.y * 0.25) - group.rotation.x) * 0.05;
-        group.rotation.z += (mouse.x * 0.05 - group.rotation.z) * 0.05;
+        group.rotation.y += 0.0004;
+        group.rotation.x += ((0.4 + mouse.y * 0.15) - group.rotation.x) * 0.05;
+        group.rotation.z += (mouse.x * 0.03 - group.rotation.z) * 0.05;
 
-        // Scroll drift and scaling
+        // Scroll drift
         const p = scrollProgress;
-        group.position.x += (p * (window.innerWidth < 640 ? 0.4 : 2.6) - group.position.x) * 0.06;
-        group.position.y += (p * 0.6 - group.position.y) * 0.06;
+        group.position.x += (p * (window.innerWidth < 640 ? 0.3 : 1.8) - group.position.x) * 0.06;
+        group.position.y += (p * 0.4 - group.position.y) * 0.06;
 
-        const s = 1 - p * 0.18;
-        group.scale.setScalar(s);
+        // Update positions of particles
+        const posAttr = points.geometry.attributes.position;
+        const linePosAttr = lineSegments.geometry.attributes.position;
+        const lineColorAttr = lineSegments.geometry.attributes.color;
 
-        glow.position.x = group.position.x;
-        glowMat.opacity = 0.5 - p * 0.2;
+        let vertexIdx = 0;
+        let colorIdx = 0;
+        let numConnections = 0;
 
-        dust.rotation.y += 0.0006;
-        dust.rotation.x = Math.sin(t * 0.1) * 0.05;
+        for (let i = 0; i < particleCount; i++) {
+          let x = posAttr.getX(i);
+          let y = posAttr.getY(i);
+          let z = posAttr.getZ(i);
+
+          const data = particlesData[i];
+          x += data.velocity.x;
+          y += data.velocity.y;
+          z += data.velocity.z;
+
+          // Soft boundary bounce
+          if (x < -6.5 || x > 6.5) data.velocity.x *= -1;
+          if (y < -5 || y > 5) data.velocity.y *= -1;
+          if (z < -4 || z > 3) data.velocity.z *= -1;
+
+          posAttr.setXYZ(i, x, y, z);
+        }
+
+        // Build dynamic light connections
+        for (let i = 0; i < particleCount; i++) {
+          const x1 = posAttr.getX(i);
+          const y1 = posAttr.getY(i);
+          const z1 = posAttr.getZ(i);
+
+          for (let j = i + 1; j < particleCount; j++) {
+            const x2 = posAttr.getX(j);
+            const y2 = posAttr.getY(j);
+            const z2 = posAttr.getZ(j);
+
+            const dx = x1 - x2;
+            const dy = y1 - y2;
+            const dz = z1 - z2;
+            const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+            if (dist < 1.7 && numConnections < maxConnections) {
+              linePosAttr.setXYZ(vertexIdx, x1, y1, z1);
+              linePosAttr.setXYZ(vertexIdx + 1, x2, y2, z2);
+
+              const alpha = (1.0 - dist / 1.7) * 0.35;
+              const r = 230 / 255 * alpha;
+              const g = 196 / 255 * alpha;
+              const b = 106 / 255 * alpha;
+
+              lineColorAttr.setXYZ(colorIdx, r, g, b);
+              lineColorAttr.setXYZ(colorIdx + 1, r, g, b);
+
+              vertexIdx += 2;
+              colorIdx += 2;
+              numConnections++;
+            }
+          }
+        }
+
+        posAttr.needsUpdate = true;
+        linePosAttr.needsUpdate = true;
+        lineColorAttr.needsUpdate = true;
+        lineSegments.geometry.setDrawRange(0, numConnections * 2);
 
         renderer.render(scene, camera);
         frameId = requestAnimationFrame(frame);
@@ -282,21 +299,12 @@ const ThreeBackground = () => {
 
         // Dispose ThreeJS resources
         scene.remove(group);
-        scene.remove(glow);
-        scene.remove(dust);
 
-        sphereGeo.dispose();
-        wireframeGeo.dispose();
-        lineMaterial.dispose();
+        particleGeometry.dispose();
         pointsMat.dispose();
-        pg.dispose();
-        glowMat.dispose();
-        pgeo.dispose();
-        dustMat.dispose();
+        lineGeometry.dispose();
+        lineMaterial.dispose();
         tex.dispose();
-
-        arcGeometries.forEach((g) => g.dispose());
-        arcMaterials.forEach((m) => m.dispose());
 
         renderer.dispose();
       };
