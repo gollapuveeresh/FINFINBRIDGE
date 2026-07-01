@@ -86,29 +86,24 @@ const CanvasBackground = () => {
     window.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseleave', handleMouseLeave);
     
-    // Grid parameters
-    const rows = 15;
-    const cols = 20;
-    const fov = 1800;
-    
     // Drifting gold particles setup
     const particles = [];
-    const particleCount = 70;
+    const particleCount = 75;
     for (let i = 0; i < particleCount; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 2.6 + 0.8,
-        speedX: (Math.random() - 0.5) * 0.4,
-        speedY: -Math.random() * 0.5 - 0.15, // Drift upwards slowly
-        color: `rgba(212, 175, 55, ${Math.random() * 0.45 + 0.25})`
+        size: Math.random() * 2.0 + 0.6,
+        speedX: (Math.random() - 0.5) * 0.35,
+        speedY: (Math.random() - 0.5) * 0.2 - 0.12, // Slow upward drift
+        opacity: Math.random() * 0.4 + 0.15
       });
     }
     
     const animate = () => {
       ctx.clearRect(0, 0, width, height);
       
-      // 1. Draw drifting dust particles across the entire height/width
+      // Update and draw drifting particles
       particles.forEach(p => {
         p.x += p.speedX;
         p.y += p.speedY;
@@ -116,184 +111,46 @@ const CanvasBackground = () => {
         // Wrap around borders
         if (p.x < 0) p.x = width;
         if (p.x > width) p.x = 0;
-        if (p.y < 0) {
-          p.y = height;
-          p.x = Math.random() * width;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+        
+        // Dynamic mouse interaction (gentle push)
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = p.x - mouse.x;
+          const dy = p.y - mouse.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            const force = (120 - dist) / 120;
+            p.x += (dx / dist) * force * 1.5;
+            p.y += (dy / dist) * force * 1.5;
+          }
         }
         
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = p.color;
+        ctx.fillStyle = `rgba(212, 175, 55, ${p.opacity})`;
         ctx.fill();
       });
       
-      const time = Date.now() * 0.0016;
-      
-      // Rotate grid slowly over time + mouse interaction
-      const rotY = 0.2 + time * 0.045 + (mouse.x !== null ? (mouse.x - width / 2) * 0.00015 : 0);
-      const rotX = -0.38 + (mouse.y !== null ? (mouse.y - height / 2) * 0.00015 : 0);
-      
-      const gridWidth = width * 1.35;
-      const gridDepth = Math.min(height * 0.85, 1100);
-      const spacingX = gridWidth / (cols - 1);
-      const spacingZ = gridDepth / (rows - 1);
-      
-      const projectedGrid = [];
-      
-      // Calculate 3D waving coordinates
-      for (let r = 0; r < rows; r++) {
-        projectedGrid[r] = [];
-        for (let c = 0; c < cols; c++) {
-          const posX = (c - cols / 2) * spacingX;
-          const posZ = (r - rows / 2) * spacingZ;
+      // Draw very thin connection lines between neighboring particles
+      const maxDistance = 110;
+      for (let i = 0; i < particleCount; i++) {
+        const p1 = particles[i];
+        for (let j = i + 1; j < particleCount; j++) {
+          const p2 = particles[j];
+          const dx = p1.x - p2.x;
+          const dy = p1.y - p2.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
           
-          // Double sine wave
-          const wave1 = Math.sin(time * 0.85 + c * 0.35 + r * 0.25) * 28;
-          const wave2 = Math.cos(time * 0.45 + c * 0.18 - r * 0.15) * 14;
-          let posY = wave1 + wave2;
-          
-          // Mouse interaction (Ripple effect)
-          if (mouse.x !== null && mouse.y !== null) {
-            // Rough projection to estimate 2D distance for mouse ripple
-            const x1_raw = posX * Math.cos(rotY) - posZ * Math.sin(rotY);
-            const z1_raw = posX * Math.sin(rotY) + posZ * Math.cos(rotY);
-            const y2_raw = - z1_raw * Math.sin(rotX);
-            const z2_raw = z1_raw * Math.cos(rotX);
-            const scale_raw = fov / (fov + z2_raw);
-            const projX_raw = (x1_raw * scale_raw) + (width * 0.5);
-            const projY_raw = (y2_raw * scale_raw) + (height * 0.5);
-            
-            const dx = projX_raw - mouse.x;
-            const dy = projY_raw - mouse.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 280) {
-              const factor = 1 - dist / 280;
-              posY += Math.sin(dist * 0.04 - time * 5.5) * 45 * factor;
-            }
+          if (dist < maxDistance) {
+            const lineOpacity = (1 - dist / maxDistance) * 0.15;
+            ctx.strokeStyle = `rgba(212, 175, 55, ${lineOpacity})`;
+            ctx.lineWidth = 0.55;
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
           }
-          
-          // Rotate coordinates around Y and X axes
-          const x1 = posX * Math.cos(rotY) - posZ * Math.sin(rotY);
-          const z1 = posX * Math.sin(rotY) + posZ * Math.cos(rotY);
-          
-          const y2 = posY * Math.cos(rotX) - z1 * Math.sin(rotX);
-          const z2 = posY * Math.sin(rotX) + z1 * Math.cos(rotX);
-          
-          // Perspective projection centered vertically
-          const scale = fov / (fov + z2);
-          const projX = (x1 * scale) + (width * 0.5);
-          const projY = (y2 * scale) + (height * 0.5);
-          
-          projectedGrid[r][c] = { x: projX, y: projY, z: z2, scale };
-        }
-      }
-      
-      // Helper function to draw connections
-      const drawLine = (p1, p2) => {
-        const dx = p1.x - p2.x;
-        const dy = p1.y - p2.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const maxDist = 165;
-        
-        if (dist < maxDist) {
-          const depthAvg = (p1.z + p2.z) / 2;
-          const depthRatio = Math.max(0.1, 1 - (depthAvg + 550) / 1100);
-          const opacity = (1 - dist / maxDist) * 0.55 * depthRatio;
-          
-          ctx.strokeStyle = `rgba(212, 175, 55, ${opacity})`;
-          ctx.lineWidth = 0.95 * ((p1.scale + p2.scale) / 2);
-          ctx.beginPath();
-          ctx.moveTo(p1.x, p1.y);
-          ctx.lineTo(p2.x, p2.y);
-          ctx.stroke();
-        }
-      };
-      
-      // Connect points (rows and columns)
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const p1 = projectedGrid[r][c];
-          
-          if (c < cols - 1) {
-            drawLine(p1, projectedGrid[r][c + 1]);
-          }
-          if (r < rows - 1) {
-            drawLine(p1, projectedGrid[r + 1][c]);
-          }
-        }
-      }
-      
-      // 3. Draw energy pulses along lines
-      const pulseSpeed = time * 0.65;
-      for (let r = 0; r < rows; r += 2) {
-        for (let c = 0; c < cols - 1; c += 3) {
-          const p1 = projectedGrid[r][c];
-          const p2 = projectedGrid[r][c + 1];
-          if (p1 && p2) {
-            const dx = p1.x - p2.x;
-            const dy = p1.y - p2.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < 140) {
-              const t = (pulseSpeed + (r * 0.12) + (c * 0.07)) % 1;
-              const px = p1.x + (p2.x - p1.x) * t;
-              const py = p1.y + (p2.y - p1.y) * t;
-              const pScale = p1.scale * (1 - t) + p2.scale * t;
-              const pSize = Math.max(2, pScale * 3.8);
-              
-              ctx.beginPath();
-              ctx.arc(px, py, pSize, 0, Math.PI * 2);
-              ctx.fillStyle = '#ffffff';
-              ctx.shadowBlur = 10;
-              ctx.shadowColor = 'rgba(212, 175, 55, 0.95)';
-              ctx.fill();
-              ctx.shadowBlur = 0;
-            }
-          }
-        }
-      }
-      
-      for (let c = 1; c < cols; c += 3) {
-        for (let r = 0; r < rows - 1; r += 4) {
-          const p1 = projectedGrid[r][c];
-          const p2 = projectedGrid[r + 1][c];
-          if (p1 && p2) {
-            const dx = p1.x - p2.x;
-            const dy = p1.y - p2.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist < 140) {
-              const t = (pulseSpeed * 0.8 + (r * 0.08) + (c * 0.15)) % 1;
-              const px = p1.x + (p2.x - p1.x) * t;
-              const py = p1.y + (p2.y - p1.y) * t;
-              const pScale = p1.scale * (1 - t) + p2.scale * t;
-              const pSize = Math.max(1.8, pScale * 3.2);
-              
-              ctx.beginPath();
-              ctx.arc(px, py, pSize, 0, Math.PI * 2);
-              ctx.fillStyle = '#ffffff';
-              ctx.shadowBlur = 8;
-              ctx.shadowColor = 'rgba(212, 175, 55, 0.9)';
-              ctx.fill();
-              ctx.shadowBlur = 0;
-            }
-          }
-        }
-      }
-      
-      // 4. Draw grid nodes
-      for (let r = 0; r < rows; r++) {
-        for (let c = 0; c < cols; c++) {
-          const p = projectedGrid[r][c];
-          const size = Math.max(1.5, p.scale * 3.2);
-          const depthRatio = Math.max(0.1, 1 - (p.z + 550) / 1100);
-          const opacity = 0.5 + depthRatio * 0.5;
-          
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(212, 175, 55, ${opacity})`;
-          ctx.shadowBlur = p.scale * 8;
-          ctx.shadowColor = 'rgba(212, 175, 55, 0.9)';
-          ctx.fill();
-          ctx.shadowBlur = 0;
         }
       }
       
@@ -312,8 +169,9 @@ const CanvasBackground = () => {
     };
   }, []);
   
-  return <canvas ref={canvasRef} style={{ filter: 'drop-shadow(0 0 10px rgba(255, 215, 0, 0.45))' }} className="absolute inset-0 w-full h-full z-0 pointer-events-none opacity-95" />;
+  return <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-0 pointer-events-none opacity-80" />;
 };
+
 
 const ServicesWeOffer = () => {
   const servicesData = [
