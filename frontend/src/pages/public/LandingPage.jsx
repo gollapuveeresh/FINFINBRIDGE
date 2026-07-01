@@ -191,7 +191,7 @@ export default function LandingPage() {
           <div className="space-y-4">
             <h4 className="text-label-lg text-accent uppercase tracking-wider">Contact Details</h4>
             <div className="space-y-2">
-              <div className="flex items-center gap-3 text-text-muted"><span className="material-symbols-outlined text-secondary text-sm">mail</span><span className="text-body-sm">contact@finbridge.com</span></div>
+              <div className="flex items-center gap-3 text-text-muted"><span className="material-symbols-outlined text-secondary text-sm">mail</span><a href="mailto:contact@finbridge.com" className="text-body-sm hover:text-secondary hover:underline transition-all">contact@finbridge.com</a></div>
               <div className="flex items-center gap-3 text-text-muted"><span className="material-symbols-outlined text-secondary text-sm">call</span><span className="text-body-sm">+880 1719 765432</span></div>
               <div className="flex items-start gap-3 text-text-muted"><span className="material-symbols-outlined text-secondary text-sm">location_on</span><span className="text-body-sm">FinBridge Tower, Agrabad, Chittagong.</span></div>
             </div>

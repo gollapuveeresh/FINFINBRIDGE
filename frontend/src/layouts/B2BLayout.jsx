@@ -5,15 +5,16 @@ import { useB2BAuth } from '../context/B2BAuthContext';
 import toast from 'react-hot-toast';
 
 const MENU = [
-  { icon: 'dashboard',      label: 'Dashboard',        path: '/b2b/dashboard' },
-  { icon: 'hub',            label: 'Service Requests', path: '/b2b/services' },
-  { icon: 'folder_open',    label: 'Documents',        path: '/b2b/documents' },
-  { icon: 'description',    label: 'Proposals',        path: '/b2b/proposals' },
-  { icon: 'calendar_month', label: 'Meetings',         path: '/b2b/meetings' },
-  { icon: 'payments',       label: 'Payments',         path: '/b2b/payments' },
-  { icon: 'people',         label: 'Team',             path: '/b2b/team' },
-  { icon: 'support_agent',  label: 'Support',          path: '/b2b/support' },
-  { icon: 'settings',       label: 'Settings',         path: '/b2b/settings' },
+  { icon: 'dashboard', label: 'Dashboard', path: '/b2b/dashboard' },
+  { icon: 'recommend', label: 'Recommendations', path: '/b2b/recommendations' },
+  { icon: 'hub', label: 'Service Requests', path: '/b2b/services' },
+  { icon: 'folder_open', label: 'Documents', path: '/b2b/documents' },
+  { icon: 'description', label: 'Proposals', path: '/b2b/proposals' },
+  { icon: 'calendar_month', label: 'Meetings', path: '/b2b/meetings' },
+  { icon: 'payments', label: 'Payments', path: '/b2b/payments' },
+  { icon: 'people', label: 'Team', path: '/b2b/team' },
+  { icon: 'support_agent', label: 'Support', path: '/b2b/support' },
+  { icon: 'settings', label: 'Settings', path: '/b2b/settings' },
 ];
 
 export default function B2BLayout({ children }) {
@@ -27,7 +28,10 @@ export default function B2BLayout({ children }) {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-  const handleLogout = () => { logout(); toast.success('Logged out'); navigate('/b2b/login'); };
+  const handleLogout = () => {
+    if (!window.confirm('Do you want to logout?')) return;
+    logout(); toast.success('Logged out'); navigate('/b2b/login');
+  };
 
   const isActive = (path) => location.pathname === path;
 
@@ -35,7 +39,7 @@ export default function B2BLayout({ children }) {
     <div className="min-h-screen bg-bg">
       {/* Sidebar Backdrop Overlay on Mobile */}
       {isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
@@ -54,7 +58,7 @@ export default function B2BLayout({ children }) {
               <p className="text-[10px] text-text-muted">Business Portal</p>
             </div>
           </Link>
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(false)}
             className="lg:hidden p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors"
             title="Close Menu"
@@ -110,7 +114,7 @@ export default function B2BLayout({ children }) {
       {/* ── Topbar ── */}
       <header className="fixed top-0 left-0 lg:left-[260px] right-0 h-14 bg-surface border-b border-border flex items-center justify-between px-4 lg:px-6 z-40">
         <div className="flex items-center gap-2">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(true)}
             className="lg:hidden p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg mr-1 transition-colors"
           >

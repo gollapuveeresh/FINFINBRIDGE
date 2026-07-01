@@ -12,6 +12,9 @@ export default function ConsultantSchedule() {
   const [schedulingId, setSchedulingId] = useState(null);
   const [inputDate, setInputDate] = useState('');
   const [inputTime, setInputTime] = useState('');
+  const [inputHour, setInputHour] = useState('10');
+  const [inputMinute, setInputMinute] = useState('00');
+  const [inputAmPm, setInputAmPm] = useState('AM');
   const [recordMeeting, setRecordMeeting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -36,9 +39,20 @@ export default function ConsultantSchedule() {
     }
   };
 
+  const convertTo24Hour = (hour, minute, ampm) => {
+    let h = parseInt(hour);
+    if (ampm === 'PM' && h !== 12) h += 12;
+    if (ampm === 'AM' && h === 12) h = 0;
+    return `${String(h).padStart(2, '0')}:${minute}`;
+  };
+
   const handleConfirmSchedule = async (id) => {
-    if (!inputDate || !inputTime) {
-      alert('Please select/enter both Date and Time.');
+    if (!inputDate) {
+      alert('Please select a date.');
+      return;
+    }
+    if (!inputHour || !inputMinute) {
+      alert('Please select a time.');
       return;
     }
     // Validation: No past dates
@@ -50,8 +64,10 @@ export default function ConsultantSchedule() {
       alert('Cannot schedule a meeting for a past date.');
       return;
     }
+    // Convert to 24-hour format for validation and API
+    const time24 = convertTo24Hour(inputHour, inputMinute, inputAmPm);
     // Validation: Between 10:00 AM and 10:00 PM
-    if (inputTime < '10:00' || inputTime > '22:00') {
+    if (time24 < '10:00' || time24 > '22:00') {
       alert('Meetings can only be scheduled between 10:00 AM and 10:00 PM.');
       return;
     }
@@ -59,7 +75,7 @@ export default function ConsultantSchedule() {
       setSubmitting(true);
       const res = await api.patch(`/consultations/${id}/accept`, {
         confirmedDate: inputDate,
-        confirmedTime: inputTime,
+        confirmedTime: time24,
         recordingEnabled: recordMeeting
       });
       if (res.data && res.data.status === 'success') {
@@ -124,7 +140,7 @@ export default function ConsultantSchedule() {
 
       <div className="grid grid-cols-12 gap-gutter my-6">
         {/* Left Side: Consultation Schedule Ledger */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
@@ -137,12 +153,12 @@ export default function ConsultantSchedule() {
                 {meetings.length} requests in ledger
               </span>
             </div>
-            
+
             <div className="divide-y divide-outline-variant/35 overflow-y-auto max-h-[440px]">
               <AnimatePresence>
                 {meetings.map((meet, index) => (
-                  <motion.div 
-                    key={meet.id || meet._id} 
+                  <motion.div
+                    key={meet.id || meet._id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -182,7 +198,7 @@ export default function ConsultantSchedule() {
                         <div className="flex gap-2">
                           {meet.status === 'pending' ? (
                             schedulingId !== (meet.id || meet._id) && (
-                              <button 
+                              <button
                                 onClick={() => {
                                   setSchedulingId(meet.id || meet._id);
                                   setInputDate('');
@@ -209,7 +225,7 @@ export default function ConsultantSchedule() {
 
                     {/* Inline Scheduling Form */}
                     {schedulingId === (meet.id || meet._id) && (
-                      <motion.div 
+                      <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         className="p-4 rounded-xl border border-secondary/35 bg-surface-hover-lowest space-y-4 shadow-[0_0_15px_rgba(212,175,55,0.05)]"
@@ -218,7 +234,7 @@ export default function ConsultantSchedule() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div>
                             <label className="text-xs font-bold text-text-muted block mb-1">Meeting Date</label>
-                            <input 
+                            <input
                               type="date"
                               min={(() => {
                                 const today = new Date();
@@ -235,9 +251,9 @@ export default function ConsultantSchedule() {
                                   return;
                                 }
                                 const today = new Date();
-                                today.setHours(0,0,0,0);
+                                today.setHours(0, 0, 0, 0);
                                 const selected = new Date(val);
-                                selected.setHours(0,0,0,0);
+                                selected.setHours(0, 0, 0, 0);
                                 if (selected < today) {
                                   alert('Cannot select a past date.');
                                   const year = today.getFullYear();
@@ -252,23 +268,43 @@ export default function ConsultantSchedule() {
                             />
                           </div>
                           <div>
-                            <label className="text-xs font-bold text-text-muted block mb-1">Meeting Time Slot (10:00 AM - 10:00 PM)</label>
-                            <input 
-                              type="time"
-                              min="10:00"
-                              max="22:00"
-                              value={inputTime}
-                              onChange={(e) => setInputTime(e.target.value)}
-                              className="w-full bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
-                            />
+                            <label className="text-xs font-bold text-text-muted block mb-1">Meeting Time (10:00 AM - 10:00 PM)</label>
+                            <div className="flex gap-2">
+                              <select
+                                value={inputHour}
+                                onChange={(e) => setInputHour(e.target.value)}
+                                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
+                              >
+                                {Array.from({ length: 12 }, (_, i) => i + 1).map(h => (
+                                  <option key={h} value={h}>{h}</option>
+                                ))}
+                              </select>
+                              <select
+                                value={inputMinute}
+                                onChange={(e) => setInputMinute(e.target.value)}
+                                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
+                              >
+                                {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map(m => (
+                                  <option key={m} value={m}>{m}</option>
+                                ))}
+                              </select>
+                              <select
+                                value={inputAmPm}
+                                onChange={(e) => setInputAmPm(e.target.value)}
+                                className="flex-1 bg-surface border border-border rounded-lg px-3 py-2 text-xs font-semibold text-accent focus:outline-none"
+                              >
+                                <option value="AM">AM</option>
+                                <option value="PM">PM</option>
+                              </select>
+                            </div>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 py-1">
-                          <input 
-                            type="checkbox" 
-                            id="recordMeeting" 
-                            checked={recordMeeting} 
-                            onChange={(e) => setRecordMeeting(e.target.checked)} 
+                          <input
+                            type="checkbox"
+                            id="recordMeeting"
+                            checked={recordMeeting}
+                            onChange={(e) => setRecordMeeting(e.target.checked)}
                             className="w-4 h-4 rounded border-border text-secondary focus:ring-secondary bg-surface"
                           />
                           <label htmlFor="recordMeeting" className="text-xs font-bold text-text-muted cursor-pointer select-none">
@@ -276,13 +312,13 @@ export default function ConsultantSchedule() {
                           </label>
                         </div>
                         <div className="flex gap-2 justify-end">
-                          <button 
+                          <button
                             onClick={() => { setSchedulingId(null); setRecordMeeting(false); }}
                             className="btn-ghost py-1.5 px-3 text-xs font-bold cursor-pointer font-sans"
                           >
                             Cancel
                           </button>
-                          <button 
+                          <button
                             onClick={() => handleConfirmSchedule(meet.id || meet._id)}
                             disabled={submitting}
                             className="btn-primary py-1.5 px-4 text-xs font-bold cursor-pointer font-sans"
@@ -300,14 +336,14 @@ export default function ConsultantSchedule() {
               )}
             </div>
           </div>
-          
+
           <div className="px-8 py-4 border-t border-border/35 text-xs text-text-muted font-semibold bg-surface-hover-lowest">
             Meetings synced with Outlook Calendar & Google Workspace feeds
           </div>
         </motion.div>
 
         {/* Right Side: Slot Availability Settings */}
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.15 }}
@@ -315,7 +351,7 @@ export default function ConsultantSchedule() {
         >
           <div>
             <h3 className="text-headline-md font-bold text-accent pb-4 border-b border-border/40">Scheduling Settings</h3>
-            
+
             <div className="space-y-6 mt-4">
               {/* Slot Buffer Slider */}
               <div>
@@ -323,7 +359,7 @@ export default function ConsultantSchedule() {
                   <label className="font-bold text-accent">Slot Buffer Time</label>
                   <span className="font-bold text-secondary">{slotBuffer} Minutes</span>
                 </div>
-                <input 
+                <input
                   type="range"
                   min="0"
                   max="60"
@@ -341,7 +377,7 @@ export default function ConsultantSchedule() {
                     <p className="text-body-sm font-bold text-accent">Allow Instant Bookings</p>
                     <p className="text-xs text-text-muted">Clients can book slots without approval</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setAllowInstantBooking(!allowInstantBooking)}
                     className={`w-12 h-6 rounded-full relative transition-all cursor-pointer border-0 ${allowInstantBooking ? 'bg-success' : 'bg-outline-variant'}`}
                   >
@@ -354,7 +390,7 @@ export default function ConsultantSchedule() {
                     <p className="text-body-sm font-bold text-accent">Send Email Reminders</p>
                     <p className="text-xs text-text-muted">Notify client 24 hours prior to sync</p>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setNotifState(!notifState)}
                     className={`w-12 h-6 rounded-full relative transition-all cursor-pointer border-0 ${notifState ? 'bg-success' : 'bg-outline-variant'}`}
                   >
@@ -366,7 +402,7 @@ export default function ConsultantSchedule() {
           </div>
 
           <div className="pt-6 border-t border-border mt-6">
-            <button 
+            <button
               onClick={handleSaveSettings}
               className="btn-primary w-full py-3 text-label-lg cursor-pointer font-sans"
             >

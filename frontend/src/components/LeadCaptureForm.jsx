@@ -151,13 +151,13 @@ export default function LeadCaptureForm({ onClose }) {
     name: '', email: '', phone: '', income: '', budget: '',
     serviceType: '', requirement: '', source: '', department: ''
   });
-  
+
   // Custom dropdown states
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = React.useRef(null);
-  
-  const defaultCountry = COUNTRY_CODES.find(c => c.code === '+91') || COUNTRY_CODES[0];
+
+  const defaultCountry = COUNTRY_CODES.find(c => c.code === '+880') || COUNTRY_CODES[0];
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
   const [phoneNumber, setPhoneNumber] = useState('');
   const [errors, setErrors] = useState({});
@@ -178,14 +178,14 @@ export default function LeadCaptureForm({ onClose }) {
   const selectedService = SERVICES.find(s => s.label === form.serviceType);
   const inferredDept = selectedService?.dept || '';
 
-  const filteredCountries = COUNTRY_CODES.filter(c => 
+  const filteredCountries = COUNTRY_CODES.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.code.includes(searchTerm)
   );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Custom validations
     const newErrors = {};
     if (!form.name.trim()) {
@@ -205,7 +205,7 @@ export default function LeadCaptureForm({ onClose }) {
     if (!form.source) {
       newErrors.source = 'Please select how you heard about us';
     }
-    
+
     const emailLower = form.email.toLowerCase().trim();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailLower) {
@@ -213,7 +213,7 @@ export default function LeadCaptureForm({ onClose }) {
     } else if (!emailRegex.test(emailLower) || (!emailLower.endsWith('@gmail.com') && !emailLower.endsWith('.com'))) {
       newErrors.email = 'Email must end with @gmail.com or .com';
     }
-    
+
     const phoneTrimmed = phoneNumber.trim();
     if (!phoneTrimmed) {
       newErrors.phone = 'Phone number is required';
@@ -223,21 +223,21 @@ export default function LeadCaptureForm({ onClose }) {
         newErrors.phone = 'Must contain exactly 10 digits';
       }
     }
-    
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       toast.error('Please correct the validation errors in the form.');
       return;
     }
-    
+
     setErrors({});
-    
+
     try {
       setLoading(true);
-      await api.post('/leads/capture', { 
-        ...form, 
+      await api.post('/leads/capture', {
+        ...form,
         phone: `${selectedCountry.code} ${phoneTrimmed}`,
-        department: inferredDept 
+        department: inferredDept
       });
       setSubmitted(true);
       toast.success('Thank you! Your request has been submitted successfully.');
@@ -324,7 +324,7 @@ export default function LeadCaptureForm({ onClose }) {
                   {/* Standard 10-digit number field */}
                   <input
                     type="tel"
-                    placeholder="9876543210"
+                    placeholder="1712345678"
                     value={phoneNumber}
                     maxLength={10}
                     onChange={e => {
@@ -343,7 +343,7 @@ export default function LeadCaptureForm({ onClose }) {
               </div>
             );
           }
-          
+
           return (
             <div key={f.key} className={f.key === 'name' ? 'md:col-span-2' : ''}>
               <label className="block text-sm text-text-muted mb-1 text-left">{f.label}</label>

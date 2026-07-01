@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ConsultantLayout from '../../layouts/ConsultantLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -108,44 +108,254 @@ function PolicyComparison({ lc, onRefresh }) {
 function InsuranceRecommendation({ lc, onRefresh }) {
   const r = lc.recommendation||{};
   const [form, setForm] = useState({ selectedPlan:r.selectedPlan||'', insurer:r.insurer||'', premium:r.premium||'', coverAmount:r.coverAmount||'', tenure:r.tenure||'', rationale:r.rationale||'' });
+  const [note, setNote] = useState(lc.recommendationNotes || '');
+  const [aiRecs, setAiRecs] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Pre-fill from comparisons
+  useEffect(() => {
+    api.get(`/recommendations/cases/${lc._id}`)
+      .then(res => {
+        if (res.data) {
+          if (res.data.recommendationData) {
+            try {
+              setAiRecs(JSON.parse(res.data.recommendationData) || []);
+            } catch {}
+          }
+          setNote(res.data.recommendationNotes || lc.recommendationNotes || '');
+        }
+      })
+      .catch(() => {});
+  }, [lc._id]);
+
   const prefill = (comp) => setForm({ selectedPlan:comp.planName, insurer:comp.insurer, premium:comp.premium, coverAmount:comp.coverAmount, tenure:comp.tenure, rationale:form.rationale });
 
-  const send = async () => {
-    try { setSaving(true);
-      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, { recommendation:{ ...form, sentToClient:true }, stage:'client_approval' });
-      toast.success('Recommendation sent to client'); onRefresh();
-    } catch { toast.error('Failed'); } finally { setSaving(false); }
+  const handleGenerate = async () => {
+    try {
+      setLoadingRecs(true);
+      const res = await api.post(`/recommendations/cases/${lc._id}/generate`);
+      const generated = res.data.recommendations || [];
+      setAiRecs(generated);
+      if (generated.length > 0) {
+        const first = generated[0];
+        let prem = 10000;
+        let cover = 10000000;
+        try {
+          prem = parseFloat(first.detail2.replace(/[^0-9]/g, '')) || 10000;
+        } catch {}
+        try {
+          cover = parseFloat(first.metricValue.replace(/[^0-9]/g, '')) || 10000000;
+        } catch {}
+        setForm(p => ({
+          ...p,
+          selectedPlan: first.title,
+          insurer: first.provider || 'LIC',
+          premium: prem,
+          coverAmount: cover,
+          tenure: 30,
+          rationale: first.description
+        }));
+      }
+      toast.success('Recommendations generated successfully!');
+    } catch {
+      toast.error('Failed to generate recommendations');
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const payloadRecs = aiRecs.length ? aiRecs : [
+        {
+          id: 'custom-ins',
+          title: form.selectedPlan,
+          metricName: 'Sum Assured',
+          metricValue: `₹${Number(form.coverAmount)?.toLocaleString('en-IN')}`,
+          detail1: `Insurer: ${form.insurer}`,
+          detail2: `Premium: ₹${Number(form.premium)?.toLocaleString('en-IN')}/yr`,
+          description: form.rationale || 'Custom insurance recommendation',
+          provider: form.insurer
+        }
+      ];
+
+      await api.post(`/recommendations/cases/${lc._id}/save`, {
+        recommendations: payloadRecs,
+        notes: note
+      });
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        recommendation: form,
+        recommendationNotes: note
+      });
+      toast.success('Recommendation saved successfully!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to save recommendation');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSend = async () => {
+    try {
+      setSaving(true);
+      const payloadRecs = aiRecs.length ? aiRecs : [
+        {
+          id: 'custom-ins',
+          title: form.selectedPlan,
+          metricName: 'Sum Assured',
+          metricValue: `₹${Number(form.coverAmount)?.toLocaleString('en-IN')}`,
+          detail1: `Insurer: ${form.insurer}`,
+          detail2: `Premium: ₹${Number(form.premium)?.toLocaleString('en-IN')}/yr`,
+          description: form.rationale || 'Custom insurance recommendation',
+          provider: form.insurer
+        }
+      ];
+
+      await api.post(`/recommendations/cases/${lc._id}/send`, {
+        recommendations: payloadRecs,
+        notes: note
+      });
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        recommendation: form,
+        recommendationNotes: note,
+        stage: 'client_approval'
+      });
+      toast.success('Recommendation sent to client!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to send recommendation');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-gutter">
-      <h2 className="text-xl font-bold text-accent">Insurance Recommendation</h2>
+    <div className="space-y-gutter animate-fade-in">
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-accent">Insurance Recommendation</h2>
+          <p className="text-xs text-text-muted mt-0.5">Structure optimal policy protection and premium terms for the client</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={loadingRecs}
+          className="btn-secondary text-xs px-4 py-2 flex items-center gap-1.5"
+        >
+          <span className="material-symbols-outlined text-sm">psychology</span>
+          {loadingRecs ? 'Generating...' : 'Generate Recommendation'}
+        </button>
+      </div>
+
+      {/* AI suggestions */}
+      {aiRecs.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h3 className="text-sm font-bold text-accent">AI Generated Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {aiRecs.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => {
+                  let prem = 10000;
+                  let cover = 10000000;
+                  try {
+                    prem = parseFloat(rec.detail2.replace(/[^0-9]/g, '')) || 10000;
+                  } catch {}
+                  try {
+                    cover = parseFloat(rec.metricValue.replace(/[^0-9]/g, '')) || 10000000;
+                  } catch {}
+                  setForm(p => ({
+                    ...p,
+                    selectedPlan: rec.title,
+                    insurer: rec.provider || 'LIC',
+                    premium: prem,
+                    coverAmount: cover,
+                    rationale: rec.description
+                  }));
+                  toast.success(`Selected suggestion: ${rec.title}`);
+                }}
+                className="text-left p-3.5 rounded-xl border border-border bg-bg/30 hover:border-accent hover:bg-surface-hover/30 transition-all"
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <p className="text-xs font-bold text-text truncate">{rec.title}</p>
+                  <span className="text-[8px] bg-accent/10 text-accent font-semibold px-1 rounded truncate">{rec.provider}</span>
+                </div>
+                <p className="text-[10px] text-text-muted line-clamp-2 mt-1">"{rec.description}"</p>
+                <div className="flex justify-between items-center mt-2.5 pt-2 border-t border-border/20">
+                  <div>
+                    <p className="text-[8px] text-text-muted font-bold uppercase tracking-wider">{rec.metricName}</p>
+                    <p className="text-xs font-bold text-secondary">{rec.metricValue}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[8px] text-text-muted">{rec.detail1}</p>
+                    <p className="text-[8px] text-text-muted">{rec.detail2}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main Forms */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
         <div className="card p-6 space-y-4">
           <h3 className="font-bold text-accent">Select from Compared Plans</h3>
-          {(lc.comparisons||[]).map((c,i)=>(
-            <button key={i} onClick={()=>prefill(c)}
-              className="w-full text-left p-3 rounded-xl border-2 border-border hover:border-accent transition-colors bg-bg">
-              <p className="font-semibold text-accent text-sm">{c.planName||'—'}</p>
-              <p className="text-xs text-text-muted">{c.insurer} · ₹{Number(c.premium||0).toLocaleString('en-IN')}/yr · Cover: ₹{Number(c.coverAmount||0).toLocaleString('en-IN')}</p>
-            </button>
-          ))}
-        </div>
-        <div className="card p-6 space-y-4">
-          <h3 className="font-bold text-accent">Recommendation Details</h3>
-          {[{k:'selectedPlan',l:'Plan Name'},{k:'insurer',l:'Insurer'},{k:'premium',l:'Annual Premium (₹)'},{k:'coverAmount',l:'Cover Amount (₹)'},{k:'tenure',l:'Tenure (Years)'}].map(f=>(
+          <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
+            {(lc.comparisons||[]).map((c,i)=>(
+              <button key={i} onClick={()=>prefill(c)}
+                className="w-full text-left p-3 rounded-xl border-2 border-border hover:border-accent transition-colors bg-bg">
+                <p className="font-semibold text-accent text-sm">{c.planName||'—'}</p>
+                <p className="text-xs text-text-muted">{c.insurer} · ₹{Number(c.premium||0).toLocaleString('en-IN')}/yr · Cover: ₹{Number(c.coverAmount||0).toLocaleString('en-IN')}</p>
+              </button>
+            ))}
+            {(lc.comparisons||[]).length === 0 && (
+              <p className="text-xs text-text-muted italic">No comparisons generated in previous stage yet.</p>
+            )}
+          </div>
+
+          <h3 className="font-bold text-accent pt-4 border-t border-border/20">Recommendation Details</h3>
+          {[{k:'selectedPlan',l:'Plan Name *'},{k:'insurer',l:'Insurer *'},{k:'premium',l:'Annual Premium (₹) *'},{k:'coverAmount',l:'Cover Amount (₹) *'},{k:'tenure',l:'Tenure (Years) *'}].map(f=>(
             <div key={f.k}><label className="text-xs text-text-muted block mb-1">{f.l}</label>
               <input value={form[f.k]} onChange={e=>setForm(p=>({...p,[f.k]:e.target.value}))} className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" /></div>
           ))}
-          <div><label className="text-xs text-text-muted block mb-1">Rationale</label>
-            <textarea value={form.rationale} onChange={e=>setForm(p=>({...p,rationale:e.target.value}))}
-              className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm h-20 resize-none" /></div>
-          <button onClick={send} disabled={saving||!form.selectedPlan} className="btn-primary w-full py-3 disabled:opacity-50">
-            {saving?'Sending...':'Send to Client for Approval'}
-          </button>
+        </div>
+
+        <div className="card p-6 flex flex-col justify-between">
+          <div className="space-y-4">
+            <h3 className="font-bold text-accent">Recommendation Notes & Rationale</h3>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Rationale *</label>
+              <textarea value={form.rationale} onChange={e=>setForm(p=>({...p,rationale:e.target.value}))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm h-32 resize-none"
+                placeholder="Explain the coverage benefits and selection criteria..." />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Advisor Notes for Client</label>
+              <textarea value={note} onChange={e=>setNote(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm h-32 resize-none"
+                placeholder="Additional notes or context on medical checks / loading charges..." />
+            </div>
+          </div>
+
+          <div className="space-y-3 mt-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-3 text-xs font-bold border border-accent/40 bg-accent/5 text-accent hover:bg-accent/10 transition-all rounded-xl"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={saving || !form.selectedPlan}
+              className="w-full py-3 text-xs font-bold btn-primary rounded-xl"
+            >
+              {saving ? 'Sending...' : 'Send to Client'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -296,9 +506,6 @@ export default function InsuranceWorkflow() {
         <div><h1 className="text-headline-lg font-bold text-accent">Insurance Workflow</h1>
           <p className="text-text-muted text-sm mt-1">End-to-end insurance policy management</p></div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
-            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
-          </button>
           <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5"><span className="material-symbols-outlined text-base">add_circle</span> New Insurance Case</button>
         </div>
       </div>
@@ -309,9 +516,6 @@ export default function InsuranceWorkflow() {
           <span className="material-symbols-outlined text-5xl text-text-muted">health_and_safety</span>
           <p className="font-bold text-accent mt-4 text-xl">No insurance cases yet</p>
           <div className="flex justify-center gap-3 mt-6">
-            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
-              View Recommendations
-            </button>
             <button onClick={()=>setShowCreate(true)} className="btn-primary px-8 py-3">Create Insurance Case</button>
           </div>
         </div>
@@ -353,9 +557,6 @@ export default function InsuranceWorkflow() {
         </div>
         <div className="flex gap-3 mt-6"><button onClick={()=>setShowCreate(false)} className="flex-1 btn-ghost py-3">Cancel</button><button onClick={createCase} disabled={creating} className="flex-1 btn-primary py-3 disabled:opacity-60">{creating?'Creating...':'Create Case'}</button></div>
       </Modal>)}
-      {showRecommendations && (
-        <RecommendationsModal department="insurance" onClose={() => setShowRecommendations(false)} />
-      )}
     </ConsultantLayout>
   );
 }

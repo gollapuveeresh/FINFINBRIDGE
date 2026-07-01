@@ -28,8 +28,8 @@ export default function ConsultantProposals() {
 
   useEffect(() => {
     fetchProposals();
-    api.get('/auth/consultant/clients').then(r => setClients(r.data.clients || [])).catch(() => {});
-    api.get('/leads', { params: { status: 'assigned' } }).then(r => setLeads(r.data.leads || [])).catch(() => {});
+    api.get('/auth/consultant/clients').then(r => setClients(r.data.clients || [])).catch(() => { });
+    api.get('/leads', { params: { status: 'assigned' } }).then(r => setLeads(r.data.leads || [])).catch(() => { });
   }, []);
 
   const fetchProposals = async () => {
@@ -43,6 +43,15 @@ export default function ConsultantProposals() {
 
   const handleCreate = async () => {
     if (!form.title || !form.department) { toast.error('Title and department are required'); return; }
+    if (form.validUntil) {
+      const selectedDate = new Date(form.validUntil);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate < today) {
+        toast.error('Valid until date cannot be in the past');
+        return;
+      }
+    }
     try {
       setSaving(true);
       let details = {};
@@ -252,6 +261,7 @@ export default function ConsultantProposals() {
                 <div>
                   <label className="text-xs text-text-muted block mb-1">Valid Until</label>
                   <input type="date" value={form.validUntil} onChange={e => setForm(p => ({ ...p, validUntil: e.target.value }))}
+                    min={new Date().toISOString().split('T')[0]}
                     className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" />
                 </div>
               </div>

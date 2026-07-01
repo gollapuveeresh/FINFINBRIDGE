@@ -9,11 +9,11 @@ export default function DepartmentAdminLayout({ children }) {
   return (
     <div className="min-h-screen bg-bg">
       <Sidebar role="department-admin" isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
-      
+
       {/* Mobile topbar/header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-14 bg-surface border-b border-border flex items-center justify-between px-6 z-40">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(true)}
             className="p-1.5 text-text-muted hover:text-text hover:bg-surface-hover rounded-lg transition-colors flex items-center justify-center"
             title="Open Menu"
@@ -24,7 +24,7 @@ export default function DepartmentAdminLayout({ children }) {
         </div>
       </div>
 
-      <main className="ml-0 lg:ml-[280px] pt-14 lg:pt-0 min-h-screen p-4 lg:p-margin-desktop">
+      <main className="ml-0 lg:ml-[280px] pt-14 lg:pt-8 min-h-screen p-4 lg:p-margin-desktop">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}

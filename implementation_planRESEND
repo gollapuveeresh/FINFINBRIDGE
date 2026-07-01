@@ -1,0 +1,24 @@
+# Implementation Plan - Integrate Resend Email API
+
+This plan outlines the changes needed to integrate the Resend HTTP API for sending verification and notification emails, bypassing the port 587 SMTP block on Render's Free tier.
+
+## Proposed Changes
+
+### Backend Service
+
+#### [MODIFY] [EmailService.java](file:///c:/Users/veere/Videos/FinBridge_Final20/backend-springboot/src/main/java/com/finbridge/service/EmailService.java)
+- Add `@Value("${RESEND_API_KEY:}")` to read the Resend API key from the environment.
+- Modify `sendHtml` to conditionally route emails:
+  - If `RESEND_API_KEY` is provided, send via Resend REST API (using HTTP port 443, which is not blocked by Render).
+  - If `RESEND_API_KEY` is empty, fall back to standard SMTP (`JavaMailSender`).
+- Add a private helper method `sendViaResend` to format the request and call `https://api.resend.com/emails` using `RestTemplate`.
+
+## Verification Plan
+
+### Automated Verification
+- We will test the updated code by running our database checks and verifying that the code compiles.
+
+### Manual Verification
+- Deploy the backend updates to Render.
+- Add `RESEND_API_KEY` to Render Environment Variables.
+- Register a new user on the frontend and verify that the verification email is successfully received.

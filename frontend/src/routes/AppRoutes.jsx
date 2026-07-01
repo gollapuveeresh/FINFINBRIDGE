@@ -70,6 +70,7 @@ const B2BPayments = lazy(() => import('../pages/b2b/Payments'));
 const B2BTeam = lazy(() => import('../pages/b2b/Team'));
 const B2BSupport = lazy(() => import('../pages/b2b/Support'));
 const B2BSettings = lazy(() => import('../pages/b2b/Settings'));
+const B2BRecommendations = lazy(() => import('../pages/b2b/Recommendations'));
 
 // ── CRM Admin (lazy) ──
 
@@ -288,6 +289,7 @@ export default function AppRoutes() {
           {/* B2B / CLIENT PORTAL (Single Client Portal)    */}
           {/* ============================================ */}
           <Route path="/b2b/dashboard" element={<B2BProtectedRoute><B2BDashboard /></B2BProtectedRoute>} />
+          <Route path="/b2b/recommendations" element={<B2BProtectedRoute><B2BRecommendations /></B2BProtectedRoute>} />
           <Route path="/b2b/services" element={<B2BProtectedRoute><B2BServiceRequests /></B2BProtectedRoute>} />
           <Route path="/b2b/documents" element={<B2BProtectedRoute><B2BDocuments /></B2BProtectedRoute>} />
           <Route path="/b2b/proposals" element={<B2BProtectedRoute><B2BProposals /></B2BProtectedRoute>} />

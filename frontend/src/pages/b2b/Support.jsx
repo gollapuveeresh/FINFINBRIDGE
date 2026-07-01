@@ -4,10 +4,10 @@ import { useB2BAuth } from '../../context/B2BAuthContext';
 import b2bApi from '../../services/b2bApi';
 import toast from 'react-hot-toast';
 
-const CATEGORIES = ['general','technical','billing','document','compliance','other'];
+const CATEGORIES = ['general', 'technical', 'billing', 'document', 'compliance', 'other'];
 const STATUS_COLORS = {
-  open:'bg-blue-500/15 text-blue-400', in_progress:'bg-amber-500/15 text-amber-400',
-  resolved:'bg-green-500/15 text-green-400', closed:'bg-surface text-text-muted',
+  open: 'bg-blue-500/15 text-blue-400', in_progress: 'bg-amber-500/15 text-amber-400',
+  resolved: 'bg-green-500/15 text-green-400', closed: 'bg-surface text-text-muted',
 };
 
 export default function B2BSupport() {
@@ -16,23 +16,27 @@ export default function B2BSupport() {
   const [tickets, setTickets] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [form, setForm] = useState({ subject:'', description:'', category:'general', priority:'medium' });
+  const [form, setForm] = useState({ subject: '', description: '', category: 'general', priority: 'medium' });
 
   const load = () => {
     if (!orgId) return;
-    b2bApi.get(`/b2b/organizations/${orgId}/support`).then(r => setTickets(r.data)).catch(() => {});
+    b2bApi.get(`/b2b/organizations/${orgId}/support`).then(r => setTickets(r.data)).catch(() => { });
   };
 
   useEffect(() => { load(); }, [orgId]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
+    if (!form.description.trim()) {
+      toast.error('Description is required');
+      return;
+    }
     setLoading(true);
     try {
       await b2bApi.post(`/b2b/organizations/${orgId}/support`, form);
       toast.success('Support ticket submitted');
       setShowModal(false);
-      setForm({ subject:'', description:'', category:'general', priority:'medium' });
+      setForm({ subject: '', description: '', category: 'general', priority: 'medium' });
       load();
     } catch { toast.error('Failed to submit ticket'); }
     finally { setLoading(false); }
@@ -53,9 +57,9 @@ export default function B2BSupport() {
       {/* Contact info */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { icon:'mail', label:'Email Support', value:'support@finbridge.in', color:'bg-accent' },
-          { icon:'call', label:'Phone Support', value:'+91 1800 XXX XXXX', color:'bg-secondary' },
-          { icon:'schedule', label:'Response Time', value:'< 24 business hours', color:'bg-purple-600' },
+          { icon: 'mail', label: 'Email Support', value: <a href="mailto:support@finbridge.in" className="hover:text-secondary hover:underline">support@finbridge.in</a>, color: 'bg-accent' },
+          { icon: 'call', label: 'Phone Support', value: '+91 1800 XXX XXXX', color: 'bg-secondary' },
+          { icon: 'schedule', label: 'Response Time', value: '< 24 business hours', color: 'bg-purple-600' },
         ].map(c => (
           <div key={c.label} className="card p-4 flex items-center gap-4">
             <div className={`w-10 h-10 rounded-xl ${c.color} flex items-center justify-center shrink-0`}>
@@ -83,7 +87,7 @@ export default function B2BSupport() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-hover-lowest">
-                {['Ticket #','Subject','Category','Priority','Status','Date'].map(h => (
+                {['Ticket #', 'Subject', 'Category', 'Priority', 'Status', 'Date'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-bold text-text-muted uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
@@ -96,13 +100,13 @@ export default function B2BSupport() {
                   <td className="px-4 py-3 text-text-muted capitalize">{t.category}</td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full
-                      ${t.priority==='high'||t.priority==='critical'?'bg-red-500/15 text-red-400':'bg-surface text-text-muted'}`}>
+                      ${t.priority === 'high' || t.priority === 'critical' ? 'bg-red-500/15 text-red-400' : 'bg-surface text-text-muted'}`}>
                       {t.priority}
                     </span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${STATUS_COLORS[t.status] || ''}`}>
-                      {t.status.replace('_',' ')}
+                      {t.status.replace('_', ' ')}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-text-muted text-xs">{new Date(t.createdAt).toLocaleDateString('en-IN')}</td>
@@ -126,29 +130,29 @@ export default function B2BSupport() {
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="text-xs text-text-muted block mb-1">Subject *</label>
-                <input value={form.subject} onChange={e => setForm(p=>({...p,subject:e.target.value}))} required
+                <input value={form.subject} onChange={e => setForm(p => ({ ...p, subject: e.target.value }))} required
                   className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm"
                   placeholder="Briefly describe your issue" />
               </div>
               <div>
-                <label className="text-xs text-text-muted block mb-1">Description</label>
-                <textarea value={form.description} onChange={e => setForm(p=>({...p,description:e.target.value}))} rows={4}
+                <label className="text-xs text-text-muted block mb-1">Description *</label>
+                <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} rows={4} required
                   className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm resize-none"
                   placeholder="Provide more details..." />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs text-text-muted block mb-1">Category</label>
-                  <select value={form.category} onChange={e => setForm(p=>({...p,category:e.target.value}))}
+                  <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))}
                     className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm">
                     {CATEGORIES.map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-xs text-text-muted block mb-1">Priority</label>
-                  <select value={form.priority} onChange={e => setForm(p=>({...p,priority:e.target.value}))}
+                  <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}
                     className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm">
-                    {['low','medium','high','critical'].map(p => <option key={p}>{p}</option>)}
+                    {['low', 'medium', 'high', 'critical'].map(p => <option key={p}>{p}</option>)}
                   </select>
                 </div>
               </div>

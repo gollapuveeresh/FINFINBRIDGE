@@ -5,7 +5,6 @@ import com.finbridge.exception.BadRequestException;
 import com.finbridge.exception.ResourceNotFoundException;
 import com.finbridge.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,7 +19,6 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JdbcTemplate jdbcTemplate;
 
     public List<User> getAllUsers() { return userRepository.findAll(); }
 
@@ -69,9 +67,7 @@ public class UserService {
         u.setDepartment(department);
         u.setPhone(phone);
         u.setEmailVerified(true); // staff created by an admin are pre-verified
-        User saved = userRepository.save(u);
-        syncToConsultants(saved);
-        return saved;
+        return userRepository.save(u);
     }
 
     @Transactional
@@ -81,23 +77,15 @@ public class UserService {
         if (name != null)       user.setName(name);
         if (phone != null)      user.setPhone(phone);
         if (department != null) user.setDepartment(department);
-        User saved = userRepository.save(user);
-        syncToConsultants(saved);
-        return saved;
+        return userRepository.save(user);
     }
 
-    public User save(User user) {
-        User saved = userRepository.save(user);
-        syncToConsultants(saved);
-        return saved;
-    }
+    public User save(User user) { return userRepository.save(user); }
 
     public User updateActive(UUID id, boolean active) {
         User user = getById(id);
         user.setActive(active);
-        User saved = userRepository.save(user);
-        syncToConsultants(saved);
-        return saved;
+        return userRepository.save(user);
     }
 
     @Transactional
@@ -105,45 +93,6 @@ public class UserService {
         User user = getById(id);
         // Soft-deactivate rather than hard-delete to preserve referential history.
         user.setActive(false);
-        User saved = userRepository.save(user);
-        syncToConsultants(saved);
-    }
-
-    private void syncToConsultants(User u) {
-        if ("consultant".equalsIgnoreCase(u.getRole())) {
-            String sql = "INSERT INTO consultants (" +
-                    "id, name, email, password, role, department, phone, " +
-                    "company_name, is_active, is_email_verified, created_at, updated_at" +
-                    ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
-                    "ON CONFLICT (id) DO UPDATE SET " +
-                    "name = EXCLUDED.name, " +
-                    "email = EXCLUDED.email, " +
-                    "password = EXCLUDED.password, " +
-                    "role = EXCLUDED.role, " +
-                    "department = EXCLUDED.department, " +
-                    "phone = EXCLUDED.phone, " +
-                    "company_name = EXCLUDED.company_name, " +
-                    "is_active = EXCLUDED.is_active, " +
-                    "is_email_verified = EXCLUDED.is_email_verified, " +
-                    "updated_at = EXCLUDED.updated_at";
-            
-            jdbcTemplate.update(sql,
-                    u.getId(),
-                    u.getName(),
-                    u.getEmail(),
-                    u.getPassword(),
-                    u.getRole(),
-                    u.getDepartment(),
-                    u.getPhone(),
-                    u.getCompanyName(),
-                    u.isActive(),
-                    u.isEmailVerified(),
-                    u.getCreatedAt() != null ? java.sql.Timestamp.from(u.getCreatedAt()) : new java.sql.Timestamp(System.currentTimeMillis()),
-                    u.getUpdatedAt() != null ? java.sql.Timestamp.from(u.getUpdatedAt()) : new java.sql.Timestamp(System.currentTimeMillis())
-            );
-        } else {
-            // If role is no longer consultant, remove from consultants table if it exists
-            jdbcTemplate.update("DELETE FROM consultants WHERE id = ?", u.getId());
-        }
+        userRepository.save(user);
     }
 }

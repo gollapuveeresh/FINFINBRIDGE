@@ -8,34 +8,34 @@ import RecommendationsModal from '../../components/RecommendationsModal';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 const STAGES = [
-  { key: 'document_collection',  label: 'Document Collection',  icon: 'upload_file' },
+  { key: 'document_collection', label: 'Document Collection', icon: 'upload_file' },
   { key: 'eligibility_analysis', label: 'Eligibility Analysis', icon: 'analytics' },
-  { key: 'loan_recommendation',  label: 'Loan Recommendation',  icon: 'recommend' },
-  { key: 'client_approval',      label: 'Client Approval',      icon: 'thumb_up' },
-  { key: 'bank_processing',      label: 'Bank Processing',      icon: 'account_balance' },
-  { key: 'loan_disbursement',    label: 'Loan Disbursement',    icon: 'payments' },
-  { key: 'emi_tracking',         label: 'EMI Tracking',         icon: 'event_repeat' },
+  { key: 'loan_recommendation', label: 'Loan Recommendation', icon: 'recommend' },
+  { key: 'client_approval', label: 'Client Approval', icon: 'thumb_up' },
+  { key: 'bank_processing', label: 'Bank Processing', icon: 'account_balance' },
+  { key: 'loan_disbursement', label: 'Loan Disbursement', icon: 'payments' },
+  { key: 'emi_tracking', label: 'EMI Tracking', icon: 'event_repeat' },
 ];
 
 const STAGE_IDX = Object.fromEntries(STAGES.map((s, i) => [s.key, i]));
 
 const DOC_STATUS_COLOR = {
-  Pending:  'bg-surface text-text-muted border border-border',
+  Pending: 'bg-surface text-text-muted border border-border',
   Uploaded: 'bg-blue-500/20 text-blue-400',
   Verified: 'bg-green-500/20 text-green-400',
   Rejected: 'bg-red-500/20 text-red-400',
 };
 const EMI_COLOR = {
   Pending: 'bg-amber-500/20 text-amber-400',
-  Paid:    'bg-green-500/20 text-green-400',
+  Paid: 'bg-green-500/20 text-green-400',
   Overdue: 'bg-red-500/20 text-red-400',
 };
 const BANK_STATUS_COLOR = {
   'Not Submitted': 'bg-surface text-text-muted',
-  'Submitted':     'bg-blue-500/20 text-blue-400',
-  'Under Review':  'bg-amber-500/20 text-amber-400',
-  'Sanctioned':    'bg-green-500/20 text-green-400',
-  'Rejected':      'bg-red-500/20 text-red-400',
+  'Submitted': 'bg-blue-500/20 text-blue-400',
+  'Under Review': 'bg-amber-500/20 text-amber-400',
+  'Sanctioned': 'bg-green-500/20 text-green-400',
+  'Rejected': 'bg-red-500/20 text-red-400',
 };
 
 function KPI({ icon, label, value, sub, color = 'text-accent', bg = 'bg-accent/10' }) {
@@ -76,11 +76,10 @@ function StageBar({ current }) {
         {STAGES.map((s, i) => (
           <div key={s.key} className="flex items-center flex-1 last:flex-none">
             <div className={`flex flex-col items-center gap-1.5 min-w-[64px]`}>
-              <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
-                i < idx  ? 'bg-green-500 text-white' :
-                i === idx ? 'bg-accent text-white ring-4 ring-accent/30' :
-                            'bg-surface border-2 border-border text-text-muted'
-              }`}>
+              <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${i < idx ? 'bg-green-500 text-white' :
+                  i === idx ? 'bg-accent text-white ring-4 ring-accent/30' :
+                    'bg-surface border-2 border-border text-text-muted'
+                }`}>
                 {i < idx
                   ? <span className="material-symbols-outlined text-base">check</span>
                   : <span className="material-symbols-outlined text-base">{s.icon}</span>
@@ -121,7 +120,7 @@ function DocumentCollection({ lc, onRefresh }) {
   };
 
   const verified = lc.documents.filter(d => d.status === 'Verified').length;
-  const total    = lc.documents.length;
+  const total = lc.documents.length;
 
   return (
     <div className="space-y-gutter">
@@ -207,11 +206,11 @@ function DocumentCollection({ lc, onRefresh }) {
 // ── Stage 2: Eligibility Analysis ─────────────────────────────────────────────
 function EligibilityAnalysis({ lc, onRefresh }) {
   const [form, setForm] = useState({
-    creditScore:  lc.eligibility?.creditScore || '',
-    dti:          lc.eligibility?.dti || '',
-    ltv:          lc.eligibility?.ltv || '',
-    eligible:     lc.eligibility?.eligible ?? '',
-    analystNote:  lc.eligibility?.analystNote || '',
+    creditScore: lc.eligibility?.creditScore || '',
+    dti: lc.eligibility?.dti || '',
+    ltv: lc.eligibility?.ltv || '',
+    eligible: lc.eligibility?.eligible ?? '',
+    analystNote: lc.eligibility?.analystNote || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -247,8 +246,8 @@ function EligibilityAnalysis({ lc, onRefresh }) {
           <h3 className="font-bold text-accent">Credit & Financial Metrics</h3>
           {[
             { key: 'creditScore', label: 'Credit Score (300–850)', type: 'number', placeholder: '750' },
-            { key: 'dti',         label: 'Debt-to-Income (%)',     type: 'number', placeholder: '35' },
-            { key: 'ltv',         label: 'Loan-to-Value (%)',      type: 'number', placeholder: '75' },
+            { key: 'dti', label: 'Debt-to-Income (%)', type: 'number', placeholder: '35' },
+            { key: 'ltv', label: 'Loan-to-Value (%)', type: 'number', placeholder: '75' },
           ].map(f => (
             <div key={f.key}>
               <label className="text-xs text-text-muted block mb-1">{f.label}</label>
@@ -264,13 +263,12 @@ function EligibilityAnalysis({ lc, onRefresh }) {
           <div>
             <label className="text-xs text-text-muted block mb-1">Eligibility Status</label>
             <div className="flex gap-3">
-              {[['true','Eligible','green'],['false','Not Eligible','red']].map(([val, label, color]) => (
+              {[['true', 'Eligible', 'green'], ['false', 'Not Eligible', 'red']].map(([val, label, color]) => (
                 <button key={val} onClick={() => setForm(p => ({ ...p, eligible: val }))}
-                  className={`flex-1 py-3 rounded-2xl text-sm font-bold border-2 transition-colors ${
-                    String(form.eligible) === val
+                  className={`flex-1 py-3 rounded-2xl text-sm font-bold border-2 transition-colors ${String(form.eligible) === val
                       ? color === 'green' ? 'bg-green-600 text-white border-green-600' : 'bg-red-600 text-white border-red-600'
                       : 'bg-surface border-border text-text-muted hover:border-accent'
-                  }`}>
+                    }`}>
                   {label}
                 </button>
               ))}
@@ -295,17 +293,31 @@ function EligibilityAnalysis({ lc, onRefresh }) {
 // ── Stage 3: Loan Recommendation ──────────────────────────────────────────────
 function LoanRecommendation({ lc, onRefresh }) {
   const [form, setForm] = useState({
-    recommendedBank:   lc.recommendation?.recommendedBank   || '',
-    recommendedRate:   lc.recommendation?.recommendedRate   || '',
-    recommendedTenure: lc.recommendation?.recommendedTenure || '',
-    recommendedEMI:    lc.recommendation?.recommendedEMI    || '',
-    note:              lc.recommendation?.note              || '',
+    recommendedBank: lc.recommendedBank || '',
+    recommendedRate: lc.recommendedRate || '',
+    recommendedTenure: lc.recommendedTenure || '',
+    recommendedEMI: lc.recommendedEmi || '',
+    recommendedAmount: lc.approvedAmount || lc.requestedAmount || '',
+    note: lc.recommendationNote || '',
   });
+  const [recs, setRecs] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // Auto-calc EMI when rate/tenure/amount changes
+  useEffect(() => {
+    api.get(`/recommendations/cases/${lc._id}`)
+      .then(res => {
+        if (res.data && res.data.recommendationData) {
+          try {
+            setRecs(JSON.parse(res.data.recommendationData) || []);
+          } catch { }
+        }
+      })
+      .catch(() => { });
+  }, [lc._id]);
+
   const calcEMI = () => {
-    const P = lc.requestedAmount;
+    const P = parseFloat(form.recommendedAmount);
     const r = parseFloat(form.recommendedRate) / 12 / 100;
     const n = parseInt(form.recommendedTenure);
     if (!P || !r || !n) return;
@@ -313,34 +325,212 @@ function LoanRecommendation({ lc, onRefresh }) {
     setForm(p => ({ ...p, recommendedEMI: Math.round(emi) }));
   };
 
-  const send = async () => {
+  const handleGenerate = async () => {
+    try {
+      setLoadingRecs(true);
+      const res = await api.post(`/recommendations/cases/${lc._id}/generate`);
+      const generated = res.data.recommendations || [];
+      setRecs(generated);
+      if (generated.length > 0) {
+        const first = generated[0];
+        let rate = 8.5;
+        let tenure = 240;
+        try {
+          rate = parseFloat(first.metricValue.replace(/[^0-9.]/g, '')) || 8.5;
+        } catch { }
+        try {
+          tenure = parseInt(first.detail1.replace(/[^0-9]/g, '')) || 240;
+        } catch { }
+        setForm(p => {
+          const next = {
+            ...p,
+            recommendedBank: first.title,
+            recommendedRate: rate,
+            recommendedTenure: tenure,
+          };
+          // calc emi with new terms
+          const P = parseFloat(next.recommendedAmount);
+          const r = rate / 12 / 100;
+          const n = tenure;
+          if (P && r && n) {
+            next.recommendedEMI = Math.round((P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+          }
+          return next;
+        });
+      }
+      toast.success('Recommendations generated successfully!');
+    } catch {
+      toast.error('Failed to generate recommendations');
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
+
+  const handleSave = async () => {
     try {
       setSaving(true);
-      await api.patch(`/loan-cases/${lc._id}`, {
-        recommendation: { ...form, sentToClient: true },
-        stage: 'client_approval',
+      await api.post(`/recommendations/cases/${lc._id}/save`, {
+        recommendations: recs.length ? recs : [
+          {
+            id: 'custom-loan',
+            title: form.recommendedBank,
+            metricName: 'Interest Rate',
+            metricValue: `${form.recommendedRate}% p.a.`,
+            detail1: `Tenure: ${form.recommendedTenure} months`,
+            detail2: `EMI: ₹${form.recommendedEMI}`,
+            description: form.note || 'Custom loan structure',
+            provider: 'Consultant Custom'
+          }
+        ],
+        notes: form.note
       });
-      toast.success('Recommendation sent to client');
+      toast.success('Recommendation saved successfully!');
       onRefresh();
-    } catch { toast.error('Failed'); }
-    finally { setSaving(false); }
+    } catch {
+      toast.error('Failed to save recommendation');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSend = async () => {
+    try {
+      setSaving(true);
+      await api.post(`/recommendations/cases/${lc._id}/send`, {
+        recommendations: recs.length ? recs : [
+          {
+            id: 'custom-loan',
+            title: form.recommendedBank,
+            metricName: 'Interest Rate',
+            metricValue: `${form.recommendedRate}% p.a.`,
+            detail1: `Tenure: ${form.recommendedTenure} months`,
+            detail2: `EMI: ₹${form.recommendedEMI}`,
+            description: form.note || 'Custom loan structure',
+            provider: 'Consultant Custom'
+          }
+        ],
+        notes: form.note
+      });
+      toast.success('Recommendation sent to client!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to send recommendation');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-gutter">
-      <h2 className="text-xl font-bold text-accent">Loan Recommendation</h2>
+    <div className="space-y-gutter animate-fade-in">
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-bold text-accent">Loan Recommendation</h2>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={loadingRecs}
+          className="btn-secondary text-xs px-4 py-2 flex items-center gap-1.5"
+        >
+          <span className="material-symbols-outlined text-sm">psychology</span>
+          {loadingRecs ? 'Generating...' : 'Generate Recommendation'}
+        </button>
+      </div>
+
+      {/* Eligibility Summary */}
+      <div className="card p-5 bg-[#D4AF37]/5 border border-[#D4AF37]/20 grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="col-span-full pb-2 border-b border-border/30">
+          <p className="text-xs font-bold text-[#D4AF37] uppercase tracking-wider">Eligibility Assessment Summary</p>
+        </div>
+        <div className="p-3 bg-bg/50 rounded-xl">
+          <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Credit Score</p>
+          <p className="text-sm font-bold text-accent mt-0.5">{lc.creditScore || '—'}</p>
+        </div>
+        <div className="p-3 bg-bg/50 rounded-xl">
+          <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">DTI Ratio</p>
+          <p className="text-sm font-bold text-accent mt-0.5">{lc.dti ? `${lc.dti}%` : '—'}</p>
+        </div>
+        <div className="p-3 bg-bg/50 rounded-xl">
+          <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">LTV Ratio</p>
+          <p className="text-sm font-bold text-accent mt-0.5">{lc.ltv ? `${lc.ltv}%` : '—'}</p>
+        </div>
+        <div className="p-3 bg-bg/50 rounded-xl">
+          <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Requested Amount</p>
+          <p className="text-sm font-bold text-accent mt-0.5">₹{lc.requestedAmount?.toLocaleString('en-IN')}</p>
+        </div>
+        {lc.analystNote && (
+          <div className="col-span-full p-3 bg-bg/50 rounded-xl">
+            <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Analyst Notes</p>
+            <p className="text-xs text-text-muted mt-1 italic">"{lc.analystNote}"</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recommendations generated log */}
+      {recs.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h3 className="text-sm font-bold text-accent">AI Generated Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recs.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => {
+                  let rate = 8.5;
+                  let tenure = 240;
+                  try {
+                    rate = parseFloat(rec.metricValue.replace(/[^0-9.]/g, '')) || 8.5;
+                  } catch { }
+                  try {
+                    tenure = parseInt(rec.detail1.replace(/[^0-9]/g, '')) || 240;
+                  } catch { }
+                  setForm(p => {
+                    const next = {
+                      ...p,
+                      recommendedBank: rec.title,
+                      recommendedRate: rate,
+                      recommendedTenure: tenure,
+                    };
+                    const P = parseFloat(next.recommendedAmount);
+                    const r = rate / 12 / 100;
+                    const n = tenure;
+                    if (P && r && n) {
+                      next.recommendedEMI = Math.round((P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
+                    }
+                    return next;
+                  });
+                  toast.success(`Selected: ${rec.title}`);
+                }}
+                className="text-left p-3.5 rounded-xl border border-border bg-bg/30 hover:border-accent hover:bg-surface-hover/30 transition-all"
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <p className="text-xs font-bold text-text truncate">{rec.title}</p>
+                  <span className="text-[8px] bg-accent/10 text-accent font-semibold px-1 rounded truncate">{rec.provider}</span>
+                </div>
+                <p className="text-[10px] text-text-muted line-clamp-2 mt-1">"{rec.description}"</p>
+                <div className="flex justify-between items-center mt-2.5 pt-2 border-t border-border/20">
+                  <div>
+                    <p className="text-[8px] text-text-muted font-bold uppercase tracking-wider">{rec.metricName}</p>
+                    <p className="text-xs font-bold text-secondary">{rec.metricValue}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[8px] text-text-muted">{rec.detail1}</p>
+                    <p className="text-[8px] text-text-muted">{rec.detail2}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main Editing Block */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
         <div className="card p-6 space-y-4">
           <h3 className="font-bold text-accent">Recommended Loan Terms</h3>
-          <div className="p-3 rounded-xl bg-bg border border-border">
-            <p className="text-xs text-text-muted">Requested Amount</p>
-            <p className="text-xl font-bold text-accent">₹{lc.requestedAmount?.toLocaleString('en-IN')}</p>
-          </div>
           {[
-            { key: 'recommendedBank',   label: 'Recommended Bank / NBFC', type: 'text',   placeholder: 'e.g. HDFC Bank' },
-            { key: 'recommendedRate',   label: 'Interest Rate (% p.a.)',   type: 'number', placeholder: '8.5', onBlur: calcEMI },
-            { key: 'recommendedTenure', label: 'Tenure (Months)',          type: 'number', placeholder: '240', onBlur: calcEMI },
-            { key: 'recommendedEMI',    label: 'Monthly EMI (₹)',          type: 'number', placeholder: 'Auto-calculated' },
+            { key: 'recommendedAmount', label: 'Recommended Amount (₹) *', type: 'number', placeholder: 'e.g. 5000000', onBlur: calcEMI },
+            { key: 'recommendedBank', label: 'Suitable Banks / Lender *', type: 'text', placeholder: 'e.g. HDFC Bank' },
+            { key: 'recommendedRate', label: 'Interest Range (% p.a.) *', type: 'number', placeholder: '8.5', onBlur: calcEMI },
+            { key: 'recommendedTenure', label: 'Tenure (Months) *', type: 'number', placeholder: '240', onBlur: calcEMI },
+            { key: 'recommendedEMI', label: 'Auto-calculated Monthly EMI (₹)', type: 'number', placeholder: 'Auto-calculated' },
           ].map(f => (
             <div key={f.key}>
               <label className="text-xs text-text-muted block mb-1">{f.label}</label>
@@ -350,32 +540,40 @@ function LoanRecommendation({ lc, onRefresh }) {
                 className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" />
             </div>
           ))}
-          <button onClick={calcEMI} className="btn-ghost text-xs px-4 py-2 flex items-center gap-1">
+          <button type="button" onClick={calcEMI} className="btn-ghost text-xs px-4 py-2 flex items-center gap-1">
             <span className="material-symbols-outlined text-base">calculate</span> Calculate EMI
           </button>
         </div>
 
-        <div className="card p-6 space-y-4">
-          <h3 className="font-bold text-accent">Recommendation Summary</h3>
-          {form.recommendedEMI && (
-            <div className="grid grid-cols-2 gap-3">
-              <KPI icon="payments"       label="Monthly EMI"     value={`₹${Number(form.recommendedEMI).toLocaleString('en-IN')}`} sub="Per month" />
-              <KPI icon="percent"        label="Interest Rate"   value={`${form.recommendedRate}%`}  sub="Per annum" color="text-blue-400" bg="bg-blue-500/10" />
-              <KPI icon="event_repeat"   label="Tenure"          value={`${form.recommendedTenure}M`} sub="Months" color="text-purple-400" bg="bg-purple-500/10" />
-              <KPI icon="account_balance" label="Bank"           value={form.recommendedBank || '—'} sub="Lender" color="text-green-400" bg="bg-green-500/10" />
-            </div>
-          )}
+        <div className="card p-6 space-y-4 flex flex-col justify-between">
           <div>
-            <label className="text-xs text-text-muted block mb-1">Recommendation Note</label>
-            <textarea value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
-              className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm h-24 resize-none"
-              placeholder="Why this bank/product is recommended..." />
+            <h3 className="font-bold text-accent mb-3">Recommendation Notes</h3>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Consultant Advisory Notes *</label>
+              <textarea value={form.note} onChange={e => setForm(p => ({ ...p, note: e.target.value }))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm h-40 resize-none"
+                placeholder="Describe why this recommendation was structured, specific options, and advice..." />
+            </div>
           </div>
-          <button onClick={send} disabled={saving || !form.recommendedBank || !form.recommendedEMI}
-            className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50">
-            <span className="material-symbols-outlined text-base">send</span>
-            {saving ? 'Sending...' : 'Send to Client for Approval'}
-          </button>
+
+          <div className="space-y-3 mt-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-3 text-xs font-bold border border-accent/40 bg-accent/5 text-accent hover:bg-accent/10 transition-all rounded-xl flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-base">save</span>
+              {saving ? 'Saving...' : 'Save Recommendation Draft'}
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={saving || !form.recommendedBank || !form.recommendedEMI}
+              className="w-full py-3 text-xs font-bold btn-primary rounded-xl flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              <span className="material-symbols-outlined text-base">send</span>
+              {saving ? 'Sending...' : 'Send Recommendation to Client'}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -385,9 +583,9 @@ function LoanRecommendation({ lc, onRefresh }) {
 // ── Stage 4: Client Approval ───────────────────────────────────────────────────
 function ClientApproval({ lc, onRefresh }) {
   const decision = lc.clientDecision;
-  const rec      = lc.recommendation;
+  const rec = lc.recommendation;
   const [advancing, setAdvancing] = useState(false);
-  const [invoice, setInvoice]     = useState(null);
+  const [invoice, setInvoice] = useState(null);
 
   // Pull the linked invoice to show payment status + gate Bank Processing.
   useEffect(() => {
@@ -395,7 +593,7 @@ function ClientApproval({ lc, onRefresh }) {
     if (lc.invoiceId) {
       api.get(`/invoices/${lc.invoiceId}`)
         .then(r => { if (active) setInvoice(r.data.invoice); })
-        .catch(() => {});
+        .catch(() => { });
     } else {
       setInvoice(null);
     }
@@ -471,11 +669,11 @@ function ClientApproval({ lc, onRefresh }) {
         <div className="card p-6 space-y-4">
           <h3 className="font-bold text-accent">Sent Recommendation</h3>
           {[
-            ['Bank / NBFC',    rec?.recommendedBank || '—'],
-            ['Interest Rate',  rec?.recommendedRate ? `${rec.recommendedRate}% p.a.` : '—'],
-            ['Tenure',         rec?.recommendedTenure ? `${rec.recommendedTenure} months` : '—'],
-            ['Monthly EMI',    rec?.recommendedEMI ? `₹${Number(rec.recommendedEMI).toLocaleString('en-IN')}` : '—'],
-            ['Loan Amount',    `₹${lc.requestedAmount?.toLocaleString('en-IN')}`],
+            ['Bank / NBFC', rec?.recommendedBank || '—'],
+            ['Interest Rate', rec?.recommendedRate ? `${rec.recommendedRate}% p.a.` : '—'],
+            ['Tenure', rec?.recommendedTenure ? `${rec.recommendedTenure} months` : '—'],
+            ['Monthly EMI', rec?.recommendedEMI ? `₹${Number(rec.recommendedEMI).toLocaleString('en-IN')}` : '—'],
+            ['Loan Amount', `₹${lc.requestedAmount?.toLocaleString('en-IN')}`],
           ].map(([label, val]) => (
             <div key={label} className="flex justify-between items-center p-3 bg-bg rounded-xl">
               <span className="text-xs text-text-muted">{label}</span>
@@ -493,12 +691,11 @@ function ClientApproval({ lc, onRefresh }) {
         {/* Decision panel */}
         <div className="card p-6 space-y-4">
           <h3 className="font-bold text-accent">Client Decision</h3>
-          <div className={`p-4 rounded-2xl text-center font-bold text-lg ${
-            decision?.status === 'Approved'           ? 'bg-green-500/20 text-green-400' :
-            decision?.status === 'Rejected'           ? 'bg-red-500/20 text-red-400' :
-            decision?.status === 'Changes Requested'  ? 'bg-amber-500/20 text-amber-400' :
-            'bg-surface border border-border text-text-muted'
-          }`}>
+          <div className={`p-4 rounded-2xl text-center font-bold text-lg ${decision?.status === 'Approved' ? 'bg-green-500/20 text-green-400' :
+              decision?.status === 'Rejected' ? 'bg-red-500/20 text-red-400' :
+                decision?.status === 'Changes Requested' ? 'bg-amber-500/20 text-amber-400' :
+                  'bg-surface border border-border text-text-muted'
+            }`}>
             {decision?.status || 'Awaiting Client Response'}
           </div>
           {decision?.decidedAt && (
@@ -521,13 +718,12 @@ function ClientApproval({ lc, onRefresh }) {
                 or you can record an offline decision:
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {['Approved','Changes Requested','Rejected'].map(s => (
+                {['Approved', 'Changes Requested', 'Rejected'].map(s => (
                   <button key={s} onClick={() => recordDecision(s)}
-                    className={`py-2.5 text-xs font-bold rounded-xl border transition-colors ${
-                      s === 'Approved'          ? 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20' :
-                      s === 'Rejected'          ? 'border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20' :
-                      'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
-                    }`}>
+                    className={`py-2.5 text-xs font-bold rounded-xl border transition-colors ${s === 'Approved' ? 'border-green-500/40 bg-green-500/10 text-green-400 hover:bg-green-500/20' :
+                        s === 'Rejected' ? 'border-red-500/40 bg-red-500/10 text-red-400 hover:bg-red-500/20' :
+                          'border-amber-500/40 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20'
+                      }`}>
                     {s}
                   </button>
                 ))}
@@ -599,10 +795,10 @@ function BankProcessing({ lc, onRefresh }) {
   const bp = lc.bankProcessing || {};
   const [form, setForm] = useState({
     applicationRef: bp.applicationRef || '',
-    submittedDate:  bp.submittedDate ? bp.submittedDate.split('T')[0] : '',
-    status:         bp.status        || 'Not Submitted',
-    sanctionedAt:   bp.sanctionedAt  ? bp.sanctionedAt.split('T')[0] : '',
-    remarks:        bp.remarks       || '',
+    submittedDate: bp.submittedDate ? bp.submittedDate.split('T')[0] : '',
+    status: bp.status || 'Not Submitted',
+    sanctionedAt: bp.sanctionedAt ? bp.sanctionedAt.split('T')[0] : '',
+    remarks: bp.remarks || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -628,8 +824,8 @@ function BankProcessing({ lc, onRefresh }) {
           <h3 className="font-bold text-accent">Application Details</h3>
           {[
             { key: 'applicationRef', label: 'Bank Application Reference', type: 'text', placeholder: 'HDFC/2025/LN/00123' },
-            { key: 'submittedDate',  label: 'Submitted to Bank On',        type: 'date' },
-            { key: 'sanctionedAt',   label: 'Sanctioned On',               type: 'date' },
+            { key: 'submittedDate', label: 'Submitted to Bank On', type: 'date' },
+            { key: 'sanctionedAt', label: 'Sanctioned On', type: 'date' },
           ].map(f => (
             <div key={f.key}>
               <label className="text-xs text-text-muted block mb-1">{f.label}</label>
@@ -645,11 +841,10 @@ function BankProcessing({ lc, onRefresh }) {
           <div>
             <label className="text-xs text-text-muted block mb-2">Current Status</label>
             <div className="grid grid-cols-1 gap-2">
-              {['Not Submitted','Submitted','Under Review','Sanctioned','Rejected'].map(s => (
+              {['Not Submitted', 'Submitted', 'Under Review', 'Sanctioned', 'Rejected'].map(s => (
                 <button key={s} onClick={() => setForm(p => ({ ...p, status: s }))}
-                  className={`py-2.5 px-4 rounded-xl text-sm font-semibold text-left border-2 transition-colors ${
-                    form.status === s ? `${BANK_STATUS_COLOR[s]} border-current` : 'border-border text-text-muted hover:border-accent'
-                  }`}>
+                  className={`py-2.5 px-4 rounded-xl text-sm font-semibold text-left border-2 transition-colors ${form.status === s ? `${BANK_STATUS_COLOR[s]} border-current` : 'border-border text-text-muted hover:border-accent'
+                    }`}>
                   {s}
                 </button>
               ))}
@@ -675,11 +870,11 @@ function BankProcessing({ lc, onRefresh }) {
 function LoanDisbursement({ lc, onRefresh }) {
   const [form, setForm] = useState({
     disbursedAmount: lc.disbursedAmount || lc.requestedAmount || '',
-    disbursedDate:   lc.disbursedDate ? new Date(lc.disbursedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-    interestRate:    lc.interestRate    || lc.recommendation?.recommendedRate   || '',
-    tenureMonths:    lc.tenureMonths    || lc.recommendation?.recommendedTenure || '',
-    monthlyEMI:      lc.monthlyEMI      || lc.recommendation?.recommendedEMI   || '',
-    bankName:        lc.bankName        || lc.recommendation?.recommendedBank  || '',
+    disbursedDate: lc.disbursedDate ? new Date(lc.disbursedDate).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+    interestRate: lc.interestRate || lc.recommendation?.recommendedRate || '',
+    tenureMonths: lc.tenureMonths || lc.recommendation?.recommendedTenure || '',
+    monthlyEMI: lc.monthlyEMI || lc.recommendation?.recommendedEMI || '',
+    bankName: lc.bankName || lc.recommendation?.recommendedBank || '',
   });
   const [saving, setSaving] = useState(false);
 
@@ -718,12 +913,12 @@ function LoanDisbursement({ lc, onRefresh }) {
         <div className="card p-6 space-y-4">
           <h3 className="font-bold text-accent">Disbursement Details</h3>
           {[
-            { key: 'bankName',        label: 'Bank / NBFC',            type: 'text',   placeholder: 'HDFC Bank' },
-            { key: 'disbursedAmount', label: 'Disbursed Amount (₹)',   type: 'number', placeholder: '5000000' },
-            { key: 'disbursedDate',   label: 'Disbursement Date',      type: 'date' },
-            { key: 'interestRate',    label: 'Interest Rate (% p.a.)', type: 'number', placeholder: '8.5' },
-            { key: 'tenureMonths',    label: 'Tenure (Months)',        type: 'number', placeholder: '240' },
-            { key: 'monthlyEMI',      label: 'Monthly EMI (₹)',        type: 'number', placeholder: 'Auto-calculated' },
+            { key: 'bankName', label: 'Bank / NBFC', type: 'text', placeholder: 'HDFC Bank' },
+            { key: 'disbursedAmount', label: 'Disbursed Amount (₹)', type: 'number', placeholder: '5000000' },
+            { key: 'disbursedDate', label: 'Disbursement Date', type: 'date' },
+            { key: 'interestRate', label: 'Interest Rate (% p.a.)', type: 'number', placeholder: '8.5' },
+            { key: 'tenureMonths', label: 'Tenure (Months)', type: 'number', placeholder: '240' },
+            { key: 'monthlyEMI', label: 'Monthly EMI (₹)', type: 'number', placeholder: 'Auto-calculated' },
           ].map(f => (
             <div key={f.key}>
               <label className="text-xs text-text-muted block mb-1">{f.label}</label>
@@ -741,9 +936,9 @@ function LoanDisbursement({ lc, onRefresh }) {
           <h3 className="font-bold text-accent">Disbursement Summary</h3>
           {form.monthlyEMI && (
             <div className="grid grid-cols-2 gap-3">
-              <KPI icon="payments"       label="Monthly EMI"    value={`₹${Number(form.monthlyEMI).toLocaleString('en-IN')}`} />
-              <KPI icon="percent"        label="Rate"           value={`${form.interestRate}%`} color="text-blue-400" bg="bg-blue-500/10" />
-              <KPI icon="event_repeat"   label="Tenure"         value={`${form.tenureMonths}M`} color="text-purple-400" bg="bg-purple-500/10" />
+              <KPI icon="payments" label="Monthly EMI" value={`₹${Number(form.monthlyEMI).toLocaleString('en-IN')}`} />
+              <KPI icon="percent" label="Rate" value={`${form.interestRate}%`} color="text-blue-400" bg="bg-blue-500/10" />
+              <KPI icon="event_repeat" label="Tenure" value={`${form.tenureMonths}M`} color="text-purple-400" bg="bg-purple-500/10" />
               <KPI icon="account_balance" label="Total Payable" color="text-amber-400" bg="bg-amber-500/10"
                 value={`₹${(form.monthlyEMI * form.tenureMonths).toLocaleString('en-IN')}`} />
             </div>
@@ -766,7 +961,7 @@ function LoanDisbursement({ lc, onRefresh }) {
 // ── Stage 7: EMI Tracking ──────────────────────────────────────────────────────
 function EMITracking({ lc, onRefresh }) {
   const emis = lc.emiSchedule || [];
-  const paid    = emis.filter(e => e.status === 'Paid').length;
+  const paid = emis.filter(e => e.status === 'Paid').length;
   const overdue = emis.filter(e => e.status === 'Overdue').length;
   const pending = emis.filter(e => e.status === 'Pending').length;
   const totalPaid = emis.filter(e => e.status === 'Paid').reduce((s, e) => s + e.amount, 0);
@@ -787,10 +982,10 @@ function EMITracking({ lc, onRefresh }) {
     <div className="space-y-gutter">
       <h2 className="text-xl font-bold text-accent">EMI Tracking</h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-        <KPI icon="check_circle"  label="Paid"        value={String(paid)}    sub={`₹${totalPaid.toLocaleString('en-IN')}`} color="text-green-400" bg="bg-green-500/10" />
-        <KPI icon="warning"       label="Overdue"     value={String(overdue)} sub="Needs attention" color="text-red-400"   bg="bg-red-500/10" />
-        <KPI icon="pending"       label="Upcoming"    value={String(pending)} sub="Scheduled" color="text-amber-400" bg="bg-amber-500/10" />
-        <KPI icon="savings"       label="Outstanding" value={`₹${(totalOutstanding / 100000).toFixed(1)}L`} sub="Remaining" />
+        <KPI icon="check_circle" label="Paid" value={String(paid)} sub={`₹${totalPaid.toLocaleString('en-IN')}`} color="text-green-400" bg="bg-green-500/10" />
+        <KPI icon="warning" label="Overdue" value={String(overdue)} sub="Needs attention" color="text-red-400" bg="bg-red-500/10" />
+        <KPI icon="pending" label="Upcoming" value={String(pending)} sub="Scheduled" color="text-amber-400" bg="bg-amber-500/10" />
+        <KPI icon="savings" label="Outstanding" value={`₹${(totalOutstanding / 100000).toFixed(1)}L`} sub="Remaining" />
       </div>
 
       {/* Progress bar */}
@@ -893,15 +1088,15 @@ function CaseNotes({ lc, onRefresh }) {
 export default function LoanWorkflow() {
   const { user } = useAuth();
 
-  const [cases,        setCases]        = useState([]);
+  const [cases, setCases] = useState([]);
   const [activeCaseId, setActiveCaseId] = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [showCreate,   setShowCreate]   = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
   const [showRecommendations, setShowRecommendations] = useState(false);
-  const [clients,      setClients]      = useState([]);
-  const [leads,        setLeads]        = useState([]);
-  const [createForm,   setCreateForm]   = useState({ clientId: '', leadId: '', loanType: 'Home Loan', requestedAmount: '' });
-  const [creating,     setCreating]     = useState(false);
+  const [clients, setClients] = useState([]);
+  const [leads, setLeads] = useState([]);
+  const [createForm, setCreateForm] = useState({ clientId: '', leadId: '', loanType: 'Home Loan', requestedAmount: '' });
+  const [creating, setCreating] = useState(false);
   const [mobileShowList, setMobileShowList] = useState(true);
 
   const activeCase = cases.find(c => c._id === activeCaseId);
@@ -912,8 +1107,8 @@ export default function LoanWorkflow() {
 
   useEffect(() => {
     fetchCases();
-    api.get('/auth/consultant/clients').then(r => setClients(r.data.clients || [])).catch(() => {});
-    api.get('/leads', { params: { status: 'assigned' } }).then(r => setLeads(r.data.leads || [])).catch(() => {});
+    api.get('/auth/consultant/clients').then(r => setClients(r.data.clients || [])).catch(() => { });
+    api.get('/leads', { params: { status: 'assigned' } }).then(r => setLeads(r.data.leads || [])).catch(() => { });
   }, []);
 
   const fetchCases = async () => {
@@ -932,15 +1127,15 @@ export default function LoanWorkflow() {
       const res = await api.get('/loan-cases');
       const list = res.data.cases || [];
       setCases(list);
-    } catch {}
+    } catch { }
   };
 
   const createCase = async () => {
     if (!createForm.clientId && !createForm.leadId) {
       toast.error('Select a client or lead'); return;
     }
-    if (!createForm.loanType || !createForm.requestedAmount) {
-      toast.error('Loan type and amount required'); return;
+    if (!createForm.requestedAmount) {
+      toast.error('Requested amount is required'); return;
     }
     try {
       setCreating(true);
@@ -963,23 +1158,23 @@ export default function LoanWorkflow() {
     if (!activeCase) return null;
     const props = { lc: activeCase, onRefresh: refreshCase };
     switch (activeCase.stage) {
-      case 'document_collection':  return <DocumentCollection  {...props} />;
+      case 'document_collection': return <DocumentCollection  {...props} />;
       case 'eligibility_analysis': return <EligibilityAnalysis {...props} />;
-      case 'loan_recommendation':  return <LoanRecommendation  {...props} />;
-      case 'client_approval':      return <ClientApproval      {...props} />;
-      case 'bank_processing':      return <BankProcessing      {...props} />;
-      case 'loan_disbursement':    return <LoanDisbursement     {...props} />;
-      case 'emi_tracking':         return <EMITracking          {...props} />;
-      default:                     return null;
+      case 'loan_recommendation': return <LoanRecommendation  {...props} />;
+      case 'client_approval': return <ClientApproval      {...props} />;
+      case 'bank_processing': return <BankProcessing      {...props} />;
+      case 'loan_disbursement': return <LoanDisbursement     {...props} />;
+      case 'emi_tracking': return <EMITracking          {...props} />;
+      default: return null;
     }
   };
 
   // Summary KPIs across all cases
   const kpis = [
-    { label: 'Total Cases',    value: cases.length,                                                        icon: 'folder_open',  color: 'text-accent',    bg: 'bg-accent/10' },
-    { label: 'Active',         value: cases.filter(c => !['emi_tracking'].includes(c.stage)).length,       icon: 'sync',         color: 'text-blue-400',  bg: 'bg-blue-500/10' },
-    { label: 'Disbursed',      value: cases.filter(c => c.stage === 'emi_tracking').length,                icon: 'payments',     color: 'text-green-400', bg: 'bg-green-500/10' },
-    { label: 'Pending Approval',value: cases.filter(c => c.stage === 'client_approval').length,            icon: 'pending',      color: 'text-amber-400', bg: 'bg-amber-500/10' },
+    { label: 'Total Cases', value: cases.length, icon: 'folder_open', color: 'text-accent', bg: 'bg-accent/10' },
+    { label: 'Active', value: cases.filter(c => !['emi_tracking'].includes(c.stage)).length, icon: 'sync', color: 'text-blue-400', bg: 'bg-blue-500/10' },
+    { label: 'Disbursed', value: cases.filter(c => c.stage === 'emi_tracking').length, icon: 'payments', color: 'text-green-400', bg: 'bg-green-500/10' },
+    { label: 'Pending Approval', value: cases.filter(c => c.stage === 'client_approval').length, icon: 'pending', color: 'text-amber-400', bg: 'bg-amber-500/10' },
   ];
 
   return (
@@ -993,9 +1188,6 @@ export default function LoanWorkflow() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
-            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
-          </button>
           <button onClick={() => setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
             <span className="material-symbols-outlined text-base">add_circle</span> New Loan Case
           </button>
@@ -1015,9 +1207,6 @@ export default function LoanWorkflow() {
           <p className="font-bold text-accent mt-4 text-xl">No loan cases yet</p>
           <p className="text-text-muted mt-2">Create your first loan case to start the workflow</p>
           <div className="flex justify-center gap-3 mt-6">
-            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
-              View Recommendations
-            </button>
             <button onClick={() => setShowCreate(true)} className="btn-primary px-8 py-3">
               Create Loan Case
             </button>
@@ -1038,9 +1227,8 @@ export default function LoanWorkflow() {
                 const stageInfo = STAGES.find(s => s.key === c.stage);
                 return (
                   <button key={c._id} onClick={() => { setActiveCaseId(c._id); setMobileShowList(false); }}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${
-                      activeCaseId === c._id ? 'border-accent bg-accent/5' : 'border-border bg-surface hover:border-accent/40'
-                    }`}>
+                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all ${activeCaseId === c._id ? 'border-accent bg-accent/5' : 'border-border bg-surface hover:border-accent/40'
+                      }`}>
                     <p className="font-bold text-accent text-sm truncate">{c.clientId?.name || 'Client'}</p>
                     <p className="text-xs text-text-muted">{c.caseId} · {c.loanType}</p>
                     <p className="text-xs font-semibold text-secondary mt-1">{stageInfo?.label || c.stage}</p>
@@ -1116,7 +1304,7 @@ export default function LoanWorkflow() {
               <label className="text-xs text-text-muted block mb-1">Loan Type *</label>
               <select value={createForm.loanType} onChange={e => setCreateForm(p => ({ ...p, loanType: e.target.value }))}
                 className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm">
-                {['Home Loan','Personal Loan','Business Loan','Vehicle Loan','Education Loan','Mortgage Loan','LAP'].map(t => (
+                {['Home Loan', 'Personal Loan', 'Business Loan', 'Vehicle Loan', 'Education Loan', 'Mortgage Loan', 'LAP'].map(t => (
                   <option key={t} value={t}>{t}</option>
                 ))}
               </select>

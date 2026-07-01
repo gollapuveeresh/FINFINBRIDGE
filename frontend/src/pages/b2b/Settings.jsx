@@ -7,6 +7,56 @@ export default function B2BSettings() {
   const { company } = useB2BAuth();
   const [tab, setTab] = useState('profile');
 
+  // Password form state
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Notification preferences state
+  const [notifications, setNotifications] = useState({
+    serviceRequestStatus: true,
+    newProposalReceived: true,
+    meetingReminders: true,
+    invoicePaymentAlerts: true,
+    kycVerificationUpdates: true,
+    supportTicketUpdates: true,
+  });
+  const [notificationsChanged, setNotificationsChanged] = useState(false);
+
+  const handlePasswordSubmit = (e) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error('All password fields are required');
+      return;
+    }
+    if (newPassword.length < 8) {
+      toast.error('New password must be at least 8 characters');
+      return;
+    }
+    if (newPassword === currentPassword) {
+      toast.error('New password must be different from current password');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      toast.error('New password and confirm password do not match');
+      return;
+    }
+    toast.success('Password updated (demo)');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+  };
+
+  const handleNotificationToggle = (key) => {
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+    setNotificationsChanged(true);
+  };
+
+  const handleSaveNotifications = () => {
+    setNotificationsChanged(false);
+    toast.success('Preferences saved');
+  };
+
   return (
     <B2BLayout>
       <div>
@@ -16,10 +66,13 @@ export default function B2BSettings() {
 
       {/* Tabs */}
       <div className="flex gap-1 border-b border-border">
-        {['profile','security','notifications'].map(t => (
-          <button key={t} onClick={() => setTab(t)}
+        {['profile', 'security', 'notifications'].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
             className={`px-5 py-2.5 text-sm font-semibold capitalize transition-colors border-b-2 -mb-px
-              ${tab === t ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text'}`}>
+              ${tab === t ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text'}`}
+          >
             {t}
           </button>
         ))}
@@ -32,18 +85,16 @@ export default function B2BSettings() {
           {/* Read-only info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[
-              { label:'Company Name',   value: company?.companyName },
-              { label:'Industry',       value: company?.industry },
-              { label:'VAT Number (BIN)', value: company?.gstin },
-              { label:'KYC Status',     value: company?.kycVerified ? 'Verified' : 'Pending' },
-              { label:'Account Status', value: company?.status },
-              { label:'Your Role',      value: company?.role?.replace(/_/g,' ') },
-            ].map(f => (
+              { label: 'Company Name', value: company?.companyName },
+              { label: 'Industry', value: company?.industry },
+              { label: 'VAT Number (BIN)', value: company?.gstin },
+              { label: 'KYC Status', value: company?.kycVerified ? 'Verified' : 'Pending' },
+              { label: 'Account Status', value: company?.status },
+              { label: 'Your Role', value: company?.role?.replace(/_/g, ' ') },
+            ].map((f) => (
               <div key={f.label}>
                 <label className="text-xs text-text-muted block mb-1">{f.label}</label>
-                <div className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm text-text-muted">
-                  {f.value || '—'}
-                </div>
+                <div className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm text-text-muted">{f.value || '—'}</div>
               </div>
             ))}
           </div>
@@ -59,13 +110,23 @@ export default function B2BSettings() {
       {tab === 'security' && (
         <div className="card p-6 max-w-lg">
           <h2 className="font-bold text-accent mb-5">Change Password</h2>
-          <form onSubmit={e => { e.preventDefault(); toast.success('Password updated (demo)'); }} className="space-y-4">
-            {['Current Password','New Password','Confirm New Password'].map(l => (
-              <div key={l}>
-                <label className="text-xs text-text-muted block mb-1">{l}</label>
-                <input type="password" className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" placeholder="••••••••" />
-              </div>
-            ))}
+          <form onSubmit={handlePasswordSubmit} className="space-y-4">
+            {['Current Password', 'New Password', 'Confirm New Password'].map((label, idx) => {
+              const value = [currentPassword, newPassword, confirmPassword][idx];
+              const setValue = [setCurrentPassword, setNewPassword, setConfirmPassword][idx];
+              return (
+                <div key={label}>
+                  <label className="text-xs text-text-muted block mb-1">{label}</label>
+                  <input
+                    type="password"
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm"
+                    placeholder="••••••••"
+                  />
+                </div>
+              );
+            })}
             <button type="submit" className="btn-primary px-6 py-2.5">Update Password</button>
           </form>
         </div>
@@ -76,20 +137,29 @@ export default function B2BSettings() {
           <h2 className="font-bold text-accent mb-5">Notification Preferences</h2>
           <div className="space-y-4">
             {[
-              'Service request status updates',
-              'New proposal received',
-              'Meeting reminders',
-              'Invoice and payment alerts',
-              'KYC verification updates',
-              'Support ticket updates',
-            ].map(item => (
-              <label key={item} className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
-                <span className="text-sm text-text">{item}</span>
-                <input type="checkbox" defaultChecked className="w-4 h-4 accent-[var(--color-accent)]" />
+              { key: 'serviceRequestStatus', label: 'Service request status updates' },
+              { key: 'newProposalReceived', label: 'New proposal received' },
+              { key: 'meetingReminders', label: 'Meeting reminders' },
+              { key: 'invoicePaymentAlerts', label: 'Invoice and payment alerts' },
+              { key: 'kycVerificationUpdates', label: 'KYC verification updates' },
+              { key: 'supportTicketUpdates', label: 'Support ticket updates' },
+            ].map(({ key, label }) => (
+              <label key={key} className="flex items-center justify-between cursor-pointer p-3 rounded-xl hover:bg-surface-hover transition-colors">
+                <span className="text-sm text-text">{label}</span>
+                <input
+                  type="checkbox"
+                  checked={notifications[key]}
+                  onChange={() => handleNotificationToggle(key)}
+                  className="w-4 h-4 accent-[var(--color-accent)]"
+                />
               </label>
             ))}
           </div>
-          <button onClick={() => toast.success('Preferences saved')} className="btn-primary mt-5 px-6 py-2.5">
+          <button
+            onClick={handleSaveNotifications}
+            disabled={!notificationsChanged}
+            className="btn-primary mt-5 px-6 py-2.5 disabled:opacity-60"
+          >
             Save Preferences
           </button>
         </div>

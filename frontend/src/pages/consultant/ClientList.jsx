@@ -49,7 +49,7 @@ export default function MyClients() {
         _id: c._id,
       }));
       setApiClients(prev => [...list, ...prev.filter(p => p.status === 'Lead')]);
-    }).catch(() => {});
+    }).catch(() => { });
 
     // Pull leads from the lead pipeline that haven't been converted to clients yet
     api.get('/leads', { params: { status: 'assigned' } }).then(r => {
@@ -65,7 +65,7 @@ export default function MyClients() {
         _id: l._id,
       }));
       setApiClients(prev => [...prev.filter(p => p.status !== 'Lead'), ...list]);
-    }).catch(() => {});
+    }).catch(() => { });
 
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -278,7 +278,6 @@ export default function MyClients() {
                               <span className="material-symbols-outlined text-base">open_in_new</span>
                             </button>
                           </Link>
-                          <button className="text-secondary hover:text-accent transition-colors"><span className="material-symbols-outlined text-base">chat_bubble</span></button>
                         </div>
                       </td>
                     </tr>

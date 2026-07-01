@@ -6,14 +6,17 @@ import { useB2BAuth } from '../../context/B2BAuthContext';
 import api from '../../services/api';
 import { isEmail, isPincode, isMobile, minLen, required, firstError, apiErrorMessage } from '../../utils/validators';
 
-const INDUSTRIES = ['Technology','Healthcare','Manufacturing','Retail','Education','Construction','Finance','Logistics','Real Estate','Other'];
-const SERVICES   = ['Loans','Tax','Investment','Insurance','Wealth Management'];
-const SVC_ICONS  = { Loans:'payments', Tax:'calculate', Investment:'trending_up', Insurance:'health_and_safety', 'Wealth Management':'account_balance' };
+const INDUSTRIES = ['Technology', 'Healthcare', 'Manufacturing', 'Retail', 'Education', 'Construction', 'Finance', 'Logistics', 'Real Estate', 'Other'];
+const SERVICES = ['Loans', 'Tax', 'Investment', 'Insurance', 'Wealth Management'];
+const SVC_ICONS = { Loans: 'payments', Tax: 'calculate', Investment: 'trending_up', Insurance: 'health_and_safety', 'Wealth Management': 'account_balance' };
 
 // ── Defined OUTSIDE the parent so React never remounts it on state change ──
 const Field = ({ label, value, onChange, type = 'text', placeholder, required }) => (
   <div>
-    <label className="text-xs text-text-muted block mb-1">{label}{required && ' *'}</label>
+    <label className="text-xs text-text-muted block mb-1">
+      {label}
+      {required ? ' *' : ' (Optional)'}
+    </label>
     <input
       type={type}
       value={value}
@@ -74,13 +77,13 @@ export default function B2BRegister() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    companyName:'', industry:'', gstin:'', cin:'', pan:'',
-    annualTurnover:'', employeeCount:'',
-    address:'', city:'', state:'', pincode:'', website:'',
-    adminName:'', adminEmail:'', adminPhoneOnly:'', countryCode: '+880', adminPassword:'', confirmPassword:'',
-    services:[],
-    selectedPackage:'',
-    customRequirement:'',
+    companyName: '', industry: '', gstin: '', cin: '', pan: '',
+    annualTurnover: '', employeeCount: '',
+    address: '', city: '', state: '', pincode: '', website: '',
+    adminName: '', adminEmail: '', adminPhoneOnly: '', countryCode: '+880', adminPassword: '', confirmPassword: '',
+    services: [],
+    selectedPackage: '',
+    customRequirement: '',
   });
 
   const [packages, setPackages] = useState([]);
@@ -145,15 +148,24 @@ export default function B2BRegister() {
       toast.error('Enter a valid 9 or 13-digit VAT Number (BIN)');
       return false;
     }
-    if (form.pan && !tinRegex.test(form.pan.trim())) {
+    if (!required(form.pan)) {
+      toast.error('TIN is required');
+      return false;
+    } else if (!tinRegex.test(form.pan.trim())) {
       toast.error('Enter a valid 12-digit TIN (Taxpayer Identification Number)');
       return false;
     }
-    if (form.annualTurnover && (isNaN(form.annualTurnover) || Number(form.annualTurnover) <= 0)) {
+    if (!required(form.annualTurnover)) {
+      toast.error('Annual Turnover is required');
+      return false;
+    } else if (isNaN(form.annualTurnover) || Number(form.annualTurnover) <= 0) {
       toast.error('Annual Turnover must be a positive number');
       return false;
     }
-    if (form.employeeCount && (isNaN(form.employeeCount) || Number(form.employeeCount) < 0 || !Number.isInteger(Number(form.employeeCount)))) {
+    if (!required(form.employeeCount)) {
+      toast.error('Number of Employees is required');
+      return false;
+    } else if (isNaN(form.employeeCount) || Number(form.employeeCount) < 0 || !Number.isInteger(Number(form.employeeCount))) {
       toast.error('Number of Employees must be a non-negative integer');
       return false;
     }
@@ -162,21 +174,21 @@ export default function B2BRegister() {
 
   const validateStep2 = () => {
     const err = firstError({
-      name:     required(form.adminName)     ? null : 'Contact name is required',
-      email:    required(form.adminEmail)
-                  ? (form.adminEmail.includes('@')
-                      ? (isEmail(form.adminEmail) ? null : 'Enter a valid business email')
-                      : 'Email must contain "@"')
-                  : 'Business email is required',
-      phone:    validatePhone(form.countryCode, form.adminPhoneOnly),
+      name: required(form.adminName) ? null : 'Contact name is required',
+      email: required(form.adminEmail)
+        ? (form.adminEmail.includes('@')
+          ? (isEmail(form.adminEmail) ? null : 'Enter a valid business email')
+          : 'Email must contain "@"')
+        : 'Business email is required',
+      phone: validatePhone(form.countryCode, form.adminPhoneOnly),
       password: isStrongPassword(form.adminPassword)
-                  ? null
-                  : 'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (e.g., @$!%*?&)',
-      match:    form.adminPassword === form.confirmPassword ? null : 'Passwords do not match',
-      address:  required(form.address)       ? null : 'Registered address is required',
-      city:     required(form.city)          ? null : 'City is required',
-      state:    required(form.state)         ? null : 'State is required',
-      pincode:  required(form.pincode)       ? (isPincode(form.pincode) ? null : 'Enter a valid 4-to-6 digit postcode') : 'Postcode is required',
+        ? null
+        : 'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (e.g., @$!%*?&)',
+      match: form.adminPassword === form.confirmPassword ? null : 'Passwords do not match',
+      address: required(form.address) ? null : 'Registered address is required',
+      city: required(form.city) ? null : 'City is required',
+      state: required(form.state) ? null : 'State is required',
+      pincode: required(form.pincode) ? (isPincode(form.pincode) ? null : 'Enter a valid 4-to-6 digit postcode') : 'Postcode is required',
     });
     if (err) { toast.error(err); return false; }
     return true;
@@ -211,7 +223,7 @@ export default function B2BRegister() {
         ...rest,
         adminPhone: `${countryCode} ${adminPhoneOnly}`,
         annualTurnover: form.annualTurnover ? Number(form.annualTurnover) : null,
-        employeeCount:  form.employeeCount  ? Number(form.employeeCount)  : null,
+        employeeCount: form.employeeCount ? Number(form.employeeCount) : null,
       });
       toast.success('Registration submitted! Our compliance team will review within 24 hours.');
       navigate('/b2b/login');
@@ -240,7 +252,7 @@ export default function B2BRegister() {
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-3 mb-6">
-          {[1,2,3].map(s => (
+          {[1, 2, 3].map(s => (
             <div key={s} className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors
                 ${step >= s ? 'bg-accent text-white' : 'bg-surface border border-border text-text-muted'}`}>{s}</div>
@@ -249,8 +261,8 @@ export default function B2BRegister() {
           ))}
         </div>
         <div className="flex justify-center gap-16 text-xs text-text-muted mb-6 -mt-2">
-          {['Company Info','Contact & Address','Services'].map((l, i) => (
-            <span key={l} className={step === i+1 ? 'text-accent font-semibold' : ''}>{l}</span>
+          {['Company Info', 'Contact & Address', 'Services'].map((l, i) => (
+            <span key={l} className={step === i + 1 ? 'text-accent font-semibold' : ''}>{l}</span>
           ))}
         </div>
 
@@ -262,7 +274,7 @@ export default function B2BRegister() {
               <>
                 <h3 className="font-bold text-accent">Company Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Field label="Company Name"        value={form.companyName}    onChange={set('companyName')}    placeholder="TechCorp Solutions Pvt Ltd" required />
+                  <Field label="Company Name" value={form.companyName} onChange={set('companyName')} placeholder="TechCorp Solutions Pvt Ltd" required />
                   <div>
                     <label className="text-xs text-text-muted block mb-1">Industry *</label>
                     <select value={form.industry} onChange={set('industry')} required
@@ -271,12 +283,12 @@ export default function B2BRegister() {
                       {INDUSTRIES.map(i => <option key={i}>{i}</option>)}
                     </select>
                   </div>
-                  <Field label="VAT Number (BIN)"    value={form.gstin}          onChange={set('gstin')}          placeholder="1234567890123" required />
-                  <Field label="CIN (optional)"      value={form.cin}            onChange={set('cin')}            placeholder="U72900MH2020PTC123456" />
-                  <Field label="TIN"                 value={form.pan}            onChange={set('pan')}            placeholder="123456789012" />
-                  <Field label="Annual Turnover (BDT)" value={form.annualTurnover} onChange={set('annualTurnover')} placeholder="5000000" />
-                  <Field label="No. of Employees"    value={form.employeeCount}  onChange={set('employeeCount')}  placeholder="150" />
-                  <Field label="Website (optional)"  value={form.website}        onChange={set('website')}        placeholder="https://yourcompany.com" />
+                  <Field label="VAT Number (BIN)" value={form.gstin} onChange={set('gstin')} placeholder="1234567890123" required />
+                  <Field label="CIN" value={form.cin} onChange={set('cin')} placeholder="U72900MH2020PTC123456" />
+                  <Field label="TIN" value={form.pan} onChange={set('pan')} placeholder="123456789012" required />
+                  <Field label="Annual Turnover (BDT)" value={form.annualTurnover} onChange={set('annualTurnover')} placeholder="5000000" required />
+                  <Field label="No. of Employees" value={form.employeeCount} onChange={set('employeeCount')} placeholder="150" required />
+                  <Field label="Website" value={form.website} onChange={set('website')} placeholder="https://yourcompany.com" />
                 </div>
               </>
             )}
@@ -286,8 +298,8 @@ export default function B2BRegister() {
               <>
                 <h3 className="font-bold text-accent">Admin Contact & Address</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Field label="Admin Name"        value={form.adminName}       onChange={set('adminName')}       placeholder="John Smith"           required />
-                  <Field label="Business Email"    value={form.adminEmail}      onChange={set('adminEmail')}      placeholder="admin@company.com"    required type="email" />
+                  <Field label="Admin Name" value={form.adminName} onChange={set('adminName')} placeholder="John Smith" required />
+                  <Field label="Business Email" value={form.adminEmail} onChange={set('adminEmail')} placeholder="admin@company.com" required type="email" />
                   <div>
                     <label className="text-xs text-text-muted block mb-1">Phone *</label>
                     <div className="flex gap-2">
@@ -304,14 +316,14 @@ export default function B2BRegister() {
                       />
                     </div>
                   </div>
-                  <PasswordField label="Password"          value={form.adminPassword}   onChange={set('adminPassword')}   placeholder="••••••••"             required />
-                  <PasswordField label="Confirm Password"  value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••"             required />
+                  <PasswordField label="Password" value={form.adminPassword} onChange={set('adminPassword')} placeholder="••••••••" required />
+                  <PasswordField label="Confirm Password" value={form.confirmPassword} onChange={set('confirmPassword')} placeholder="••••••••" required />
                   <div className="md:col-span-2">
                     <Field label="Registered Address" value={form.address} onChange={set('address')} placeholder="123, Business Park, MG Road" required />
                   </div>
-                  <Field label="City"     value={form.city}    onChange={set('city')}    placeholder="Dhaka"      required />
-                  <Field label="State"    value={form.state}   onChange={set('state')}   placeholder="Dhaka Division" required />
-                  <Field label="Postcode" value={form.pincode} onChange={set('pincode')} placeholder="1209"      required />
+                  <Field label="City" value={form.city} onChange={set('city')} placeholder="Dhaka" required />
+                  <Field label="State" value={form.state} onChange={set('state')} placeholder="Dhaka Division" required />
+                  <Field label="Postcode" value={form.pincode} onChange={set('pincode')} placeholder="1209" required />
 
                 </div>
               </>
@@ -344,7 +356,7 @@ export default function B2BRegister() {
                   <div className="space-y-4 mt-6 fade-in">
                     <h3 className="font-bold text-[#D4AF37]">Available Consulting Packages</h3>
                     <p className="text-text-muted text-sm">Choose a consulting package (optional but recommended):</p>
-                    
+
                     {loadingPackages ? (
                       <div className="py-8 text-center text-text-muted text-sm flex items-center justify-center gap-2">
                         <div className="w-4 h-4 rounded-full border-2 border-accent/20 border-t-accent animate-spin" />
@@ -429,7 +441,7 @@ export default function B2BRegister() {
             {/* Nav buttons */}
             <div className="flex gap-3 pt-2">
               {step > 1 && (
-                <button type="button" onClick={() => setStep(s => s-1)} className="flex-1 btn-ghost py-3">← Back</button>
+                <button type="button" onClick={() => setStep(s => s - 1)} className="flex-1 btn-ghost py-3">← Back</button>
               )}
               {step < 3 ? (
                 <button type="button" onClick={handleNext} className="flex-1 btn-primary py-3">Next →</button>

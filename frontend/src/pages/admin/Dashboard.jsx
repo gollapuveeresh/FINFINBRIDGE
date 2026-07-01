@@ -1143,11 +1143,107 @@ function ClientLifecycleTab() {
   );
 }
 
+function RecommendationsLogTab() {
+  const [recs, setRecs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    api.get('/recommendations/admin')
+      .then(res => setRecs(res.data || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const filtered = recs.filter(r =>
+    r.client?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    r.consultant?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    r.department?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const getStatusColor = (s) => {
+    switch (s) {
+      case 'approved': return 'bg-green-500/15 text-green-400 border border-green-500/20';
+      case 'changes_requested': return 'bg-amber-500/15 text-amber-400 border border-amber-500/20';
+      default: return 'bg-blue-500/15 text-blue-400 border border-blue-500/20';
+    }
+  };
+
+  return (
+    <div className="space-y-gutter">
+      <SectionHeader title="Advisory Recommendations Log" sub="Monitor all customized product recommendations sent to B2B & Retail clients" />
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-gutter">
+        <KPI icon="recommend" label="Total Plans" value={loading ? '…' : String(recs.length)} sub="Generated plans" color="text-accent bg-accent/10" />
+        <KPI icon="task_alt" label="Approved" value={loading ? '…' : String(recs.filter(r => r.status === 'approved').length)} sub="Accepted by clients" color="text-green-400 bg-green-500/10" />
+        <KPI icon="feedback" label="Changes Requested" value={loading ? '…' : String(recs.filter(r => r.status === 'changes_requested').length)} sub="Revision pending" color="text-amber-400 bg-amber-500/10" />
+      </div>
+
+      {/* Search */}
+      <div className="card p-4">
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-muted text-sm">search</span>
+          <input value={search} onChange={e => setSearch(e.target.value)}
+            className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-border bg-bg text-sm"
+            placeholder="Search by client, consultant, or department..." />
+        </div>
+      </div>
+
+      <div className="card overflow-hidden">
+        {loading ? (
+          <div className="py-16 text-center text-text-muted">Loading recommendations...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
+                  <th className="px-6 py-3">Client</th>
+                  <th className="px-6 py-3">Advisor</th>
+                  <th className="px-6 py-3">Department</th>
+                  <th className="px-6 py-3">Status</th>
+                  <th className="px-6 py-3">Date Generated</th>
+                  <th className="px-6 py-3">Notes</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map(r => (
+                  <tr key={r.id} className="hover:bg-surface/50">
+                    <td className="px-6 py-4">
+                      <div>
+                        <p className="font-semibold text-text">{r.client?.name || 'Lead Account'}</p>
+                        <p className="text-xs text-text-muted font-mono">{r.client?.email || 'N/A'}</p>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-text font-medium">{r.consultant?.name || 'System / AI'}</td>
+                    <td className="px-6 py-4 capitalize text-text-muted">{r.department}</td>
+                    <td className="px-6 py-4">
+                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold capitalize border ${getStatusColor(r.status)}`}>
+                        {r.status?.replace('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-text-muted text-xs">{new Date(r.generatedAt).toLocaleString()}</td>
+                    <td className="px-6 py-4 text-text-muted max-w-xs truncate italic">"{r.recommendationNotes || '—'}"</td>
+                  </tr>
+                ))}
+                {filtered.length === 0 && (
+                  <tr><td colSpan={6} className="py-12 text-center text-text-muted">No recommendations found.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 const TABS = [
   { key: 'overview',    label: 'Revenue Dashboard',          icon: 'dashboard' },
   { key: 'users',       label: 'User Management',            icon: 'manage_accounts' },
   { key: 'departments', label: 'Department Management',      icon: 'corporate_fare' },
+  { key: 'recommendations', label: 'Recommendations Log',    icon: 'recommend' },
   { key: 'compliance',  label: 'Compliance Dashboard',       icon: 'verified_user' },
   { key: 'logs',        label: 'Activity Logs',              icon: 'history' },
   { key: 'notifications', label: 'Notification Center',     icon: 'notifications' },
@@ -1183,6 +1279,7 @@ export default function AdminDashboard() {
       case 'overview':      return <OverviewTab leadStats={leadStats} liveStats={liveStats} dashboardStats={dashboardStats} />;
       case 'users':         return <UserManagementTab />;
       case 'departments':   return <DepartmentManagementTab />;
+      case 'recommendations': return <RecommendationsLogTab />;
       case 'compliance':    return <ComplianceTab />;
       case 'logs':          return <ActivityLogsTab />;
       case 'notifications': return <NotificationCenterTab />;

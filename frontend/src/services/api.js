@@ -7,10 +7,7 @@ const getBaseURL = () => {
   }
   const hostname = typeof window !== 'undefined' ? window.location.hostname : '127.0.0.1';
   const protocol = typeof window !== 'undefined' ? window.location.protocol : 'http:';
-  if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return `${protocol}//${hostname}:5000/api`;
-  }
-  return 'https://finbridge-backend-v2.onrender.com/api';
+  return `${protocol}//${hostname}:5000/api`;
 };
 
 // Public endpoints that should NOT get an Authorization header attached

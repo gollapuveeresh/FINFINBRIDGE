@@ -112,7 +112,7 @@ const COUNTRY_CODES = [
 export default function LoginRegistration({ portalType = 'client' }) {
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(searchParams.get('register') === 'true' ? 'register' : 'login');
-  
+
   useEffect(() => {
     if (searchParams.get('register') === 'true') {
       setActiveTab('register');
@@ -128,18 +128,18 @@ export default function LoginRegistration({ portalType = 'client' }) {
   // Form states
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  
+
   // Custom phone and country states
   const [phoneNumber, setPhoneNumber] = useState('');
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const dropdownRef = useRef(null);
-  
-  const defaultCountry = COUNTRY_CODES.find(c => c.code === '+91') || COUNTRY_CODES[0];
+
+  const defaultCountry = COUNTRY_CODES.find(c => c.code === '+880') || COUNTRY_CODES[0];
   const [selectedCountry, setSelectedCountry] = useState(defaultCountry);
 
   const [regCompany, setRegCompany] = useState('');
@@ -161,7 +161,7 @@ export default function LoginRegistration({ portalType = 'client' }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const filteredCountries = COUNTRY_CODES.filter(c => 
+  const filteredCountries = COUNTRY_CODES.filter(c =>
     c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.code.includes(searchTerm)
   );
@@ -309,21 +309,19 @@ export default function LoginRegistration({ portalType = 'client' }) {
             <div className="flex border-b border-border">
               <button
                 onClick={() => { setActiveTab('login'); setError(null); setSuccess(null); }}
-                className={`flex-1 py-4 text-label-lg font-semibold transition-all border-b-2 ${
-                  activeTab === 'login'
+                className={`flex-1 py-4 text-label-lg font-semibold transition-all border-b-2 ${activeTab === 'login'
                     ? 'border-secondary text-accent'
                     : 'border-transparent text-text-muted hover:text-accent'
-                }`}
+                  }`}
               >
                 Login
               </button>
               <button
                 onClick={() => { setActiveTab('register'); setError(null); setSuccess(null); }}
-                className={`flex-1 py-4 text-label-lg font-semibold transition-all border-b-2 ${
-                  activeTab === 'register'
+                className={`flex-1 py-4 text-label-lg font-semibold transition-all border-b-2 ${activeTab === 'register'
                     ? 'border-secondary text-accent'
                     : 'border-transparent text-text-muted hover:text-accent'
-                }`}
+                  }`}
               >
                 Register
               </button>
@@ -375,13 +373,13 @@ export default function LoginRegistration({ portalType = 'client' }) {
                     <label className="text-label-lg text-text">Email Address</label>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-faint-variant">mail</span>
-                      <input 
-                        className="form-input pl-10" 
-                        placeholder="name@company.com" 
-                        type="email" 
+                      <input
+                        className="form-input pl-10"
+                        placeholder="name@company.com"
+                        type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        required 
+                        required
                       />
                     </div>
                   </div>
@@ -392,18 +390,18 @@ export default function LoginRegistration({ portalType = 'client' }) {
                     </div>
                     <div className="relative">
                       <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-faint-variant">lock</span>
-                      <input 
-                        className="form-input pl-10" 
-                        placeholder="********" 
-                        type="password" 
+                      <input
+                        className="form-input pl-10"
+                        placeholder="********"
+                        type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        required 
+                        required
                       />
                     </div>
                   </div>
 
-                  
+
                   <button type="submit" className="w-full bg-accent/20 hover:bg-secondary-fixed-dim text-accent text-label-lg font-semibold py-4 rounded-lg shadow-sm transition-all transform active:scale-95 mt-4">
                     Sign In to Portal
                   </button>
@@ -420,24 +418,24 @@ export default function LoginRegistration({ portalType = 'client' }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <label className="text-label-lg text-text">Full Name</label>
-                      <input 
-                        className="form-input" 
-                        placeholder="John Doe" 
-                        type="text" 
+                      <input
+                        className="form-input"
+                        placeholder="John Doe"
+                        type="text"
                         value={regName}
                         onChange={(e) => setRegName(e.target.value)}
-                        required 
+                        required
                       />
                     </div>
                     <div className="space-y-2">
                       <label className="text-label-lg text-text">Work Email</label>
-                      <input 
-                        className="form-input" 
-                        placeholder="john@firm.com" 
-                        type="email" 
+                      <input
+                        className="form-input"
+                        placeholder="john@firm.com"
+                        type="email"
                         value={regEmail}
                         onChange={(e) => setRegEmail(e.target.value)}
-                        required 
+                        required
                       />
                     </div>
                   </div>
@@ -493,7 +491,7 @@ export default function LoginRegistration({ portalType = 'client' }) {
                         {/* Standard 10-digit number field */}
                         <input
                           type="tel"
-                          placeholder="9876543210"
+                          placeholder="1712345678"
                           value={phoneNumber}
                           maxLength={10}
                           onChange={e => {
@@ -507,13 +505,13 @@ export default function LoginRegistration({ portalType = 'client' }) {
                     </div>
                     <div className="space-y-2">
                       <label className="text-label-lg text-text">Password (Min 6 chars)</label>
-                      <input 
-                        className="form-input" 
-                        placeholder="********" 
-                        type="password" 
+                      <input
+                        className="form-input"
+                        placeholder="********"
+                        type="password"
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        required 
+                        required
                       />
                     </div>
                   </div>

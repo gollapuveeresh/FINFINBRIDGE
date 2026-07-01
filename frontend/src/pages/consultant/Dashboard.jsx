@@ -41,25 +41,25 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
     (l.email || '').toLowerCase().includes(search.toLowerCase())
   );
 
-  const displayCases = deptCases && deptCases.length > 0 
+  const displayCases = deptCases && deptCases.length > 0
     ? deptCases.map(c => ({
-        name: c.clientId?.name || c.client?.name || 'Client',
-        service: c.loanType || c.stage?.replace(/_/g, ' ') || 'Service Case',
-        priority: c.lead?.priority || 'Medium',
-        status: c.stage?.replace(/_/g, ' ') || 'Active'
-      }))
-    : [];
+      name: c.clientId?.name || c.client?.name || 'Client',
+      service: c.loanType || c.stage?.replace(/_/g, ' ') || 'Service Case',
+      priority: c.lead?.priority || 'Medium',
+      status: c.stage?.replace(/_/g, ' ') || 'Active'
+    }))
+    : deptData.clients;
 
-  const totalClientsCount = String(clients?.length || 0);
-  const activeClientsCount = String(clients?.filter(c => c.active !== false).length || 0);
+  const totalClientsCount = clients && clients.length > 0 ? String(clients.length) : data.totalClients;
+  const activeClientsCount = clients && clients.length > 0 ? String(clients.filter(c => c.active !== false).length) : data.activeClients;
 
   return (
     <div className="space-y-gutter">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-        <KPI icon="groups"       label="Total Clients"   value={totalClientsCount}  sub="Portfolio" />
-        <KPI icon="check_circle" label="Active Clients"  value={activeClientsCount} sub="Under advisory" color="text-green-400" bg="bg-green-500/10" />
-        <KPI icon="contacts"     label="Leads Assigned"  value={String(assignedLeads.length)} sub="In pipeline" color="text-purple-400" bg="bg-purple-500/10" />
-        <KPI icon="event"        label="Consultations"   value={String(consultations.length)} sub="Scheduled" color="text-secondary" bg="bg-secondary/10" />
+        <KPI icon="groups" label="Total Clients" value={totalClientsCount} sub="Portfolio" />
+        <KPI icon="check_circle" label="Active Clients" value={activeClientsCount} sub="Under advisory" color="text-green-400" bg="bg-green-500/10" />
+        <KPI icon="contacts" label="Leads Assigned" value={String(assignedLeads.length)} sub="In pipeline" color="text-purple-400" bg="bg-purple-500/10" />
+        <KPI icon="event" label="Consultations" value={String(consultations.length)} sub="Scheduled" color="text-secondary" bg="bg-secondary/10" />
       </div>
 
       {/* Lead Pipeline */}
@@ -127,22 +127,18 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
           <h3 className="font-bold text-accent">{deptData.name} Consultation Request</h3>
         </div>
         <div className="divide-y divide-border">
-          {displayCases.length === 0 ? (
-            <div className="py-10 text-center text-text-muted text-sm">No active cases assigned yet.</div>
-          ) : (
-            displayCases.map((c, i) => (
-              <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
-                <div>
-                  <p className="font-semibold text-text text-sm">{c.name}</p>
-                  <p className="text-xs text-text-muted capitalize">{c.service}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${PRIORITY_COLOR[c.priority] || 'bg-surface text-text-muted'}`}>{c.priority}</span>
-                  <span className="text-xs text-text-muted capitalize">{c.status}</span>
-                </div>
+          {displayCases.map((c, i) => (
+            <div key={i} className="px-6 py-4 flex items-center justify-between hover:bg-surface/50">
+              <div>
+                <p className="font-semibold text-text text-sm">{c.name}</p>
+                <p className="text-xs text-text-muted capitalize">{c.service}</p>
               </div>
-            ))
-          )}
+              <div className="flex items-center gap-2">
+                <span className={`text-xs px-2 py-0.5 rounded-full font-semibold capitalize ${PRIORITY_COLOR[c.priority] || 'bg-surface text-text-muted'}`}>{c.priority}</span>
+                <span className="text-xs text-text-muted capitalize">{c.status}</span>
+              </div>
+            </div>
+          ))}
         </div>
         <div className="px-6 py-3 border-t border-border">
           <Link to="/consultant/clients" className="text-xs text-secondary hover:underline font-semibold">View full client portfolio →</Link>
@@ -154,29 +150,43 @@ function ClientManagementTab({ deptData, assignedLeads, consultations, leadsLoad
 
 // ── TAB: Tasks ────────────────────────────────────────────────────────────────
 const INITIAL_TASKS = [
-  { id: 1, title: 'Submit Q2 loan recommendation for James Harrington', priority: 'High',   status: 'pending',  due: '2025-07-05', category: 'Proposal' },
-  { id: 2, title: 'Follow up with Sarah Mitchell on tax strategy approval', priority: 'High',  status: 'pending',  due: '2025-07-03', category: 'Follow-up' },
-  { id: 3, title: 'Upload portfolio rebalancing report — Noor Patel',       priority: 'Medium', status: 'pending',  due: '2025-07-08', category: 'Document' },
-  { id: 4, title: 'Appointment: Emma Williams — Loan offer comparison',     priority: 'High',   status: 'upcoming', due: '2025-07-02', category: 'Appointment' },
-  { id: 5, title: 'Review draft proposal for Alexander Vance',               priority: 'Medium', status: 'pending',  due: '2025-07-10', category: 'Proposal' },
-  { id: 6, title: 'Compliance check — Lucas Reed insurance renewal',         priority: 'Low',    status: 'done',     due: '2025-06-30', category: 'Compliance' },
-  { id: 7, title: 'Send onboarding docs to Priya Sharma',                    priority: 'Medium', status: 'overdue',  due: '2025-06-28', category: 'Document' },
+  { id: 1, title: 'Submit Q2 loan recommendation for James Harrington', priority: 'High', status: 'pending', due: '2025-07-05', category: 'Proposal' },
+  { id: 2, title: 'Follow up with Sarah Mitchell on tax strategy approval', priority: 'High', status: 'pending', due: '2025-07-03', category: 'Follow-up' },
+  { id: 3, title: 'Upload portfolio rebalancing report — Noor Patel', priority: 'Medium', status: 'pending', due: '2025-07-08', category: 'Document' },
+  { id: 4, title: 'Appointment: Emma Williams — Loan offer comparison', priority: 'High', status: 'upcoming', due: '2025-07-02', category: 'Appointment' },
+  { id: 5, title: 'Review draft proposal for Alexander Vance', priority: 'Medium', status: 'pending', due: '2025-07-10', category: 'Proposal' },
+  { id: 6, title: 'Compliance check — Lucas Reed insurance renewal', priority: 'Low', status: 'done', due: '2025-06-30', category: 'Compliance' },
+  { id: 7, title: 'Send onboarding docs to Priya Sharma', priority: 'Medium', status: 'overdue', due: '2025-06-28', category: 'Document' },
 ];
 const CATEGORIES = ['All', 'Proposal', 'Follow-up', 'Document', 'Appointment', 'Compliance'];
 
 function TasksTab() {
-  const [tasks, setTasks]       = useState([]);
-  const [filter, setFilter]     = useState('All');
+  const [tasks, setTasks] = useState(INITIAL_TASKS);
+  const [filter, setFilter] = useState('All');
   const [catFilter, setCatFilter] = useState('All');
-  const [showAdd, setShowAdd]   = useState(false);
-  const [form, setForm]         = useState({ title: '', priority: 'Medium', due: '', category: 'Proposal' });
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ title: '', priority: 'Medium', due: '', category: 'Proposal' });
 
   const toggle = (id) => setTasks(prev => prev.map(t =>
     t.id === id ? { ...t, status: t.status === 'done' ? 'pending' : 'done' } : t
   ));
 
   const addTask = () => {
-    if (!form.title.trim()) return;
+    if (!form.title.trim()) {
+      toast.error('Task description is required');
+      return;
+    }
+    if (!form.due) {
+      toast.error('Due date is required');
+      return;
+    }
+    const selectedDate = new Date(form.due);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (selectedDate < today) {
+      toast.error('Due date cannot be in the past');
+      return;
+    }
     setTasks(prev => [...prev, { ...form, id: Date.now(), status: 'pending' }]);
     setForm({ title: '', priority: 'Medium', due: '', category: 'Proposal' });
     setShowAdd(false);
@@ -187,7 +197,7 @@ function TasksTab() {
 
   const filtered = tasks.filter(t => {
     const matchStatus = filter === 'All' || t.status === filter;
-    const matchCat    = catFilter === 'All' || t.category === catFilter;
+    const matchCat = catFilter === 'All' || t.category === catFilter;
     return matchStatus && matchCat;
   });
 
@@ -206,16 +216,16 @@ function TasksTab() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-gutter">
-        <KPI icon="pending_actions" label="Pending"   value={String(counts.pending)}  sub="Actions needed"  color="text-amber-400" bg="bg-amber-500/10" />
-        <KPI icon="warning"         label="Overdue"   value={String(counts.overdue)}  sub="Past due date"   color="text-red-400"   bg="bg-red-500/10" />
-        <KPI icon="event_upcoming"  label="Upcoming"  value={String(counts.upcoming)} sub="Appointments"    color="text-blue-400"  bg="bg-blue-500/10" />
-        <KPI icon="task_alt"        label="Completed" value={String(counts.done)}     sub="Done"            color="text-green-400" bg="bg-green-500/10" />
+        <KPI icon="pending_actions" label="Pending" value={String(counts.pending)} sub="Actions needed" color="text-amber-400" bg="bg-amber-500/10" />
+        <KPI icon="warning" label="Overdue" value={String(counts.overdue)} sub="Past due date" color="text-red-400" bg="bg-red-500/10" />
+        <KPI icon="event_upcoming" label="Upcoming" value={String(counts.upcoming)} sub="Appointments" color="text-blue-400" bg="bg-blue-500/10" />
+        <KPI icon="task_alt" label="Completed" value={String(counts.done)} sub="Done" color="text-green-400" bg="bg-green-500/10" />
       </div>
 
       {/* Filters */}
       <div className="card p-4 flex flex-wrap gap-3 items-center">
         <div className="flex gap-2 flex-wrap">
-          {['All','pending','upcoming','overdue','done'].map(s => (
+          {['All', 'pending', 'upcoming', 'overdue', 'done'].map(s => (
             <button key={s} onClick={() => setFilter(s)}
               className={`px-3 py-1.5 rounded-xl text-xs font-semibold capitalize transition-colors ${filter === s ? 'bg-accent text-on-primary' : 'bg-surface border border-border text-text-muted hover:text-text'}`}>
               {s === 'All' ? 'All Status' : s}
@@ -274,7 +284,7 @@ function TasksTab() {
                   <label className="text-xs text-text-muted block mb-1">Priority</label>
                   <select value={form.priority} onChange={e => setForm(p => ({ ...p, priority: e.target.value }))}
                     className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm">
-                    {['High','Medium','Low'].map(v => <option key={v} value={v}>{v}</option>)}
+                    {['High', 'Medium', 'Low'].map(v => <option key={v} value={v}>{v}</option>)}
                   </select>
                 </div>
                 <div>
@@ -286,8 +296,9 @@ function TasksTab() {
                 </div>
               </div>
               <div>
-                <label className="text-xs text-text-muted block mb-1">Due Date</label>
+                <label className="text-xs text-text-muted block mb-1">Due Date *</label>
                 <input type="date" value={form.due} onChange={e => setForm(p => ({ ...p, due: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
                   className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" />
               </div>
             </div>
@@ -304,11 +315,11 @@ function TasksTab() {
 
 // ── TAB: Documents ────────────────────────────────────────────────────────────
 const INITIAL_DOCS = [
-  { id: 1, name: 'Q2_Portfolio_Review_Vance.pdf',    client: 'Alexander Vance',   type: 'Report',    size: '2.4 MB', uploaded: '2025-06-28', status: 'Signed' },
-  { id: 2, name: 'Harrington_Loan_Proposal.pdf',     client: 'James Harrington',  type: 'Proposal',  size: '1.1 MB', uploaded: '2025-06-25', status: 'Pending Sign' },
-  { id: 3, name: 'Mitchell_TaxStrategy_2025.xlsx',   client: 'Sarah Mitchell',    type: 'Tax Doc',   size: '540 KB', uploaded: '2025-06-20', status: 'Uploaded' },
-  { id: 4, name: 'Patel_InsuranceQuote.pdf',         client: 'Noor Patel',        type: 'Quote',     size: '890 KB', uploaded: '2025-06-18', status: 'Signed' },
-  { id: 5, name: 'Williams_CreditReport.pdf',        client: 'Emma Williams',     type: 'Report',    size: '3.2 MB', uploaded: '2025-06-15', status: 'Uploaded' },
+  { id: 1, name: 'Q2_Portfolio_Review_Vance.pdf', client: 'Alexander Vance', type: 'Report', size: '2.4 MB', uploaded: '2025-06-28', status: 'Signed' },
+  { id: 2, name: 'Harrington_Loan_Proposal.pdf', client: 'James Harrington', type: 'Proposal', size: '1.1 MB', uploaded: '2025-06-25', status: 'Pending Sign' },
+  { id: 3, name: 'Mitchell_TaxStrategy_2025.xlsx', client: 'Sarah Mitchell', type: 'Tax Doc', size: '540 KB', uploaded: '2025-06-20', status: 'Uploaded' },
+  { id: 4, name: 'Patel_InsuranceQuote.pdf', client: 'Noor Patel', type: 'Quote', size: '890 KB', uploaded: '2025-06-18', status: 'Signed' },
+  { id: 5, name: 'Williams_CreditReport.pdf', client: 'Emma Williams', type: 'Report', size: '3.2 MB', uploaded: '2025-06-15', status: 'Uploaded' },
 ];
 const DOC_TYPE_ICON = { Report: 'description', Proposal: 'article', 'Tax Doc': 'receipt_long', Quote: 'request_quote', KYC: 'badge', Other: 'folder' };
 const DOC_STATUS_COLOR = {
@@ -317,10 +328,10 @@ const DOC_STATUS_COLOR = {
 };
 
 function DocumentsTab() {
-  const [docs, setDocs]           = useState(INITIAL_DOCS);
+  const [docs, setDocs] = useState(INITIAL_DOCS);
   const [docSearch, setDocSearch] = useState('');
   const [uploading, setUploading] = useState(false);
-  const [form, setForm]           = useState({ name: '', client: '', type: 'Report' });
+  const [form, setForm] = useState({ name: '', client: '', type: 'Report' });
   const [showUpload, setShowUpload] = useState(false);
   const fileRef = useRef(null);
 
@@ -330,7 +341,8 @@ function DocumentsTab() {
   );
 
   const handleUpload = () => {
-    if (!form.name.trim() || !form.client.trim()) { toast.error('Name and client required'); return; }
+    if (!form.name.trim()) { toast.error('Document name is required'); return; }
+    if (!form.client.trim()) { toast.error('Client name is required'); return; }
     setUploading(true);
     setTimeout(() => {
       setDocs(prev => [{
@@ -369,8 +381,8 @@ function DocumentsTab() {
 
       <div className="grid grid-cols-3 gap-gutter">
         <KPI icon="folder_open" label="Total Documents" value={String(docCounts.total)} sub="All files" />
-        <KPI icon="verified"    label="E-Signed"        value={String(docCounts.signed)} sub="Completed" color="text-green-400" bg="bg-green-500/10" />
-        <KPI icon="draw"        label="Pending Sign"    value={String(docCounts.pending)} sub="Awaiting client" color="text-amber-400" bg="bg-amber-500/10" />
+        <KPI icon="verified" label="E-Signed" value={String(docCounts.signed)} sub="Completed" color="text-green-400" bg="bg-green-500/10" />
+        <KPI icon="draw" label="Pending Sign" value={String(docCounts.pending)} sub="Awaiting client" color="text-amber-400" bg="bg-amber-500/10" />
       </div>
 
       {/* Search */}
@@ -389,7 +401,7 @@ function DocumentsTab() {
           <table className="w-full text-sm">
             <thead className="bg-surface border-b border-border">
               <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
-                {['Document','Client','Type','Size','Uploaded','Status','Actions'].map(h => (
+                {['Document', 'Client', 'Type', 'Size', 'Uploaded', 'Status', 'Actions'].map(h => (
                   <th key={h} className="px-5 py-3">{h}</th>
                 ))}
               </tr>
@@ -416,7 +428,7 @@ function DocumentsTab() {
                   </td>
                   <td className="px-5 py-4">
                     <div className="flex gap-2">
-                      <button className="text-xs text-accent hover:underline font-semibold">View</button>
+                      <button onClick={() => window.open('#', '_blank')} className="text-xs text-accent hover:underline font-semibold">View</button>
                       {doc.status === 'Uploaded' && (
                         <button onClick={() => requestSign(doc.id)}
                           className="text-xs text-amber-400 hover:underline font-semibold">E-Sign</button>
@@ -474,7 +486,7 @@ function DocumentsTab() {
             </div>
             <div className="flex gap-3 mt-6">
               <button onClick={() => setShowUpload(false)} className="flex-1 btn-ghost py-3">Cancel</button>
-              <button onClick={handleUpload} disabled={uploading} className="flex-1 btn-primary py-3 disabled:opacity-60">
+              <button onClick={handleUpload} disabled={uploading || !form.name.trim() || !form.client.trim()} className="flex-1 btn-primary py-3 disabled:opacity-60">
                 {uploading ? 'Uploading...' : 'Upload'}
               </button>
             </div>
@@ -488,24 +500,24 @@ function DocumentsTab() {
 // ── TAB: Communication ────────────────────────────────────────────────────────
 const CHAT_CONTACTS = [
   { id: 'dept', name: 'Department Admin', role: 'Dept Admin', online: true },
-  { id: 'ops',  name: 'Operations Team', role: 'Internal',   online: true },
-  { id: 'c1',   name: 'James Harrington', role: 'Client',    online: false },
-  { id: 'c2',   name: 'Sarah Mitchell',   role: 'Client',    online: true },
+  { id: 'ops', name: 'Operations Team', role: 'Internal', online: true },
+  { id: 'c1', name: 'James Harrington', role: 'Client', online: false },
+  { id: 'c2', name: 'Sarah Mitchell', role: 'Client', online: true },
 ];
 const INITIAL_MSGS = {
   dept: [
     { from: 'them', text: 'Please submit the Harrington proposal by EOD Friday.', time: '10:32 AM' },
-    { from: 'me',   text: 'Understood, will do. Working on the details now.',       time: '10:45 AM' },
+    { from: 'me', text: 'Understood, will do. Working on the details now.', time: '10:45 AM' },
   ],
-  ops:  [{ from: 'them', text: 'System maintenance scheduled for Saturday 2AM–4AM.', time: 'Yesterday' }],
-  c1:   [{ from: 'them', text: 'When can we discuss the refinancing options?', time: '9:00 AM' }],
-  c2:   [{ from: 'them', text: 'Please send me the updated tax strategy document.', time: '2 days ago' }],
+  ops: [{ from: 'them', text: 'System maintenance scheduled for Saturday 2AM–4AM.', time: 'Yesterday' }],
+  c1: [{ from: 'them', text: 'When can we discuss the refinancing options?', time: '9:00 AM' }],
+  c2: [{ from: 'them', text: 'Please send me the updated tax strategy document.', time: '2 days ago' }],
 };
 const EMAIL_TEMPLATES = [
   { label: 'Consultation Follow-up', subject: 'Follow-up: Your Consultation Summary', body: 'Dear [Client Name],\n\nThank you for your time today. Please find a summary of our discussion attached.\n\nBest regards,\n[Your Name]' },
-  { label: 'Proposal Ready',         subject: 'Your Financial Proposal is Ready', body: 'Dear [Client Name],\n\nYour customized financial proposal is now available in your portal under "Proposals".\n\nPlease review and let us know if you have any questions.\n\nBest regards,\n[Your Name]' },
-  { label: 'Document Request',       subject: 'Documents Required for Your File', body: 'Dear [Client Name],\n\nWe require the following documents to proceed:\n- [Document 1]\n- [Document 2]\n\nPlease upload them to your portal.\n\nBest regards,\n[Your Name]' },
-  { label: 'Appointment Reminder',   subject: 'Reminder: Upcoming Appointment', body: 'Dear [Client Name],\n\nThis is a reminder for your upcoming consultation scheduled on [Date] at [Time].\n\nBest regards,\n[Your Name]' },
+  { label: 'Proposal Ready', subject: 'Your Financial Proposal is Ready', body: 'Dear [Client Name],\n\nYour customized financial proposal is now available in your portal under "Proposals".\n\nPlease review and let us know if you have any questions.\n\nBest regards,\n[Your Name]' },
+  { label: 'Document Request', subject: 'Documents Required for Your File', body: 'Dear [Client Name],\n\nWe require the following documents to proceed:\n- [Document 1]\n- [Document 2]\n\nPlease upload them to your portal.\n\nBest regards,\n[Your Name]' },
+  { label: 'Appointment Reminder', subject: 'Reminder: Upcoming Appointment', body: 'Dear [Client Name],\n\nThis is a reminder for your upcoming consultation scheduled on [Date] at [Time].\n\nBest regards,\n[Your Name]' },
 ];
 
 function CommunicationTab({ notifications }) {
@@ -514,10 +526,10 @@ function CommunicationTab({ notifications }) {
   const [messages, setMessages] = useState({});
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
-  const [input, setInput]                 = useState('');
-  const [commTab, setCommTab]             = useState('chat');  // chat | email | sms
-  const [emailForm, setEmailForm]         = useState({ to: '', subject: '', body: '' });
-  const [smsForm, setSmsForm]             = useState({ to: '', message: '' });
+  const [input, setInput] = useState('');
+  const [commTab, setCommTab] = useState('chat');  // chat | email | sms
+  const [emailForm, setEmailForm] = useState({ to: '', subject: '', body: '' });
+  const [smsForm, setSmsForm] = useState({ to: '', message: '' });
   const [selectedTemplate, setSelectedTemplate] = useState('');
   const chatBottomRef = useRef(null);
 
@@ -529,15 +541,15 @@ function CommunicationTab({ notifications }) {
         if (list.length > 0) {
           setActiveContact(list[0].id);
         } else {
-          setContacts([]);
-          setActiveContact(null);
-          setMessages({});
+          setContacts(CHAT_CONTACTS);
+          setActiveContact('dept');
+          setMessages(INITIAL_MSGS);
         }
       })
       .catch(() => {
-        setContacts([]);
-        setActiveContact(null);
-        setMessages({});
+        setContacts(CHAT_CONTACTS);
+        setActiveContact('dept');
+        setMessages(INITIAL_MSGS);
       })
       .finally(() => setLoadingContacts(false));
   }, []);
@@ -555,7 +567,7 @@ function CommunicationTab({ notifications }) {
           [activeContact]: res.data || []
         }));
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoadingMessages(false));
   }, [activeContact]);
 
@@ -619,15 +631,14 @@ function CommunicationTab({ notifications }) {
       {/* Sub-tabs */}
       <div className="flex gap-2 border-b border-border pb-0">
         {[
-          { key: 'chat',  label: 'Internal Chat',     icon: 'chat' },
+          { key: 'chat', label: 'Internal Chat', icon: 'chat' },
           { key: 'email', label: 'Email Integration', icon: 'email' },
-          { key: 'sms',   label: 'SMS Notifications', icon: 'sms' },
+          { key: 'sms', label: 'SMS Notifications', icon: 'sms' },
           { key: 'inbox', label: `Notifications${unread > 0 ? ` (${unread})` : ''}`, icon: 'notifications' },
         ].map(t => (
           <button key={t.key} onClick={() => setCommTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-sm font-semibold border-b-2 transition-all ${
-              commTab === t.key ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-text-muted hover:text-text'
-            }`}>
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-sm font-semibold border-b-2 transition-all ${commTab === t.key ? 'border-accent text-accent bg-accent/5' : 'border-transparent text-text-muted hover:text-text'
+              }`}>
             <span className="material-symbols-outlined text-base">{t.icon}</span>
             {t.label}
           </button>
@@ -817,60 +828,60 @@ function CommunicationTab({ notifications }) {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 const TABS = [
-  { key: 'clients',       label: 'Client Management', icon: 'groups' },
-  { key: 'tasks',         label: 'Tasks',             icon: 'task_alt' },
-  { key: 'documents',     label: 'Documents',         icon: 'folder_open' },
-  { key: 'communication', label: 'Communication',     icon: 'chat' },
+  { key: 'clients', label: 'Client Management', icon: 'groups' },
+  { key: 'tasks', label: 'Tasks', icon: 'task_alt' },
+  { key: 'documents', label: 'Documents', icon: 'folder_open' },
+  { key: 'communication', label: 'Communication', icon: 'chat' },
 ];
 
 export default function ConsultantDashboard({ department: deptProp = 'loans' }) {
   const { user } = useAuth();
-  const dept    = getUserDepartment(user) || deptProp;
+  const dept = getUserDepartment(user) || deptProp;
   const deptKey = dept === 'investments' ? 'investments' : dept;
   const deptData = getDepartmentDashboard(deptKey);
 
-  const [activeTab,      setActiveTab]      = useState('clients');
-  const [assignedLeads,  setAssignedLeads]  = useState([]);
-  const [clients,        setClients]        = useState([]);
-  const [deptCases,      setDeptCases]      = useState([]);
-  const [consultations,  setConsultations]  = useState([]);
-  const [notifications,  setNotifications]  = useState([]);
-  const [leadsLoading,   setLeadsLoading]   = useState(true);
+  const [activeTab, setActiveTab] = useState('clients');
+  const [assignedLeads, setAssignedLeads] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [deptCases, setDeptCases] = useState([]);
+  const [consultations, setConsultations] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [leadsLoading, setLeadsLoading] = useState(true);
 
   useEffect(() => {
     // Leads assigned to this consultant
     api.get('/leads', { params: { status: 'assigned' } })
       .then(r => setAssignedLeads(r.data.leads || []))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLeadsLoading(false));
 
     // Clients assigned to this consultant's department
     api.get('/auth/consultant/clients')
       .then(r => setClients(r.data.clients || []))
-      .catch(() => {});
+      .catch(() => { });
 
     // Fetch active cases for this department
     const casesUrl = deptKey === 'loans' ? '/loan-cases' : `/dept-cases/${deptKey}`;
     api.get(casesUrl)
       .then(r => setDeptCases(r.data.cases || []))
-      .catch(() => {});
+      .catch(() => { });
 
     // Consultations
-    api.get('/consultations').then(r => setConsultations(r.data.data || [])).catch(() => {});
+    api.get('/consultations').then(r => setConsultations(r.data.data || [])).catch(() => { });
 
     // Notifications
-    api.get('/notifications').then(r => setNotifications(r.data.data || [])).catch(() => {});
+    api.get('/notifications').then(r => setNotifications(r.data.data || [])).catch(() => { });
   }, [deptKey]);
 
   const unreadNotifs = notifications.filter(n => !n.isRead).length;
 
   const renderTab = () => {
     switch (activeTab) {
-      case 'clients':       return <ClientManagementTab deptData={deptData} assignedLeads={assignedLeads} consultations={consultations} leadsLoading={leadsLoading} clients={clients} deptCases={deptCases} />;
-      case 'tasks':         return <TasksTab />;
-      case 'documents':     return <DocumentsTab />;
+      case 'clients': return <ClientManagementTab deptData={deptData} assignedLeads={assignedLeads} consultations={consultations} leadsLoading={leadsLoading} clients={clients} deptCases={deptCases} />;
+      case 'tasks': return <TasksTab />;
+      case 'documents': return <DocumentsTab />;
       case 'communication': return <CommunicationTab notifications={notifications} />;
-      default:              return null;
+      default: return null;
     }
   };
 
@@ -908,11 +919,10 @@ export default function ConsultantDashboard({ department: deptProp = 'loans' }) 
       <div className="flex flex-wrap gap-1 border-b border-border">
         {TABS.map(t => (
           <button key={t.key} onClick={() => setActiveTab(t.key)}
-            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-sm font-semibold border-b-2 transition-all relative ${
-              activeTab === t.key
+            className={`flex items-center gap-1.5 px-4 py-2.5 rounded-t-xl text-sm font-semibold border-b-2 transition-all relative ${activeTab === t.key
                 ? 'border-accent text-accent bg-accent/5'
                 : 'border-transparent text-text-muted hover:text-text hover:bg-surface/50'
-            }`}>
+              }`}>
             <span className="material-symbols-outlined text-base">{t.icon}</span>
             {t.label}
             {t.key === 'communication' && unreadNotifs > 0 && (

@@ -20,11 +20,10 @@ export default function OnboardingAssessment() {
           {steps.map((step, i) => (
             <div key={i} className="flex items-center flex-1">
               <div className="flex flex-col items-center">
-                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
-                  i < currentStep ? 'bg-success border-success text-white' :
-                  i === currentStep ? 'bg-secondary border-secondary text-accent' :
-                  'bg-surface border-border text-text-muted'
-                }`}>
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold border-2 transition-all ${i < currentStep ? 'bg-success border-success text-white' :
+                    i === currentStep ? 'bg-secondary border-secondary text-accent' :
+                      'bg-surface border-border text-text-muted'
+                  }`}>
                   {i < currentStep ? <span className="material-symbols-outlined text-base">check</span> : <span className="text-sm">{i + 1}</span>}
                 </div>
                 <p className={`text-xs font-bold mt-2 text-center max-w-[72px] leading-tight hidden md:block ${i === currentStep ? 'text-accent' : 'text-text-muted'}`}>{step}</p>
@@ -54,7 +53,7 @@ export default function OnboardingAssessment() {
                 </div>
                 <div className="space-y-2">
                   <label className="text-label-lg text-text">Date of Birth</label>
-                  <input className="form-input" type="date" />
+                  <input className="form-input" type="date" min={new Date().toISOString().split('T')[0]} />
                 </div>
                 <div className="space-y-2">
                   <label className="text-label-lg text-text">Nationality</label>

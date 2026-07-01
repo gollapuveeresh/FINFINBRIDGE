@@ -61,7 +61,7 @@ const About = () => {
       <section className="pt-32 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(at_top_right,#D4AF37_0%,transparent_60%)] opacity-10"></div>
         <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -88,13 +88,13 @@ const About = () => {
           >
             <div className="relative p-8 rounded-3xl bg-white/[0.03] border border-white/10 shadow-2xl overflow-hidden group hover:border-[#D4AF37]/30 transition-all duration-500">
               <div className="absolute -top-12 -right-12 w-40 h-40 bg-[#D4AF37]/10 rounded-full blur-2xl group-hover:bg-[#D4AF37]/20 transition-all" />
-              
+
               <div className="space-y-6">
                 <div className="flex justify-between items-center pb-4 border-b border-white/10">
                   <span className="text-[10px] font-mono tracking-widest text-[#D4AF37] uppercase font-bold">Global Presence</span>
                   <span className="text-xs px-2.5 py-1 rounded-full bg-success/10 text-success font-bold font-mono">4 Continents</span>
                 </div>
-                
+
                 <div className="space-y-4">
                   <div className="p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
                     <p className="text-[10px] text-gray-400 font-mono">TOTAL TRANSACTIONS ADVISED</p>
@@ -117,7 +117,7 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {stats.map((stat, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -147,7 +147,7 @@ const About = () => {
                 <p>Today, we serve startups, SMEs, and enterprises, supporting their financial growth across business loan consulting, tax management, investment advisory, insurance, and wealth management. Our success is measured by the lasting impact we create for our clients.</p>
               </div>
             </motion.div>
-            
+
             <div className="relative">
               <div className="aspect-video bg-white/5 border border-white/10 rounded-3xl overflow-hidden">
                 <div className="w-full h-full bg-gradient-to-br from-[#D4AF37]/10 to-transparent flex items-center justify-center">
@@ -168,10 +168,10 @@ const About = () => {
           <div className="text-center mb-16">
             <h2 className="text-5xl font-semibold tracking-tight">Our Guiding Values</h2>
           </div>
-          
+
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {values.map((value, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -197,7 +197,7 @@ const About = () => {
 
           <div className="grid md:grid-cols-3 gap-8">
             {leadership.map((leader, index) => (
-              <motion.div 
+              <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 40 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -205,10 +205,11 @@ const About = () => {
                 className="bg-white/5 border border-white/10 rounded-3xl overflow-hidden group"
               >
                 <div className="h-80 bg-gradient-to-br from-[#1A2A4C] to-[#0A192F] flex items-center justify-center border-b border-white/10 overflow-hidden relative">
-                  <img 
-                    src={leader.image} 
-                    alt={leader.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  <img
+                    src={leader.image}
+                    alt={leader.name}
+                    draggable="false"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 select-none pointer-events-none"
                   />
                 </div>
                 <div className="p-10">
@@ -279,7 +280,7 @@ const About = () => {
         <div className="max-w-3xl mx-auto text-center px-6">
           <h2 className="text-5xl font-semibold tracking-tight mb-6">Ready to work with the best?</h2>
           <p className="text-xl text-gray-400 mb-12">Join the growing list of organizations that trust FinBridge with their most important financial decisions.</p>
-          <Link 
+          <Link
             to="/contact"
             className="inline-flex items-center gap-4 bg-[#D4AF37] hover:bg-white text-[#0A192F] px-12 py-5 rounded-2xl font-semibold text-lg transition-all group"
           >

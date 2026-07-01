@@ -6,7 +6,7 @@ export default function RecommendationsModal({ department, onClose }) {
   const [step, setStep] = useState('select'); // 'select' or 'results'
   const [loadingContext, setLoadingContext] = useState(true);
   const [loadingRecs, setLoadingRecs] = useState(false);
-  
+
   const [clients, setClients] = useState([]);
   const [leads, setLeads] = useState([]);
   const [selectedClient, setSelectedClient] = useState('');
@@ -79,7 +79,7 @@ export default function RecommendationsModal({ department, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center px-4 transition-all duration-300">
       <div className="bg-surface border border-border/40 rounded-3xl p-8 w-full max-w-2xl max-h-[85vh] overflow-y-auto shadow-2xl flex flex-col gap-6">
-        
+
         {/* Header */}
         <div className="flex justify-between items-start border-b border-border/40 pb-4">
           <div>
@@ -87,14 +87,14 @@ export default function RecommendationsModal({ department, onClose }) {
               {step === 'select' ? 'Select Target Account' : getDeptTitle()}
             </h3>
             <p className="text-xs text-text-muted mt-1">
-              {step === 'select' 
-                ? 'Choose a client or lead to analyze and fetch recommendations' 
+              {step === 'select'
+                ? 'Choose a client or lead to analyze and fetch recommendations'
                 : 'Recommended products and rates for case planning'
               }
             </p>
           </div>
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="p-2 rounded-xl hover:bg-surface-hover text-text-muted transition-colors"
             title="Close Modal"
           >
@@ -113,8 +113,8 @@ export default function RecommendationsModal({ department, onClose }) {
             <div className="space-y-5 py-2">
               <div>
                 <label className="text-xs text-text-muted font-semibold block mb-1.5 uppercase tracking-wider">Client *</label>
-                <select 
-                  value={selectedClient} 
+                <select
+                  value={selectedClient}
                   onChange={e => { setSelectedClient(e.target.value); setSelectedLead(''); }}
                   className="w-full p-3.5 rounded-xl border border-border bg-bg text-sm text-text focus:outline-none focus:border-accent"
                 >
@@ -133,8 +133,8 @@ export default function RecommendationsModal({ department, onClose }) {
 
               <div>
                 <label className="text-xs text-text-muted font-semibold block mb-1.5 uppercase tracking-wider">Or Link Lead (not yet a client)</label>
-                <select 
-                  value={selectedLead} 
+                <select
+                  value={selectedLead}
                   onChange={e => { setSelectedLead(e.target.value); setSelectedClient(''); }}
                   className="w-full p-3.5 rounded-xl border border-border bg-bg text-sm text-text focus:outline-none focus:border-accent"
                 >
@@ -147,7 +147,7 @@ export default function RecommendationsModal({ department, onClose }) {
                 </select>
               </div>
 
-              <button 
+              <button
                 onClick={handleGetRecommendations}
                 disabled={!selectedClient && !selectedLead}
                 className="w-full btn-primary py-4 rounded-xl shadow-lg mt-6 disabled:opacity-40 disabled:cursor-not-allowed hover:scale-[1.01] active:scale-[0.99] transition-all flex items-center justify-center gap-2 font-bold"
@@ -168,27 +168,20 @@ export default function RecommendationsModal({ department, onClose }) {
             </div>
           ) : (
             <div className="space-y-6">
-              
+
               {/* Info Badge */}
-              <div className="flex items-center justify-between p-3.5 bg-accent/5 rounded-2xl border border-accent/10">
-                <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-accent text-lg">info</span>
-                  <span className="text-xs font-semibold text-text">Data Source:</span>
-                  <span className="text-xs font-medium text-accent font-mono">{data.source}</span>
-                </div>
-                <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase tracking-wider ${
-                  data.isLive ? 'bg-green-500/20 text-green-400 border border-green-500/20' : 'bg-amber-500/20 text-amber-400 border border-amber-500/20'
-                }`}>
-                  {data.isLive ? 'Live API' : 'Static Fallback'}
-                </span>
+              <div className="flex items-center gap-2 p-3.5 bg-accent/5 rounded-2xl border border-accent/10">
+                <span className="material-symbols-outlined text-accent text-lg">info</span>
+                <span className="text-xs font-semibold text-text">Data Source:</span>
+                <span className="text-xs font-medium text-accent font-mono">{data.source}</span>
               </div>
 
               {/* Recommendations List */}
               <div className="space-y-4">
                 {data.recommendations && data.recommendations.length > 0 ? (
                   data.recommendations.map((rec) => (
-                    <div 
-                      key={rec.id} 
+                    <div
+                      key={rec.id}
                       className="card p-5 border border-border/60 hover:border-accent/40 bg-surface-hover/30 hover:bg-surface-hover/50 transition-all duration-200 group flex flex-col md:flex-row justify-between gap-4"
                     >
                       <div className="space-y-2 flex-1">
@@ -219,7 +212,7 @@ export default function RecommendationsModal({ department, onClose }) {
                           <p className="text-[10px] text-text-muted font-semibold uppercase tracking-wider">{rec.metricName}</p>
                           <p className="text-xl font-extrabold text-secondary mt-0.5">{rec.metricValue}</p>
                         </div>
-                        <button 
+                        <button
                           onClick={() => handleCopy(rec)}
                           className="btn-ghost text-xs px-3.5 py-2 flex items-center gap-1.5 hover:bg-accent/10 hover:text-accent font-semibold transition-all rounded-xl"
                         >
@@ -241,7 +234,7 @@ export default function RecommendationsModal({ department, onClose }) {
         {/* Footer */}
         <div className="flex justify-between items-center pt-2 border-t border-border/40">
           {step === 'results' ? (
-            <button 
+            <button
               onClick={() => setStep('select')}
               className="btn-ghost text-xs px-4 py-2.5 flex items-center gap-1.5 hover:bg-accent/10 hover:text-accent font-bold transition-all rounded-xl"
             >

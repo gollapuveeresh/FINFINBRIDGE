@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ConsultantLayout from '../../layouts/ConsultantLayout';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
@@ -132,7 +132,26 @@ function PortfolioDesign({ lc, onRefresh }) {
     { assetClass:'Debt',   instrument:'Short Duration Fund',  allocation:30, amount:0, expectedReturn:7 },
     { assetClass:'Gold',   instrument:'SGB / Gold ETF',       allocation:10, amount:0, expectedReturn:8 },
   ]);
+  const [note, setNote] = useState(lc.recommendationNotes || '');
+  const [aiRecs, setAiRecs] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get(`/recommendations/cases/${lc._id}`)
+      .then(res => {
+        if (res.data) {
+          if (res.data.recommendationData) {
+            try {
+              setAiRecs(JSON.parse(res.data.recommendationData) || []);
+            } catch {}
+          }
+          setNote(res.data.recommendationNotes || lc.recommendationNotes || '');
+        }
+      })
+      .catch(() => {});
+  }, [lc._id]);
+
   const totalPct = portfolio.reduce((s,r)=>s+(+r.allocation||0),0);
   const total = lc.investmentAmount || 0;
 
@@ -142,58 +161,223 @@ function PortfolioDesign({ lc, onRefresh }) {
 
   const calcAmounts = () => setPortfolio(prev=>prev.map(r=>({...r, amount:Math.round((+r.allocation/100)*total)})));
 
-  const send = async () => {
+  const handleGenerate = async () => {
+    try {
+      setLoadingRecs(true);
+      const res = await api.post(`/recommendations/cases/${lc._id}/generate`);
+      const generated = res.data.recommendations || [];
+      setAiRecs(generated);
+      if (generated.length > 0) {
+        const newPortfolio = generated.map(g => {
+          let asset = 'Equity';
+          if (g.title.toLowerCase().includes('bond') || g.title.toLowerCase().includes('debt')) asset = 'Debt';
+          else if (g.title.toLowerCase().includes('gold')) asset = 'Gold';
+          return {
+            assetClass: asset,
+            instrument: g.title,
+            allocation: Math.round(100 / generated.length),
+            amount: Math.round((100 / generated.length / 100) * total),
+            expectedReturn: 12
+          };
+        });
+        setPortfolio(newPortfolio);
+      }
+      toast.success('Recommendations generated successfully!');
+    } catch {
+      toast.error('Failed to generate recommendations');
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
+
+  const handleSave = async () => {
     if (Math.abs(totalPct-100)>0.5) { toast.error('Allocation must sum to 100%'); return; }
-    try { setSaving(true);
-      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, { portfolio, stage:'client_approval' });
-      toast.success('Portfolio sent to client'); onRefresh();
-    } catch { toast.error('Failed'); } finally { setSaving(false); }
+    try {
+      setSaving(true);
+      const payloadRecs = portfolio.map((r, i) => ({
+        id: `invest-rec-${i}`,
+        title: r.instrument,
+        metricName: 'Allocation',
+        metricValue: `${r.allocation}%`,
+        detail1: `Asset Class: ${r.assetClass}`,
+        detail2: `Expected Return: ${r.expectedReturn}%`,
+        description: `Invest ₹${r.amount?.toLocaleString('en-IN')} in ${r.instrument}`,
+        provider: 'Consultant Custom'
+      }));
+
+      await api.post(`/recommendations/cases/${lc._id}/save`, {
+        recommendations: payloadRecs,
+        notes: note
+      });
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        portfolio,
+        recommendationNotes: note
+      });
+      toast.success('Recommendation saved successfully!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to save recommendation');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (Math.abs(totalPct-100)>0.5) { toast.error('Allocation must sum to 100%'); return; }
+    try {
+      setSaving(true);
+      const payloadRecs = portfolio.map((r, i) => ({
+        id: `invest-rec-${i}`,
+        title: r.instrument,
+        metricName: 'Allocation',
+        metricValue: `${r.allocation}%`,
+        detail1: `Asset Class: ${r.assetClass}`,
+        detail2: `Expected Return: ${r.expectedReturn}%`,
+        description: `Invest ₹${r.amount?.toLocaleString('en-IN')} in ${r.instrument}`,
+        provider: 'Consultant Custom'
+      }));
+
+      await api.post(`/recommendations/cases/${lc._id}/send`, {
+        recommendations: payloadRecs,
+        notes: note
+      });
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        portfolio,
+        recommendationNotes: note,
+        stage: 'client_approval'
+      });
+      toast.success('Recommendation sent to client!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to send recommendation');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-gutter">
+    <div className="space-y-gutter animate-fade-in">
       <div className="flex justify-between items-start flex-wrap gap-3">
-        <h2 className="text-xl font-bold text-accent">Portfolio Design</h2>
+        <div>
+          <h2 className="text-xl font-bold text-accent">Portfolio Design</h2>
+          <p className="text-xs text-text-muted mt-0.5">Define target assets, instruments, and percentage weighting</p>
+        </div>
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={loadingRecs}
+            className="btn-secondary text-xs px-4 py-2 flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-sm">psychology</span>
+            {loadingRecs ? 'Generating...' : 'Generate Recommendation'}
+          </button>
           <span className={`text-sm font-bold px-3 py-1 rounded-full ${Math.abs(totalPct-100)<1?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>
             {totalPct}% allocated
           </span>
           <button onClick={calcAmounts} className="btn-ghost text-xs px-4 py-2">Auto-calc ₹ amounts</button>
         </div>
       </div>
-      <div className="card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-surface border-b border-border">
-            <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
-              {['Asset Class','Instrument','Allocation %','Amount (₹)','Expected Return %',''].map(h=><th key={h} className="px-4 py-3">{h}</th>)}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {portfolio.map((r,i)=>(
-              <tr key={i}>
-                <td className="px-4 py-3">
-                  <select value={r.assetClass} onChange={e=>update(i,'assetClass',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs">
-                    {ASSET_CLASSES.map(a=><option key={a} value={a}>{a}</option>)}
-                  </select>
-                </td>
-                <td className="px-4 py-3"><input value={r.instrument} onChange={e=>update(i,'instrument',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-40" /></td>
-                <td className="px-4 py-3"><input type="number" value={r.allocation} onChange={e=>update(i,'allocation',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-16" /></td>
-                <td className="px-4 py-3"><input type="number" value={r.amount} onChange={e=>update(i,'amount',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-28" /></td>
-                <td className="px-4 py-3"><input type="number" value={r.expectedReturn} onChange={e=>update(i,'expectedReturn',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-16" /></td>
-                <td className="px-4 py-3"><button onClick={()=>removeRow(i)} className="text-red-400 hover:text-red-300"><span className="material-symbols-outlined text-base">delete</span></button></td>
-              </tr>
+
+      {/* AI suggestions */}
+      {aiRecs.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h3 className="text-sm font-bold text-accent">AI Generated Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {aiRecs.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => {
+                  setNote(p => p + `\n- Suggested: ${rec.title} (${rec.metricValue})`);
+                  toast.success(`Selected suggestion: ${rec.title}`);
+                }}
+                className="text-left p-3.5 rounded-xl border border-border bg-bg/30 hover:border-accent hover:bg-surface-hover/30 transition-all"
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <p className="text-xs font-bold text-text truncate">{rec.title}</p>
+                  <span className="text-[8px] bg-accent/10 text-accent font-semibold px-1 rounded truncate">{rec.provider}</span>
+                </div>
+                <p className="text-[10px] text-text-muted line-clamp-2 mt-1">"{rec.description}"</p>
+                <div className="flex justify-between items-center mt-2.5 pt-2 border-t border-border/20">
+                  <div>
+                    <p className="text-[8px] text-text-muted font-bold uppercase tracking-wider">{rec.metricName}</p>
+                    <p className="text-xs font-bold text-secondary">{rec.metricValue}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[8px] text-text-muted">{rec.detail1}</p>
+                    <p className="text-[8px] text-text-muted">{rec.detail2}</p>
+                  </div>
+                </div>
+              </button>
             ))}
-          </tbody>
-        </table>
-        <div className="px-4 py-3 border-t border-border flex gap-3">
-          <button onClick={addRow} className="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">add</span> Add Row
-          </button>
+          </div>
+        </div>
+      )}
+
+      {/* Table & Notes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+        <div className="card overflow-x-auto col-span-2 p-5 space-y-4">
+          <h3 className="font-bold text-accent">Target Portfolio Weighting</h3>
+          <table className="w-full text-sm">
+            <thead className="bg-surface border-b border-border">
+              <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
+                {['Asset Class','Instrument','Allocation %','Amount (₹)','Expected Return %',''].map(h=><th key={h} className="px-3 py-2">{h}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {portfolio.map((r,i)=>(
+                <tr key={i}>
+                  <td className="px-3 py-2">
+                    <select value={r.assetClass} onChange={e=>update(i,'assetClass',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-full">
+                      {ASSET_CLASSES.map(a=><option key={a} value={a}>{a}</option>)}
+                    </select>
+                  </td>
+                  <td className="px-3 py-2"><input value={r.instrument} onChange={e=>update(i,'instrument',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-full" /></td>
+                  <td className="px-3 py-2"><input type="number" value={r.allocation} onChange={e=>update(i,'allocation',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-16" /></td>
+                  <td className="px-3 py-2"><input type="number" value={r.amount} onChange={e=>update(i,'amount',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-24" /></td>
+                  <td className="px-3 py-2"><input type="number" value={r.expectedReturn} onChange={e=>update(i,'expectedReturn',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-16" /></td>
+                  <td className="px-3 py-2"><button onClick={()=>removeRow(i)} className="text-red-400 hover:text-red-300"><span className="material-symbols-outlined text-base">delete</span></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div className="pt-2 flex gap-3">
+            <button onClick={addRow} className="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
+              <span className="material-symbols-outlined text-sm">add</span> Add Row
+            </button>
+          </div>
+        </div>
+
+        <div className="card p-6 flex flex-col justify-between">
+          <div>
+            <h3 className="font-bold text-accent mb-3">Consultant Notes</h3>
+            <label className="text-xs text-text-muted block mb-1">Investment Strategy & Notes *</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              className="w-full p-2.5 rounded-xl border border-border bg-bg text-xs h-48 resize-none"
+              placeholder="Explain risk profile alignment, target yields, and asset correlation..."
+            />
+          </div>
+
+          <div className="space-y-3 mt-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-3 text-xs font-bold border border-accent/40 bg-accent/5 text-accent hover:bg-accent/10 transition-all rounded-xl"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={saving}
+              className="w-full py-3 text-xs font-bold btn-primary rounded-xl"
+            >
+              {saving ? 'Sending...' : 'Send Portfolio to Client'}
+            </button>
+          </div>
         </div>
       </div>
-      <button onClick={send} disabled={saving} className="btn-primary px-8 py-3 disabled:opacity-50">
-        {saving ? 'Sending...' : 'Send Portfolio to Client for Approval'}
-      </button>
     </div>
   );
 }
@@ -441,9 +625,6 @@ export default function InvestmentWorkflow() {
         <div><h1 className="text-headline-lg font-bold text-accent">Investment Workflow</h1>
           <p className="text-text-muted text-sm mt-1">End-to-end investment portfolio management</p></div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
-            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
-          </button>
           <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5">
             <span className="material-symbols-outlined text-base">add_circle</span> New Investment Case
           </button>
@@ -456,9 +637,6 @@ export default function InvestmentWorkflow() {
           <span className="material-symbols-outlined text-5xl text-text-muted">trending_up</span>
           <p className="font-bold text-accent mt-4 text-xl">No investment cases yet</p>
           <div className="flex justify-center gap-3 mt-6">
-            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
-              View Recommendations
-            </button>
             <button onClick={()=>setShowCreate(true)} className="btn-primary px-8 py-3">Create Investment Case</button>
           </div>
         </div>
@@ -528,9 +706,6 @@ export default function InvestmentWorkflow() {
             <button onClick={createCase} disabled={creating} className="flex-1 btn-primary py-3 disabled:opacity-60">{creating?'Creating...':'Create Case'}</button>
           </div>
         </Modal>
-      )}
-      {showRecommendations && (
-        <RecommendationsModal department="investments" onClose={() => setShowRecommendations(false)} />
       )}
     </ConsultantLayout>
   );

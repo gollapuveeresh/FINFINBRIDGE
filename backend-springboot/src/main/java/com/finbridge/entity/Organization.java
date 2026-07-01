@@ -46,7 +46,7 @@ public class Organization {
     @Column(table = "organization_packages", name = "selected_package")
     private String selectedPackage;
 
-    @Column(table = "organization_packages", name = "custom_requirement")
+    @Column(name = "custom_requirement")
     private String customRequirement;
 
     @Column(name = "kyc_verified", nullable = false)

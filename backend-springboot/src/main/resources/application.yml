@@ -32,7 +32,7 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     # SQL logging is OFF by default (perf + avoids PII in logs). Enable in the 'dev' profile only.
     show-sql: false
     # Keep open-session-in-view ON: several read endpoints build their DTOs outside an explicit
@@ -53,7 +53,7 @@ spring:
         order_updates: true
 
   flyway:
-    enabled: true
+    enabled: false
     locations: classpath:db/migration
     baseline-on-migrate: true
     ignore-missing-migrations: true

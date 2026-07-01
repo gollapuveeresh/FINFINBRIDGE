@@ -95,11 +95,10 @@ export default function DepartmentManagement() {
       <div className="flex gap-3 flex-wrap">
         {DEPARTMENTS.map(d => (
           <button key={d.key} onClick={() => setActiveDept(d.key)}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm border transition-all ${
-              activeDept === d.key
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl font-semibold text-sm border transition-all ${activeDept === d.key
                 ? 'bg-accent text-on-primary border-accent'
                 : 'border-border text-text-muted hover:border-secondary hover:text-secondary'
-            }`}>
+              }`}>
             <span className="material-symbols-outlined text-base">{d.icon}</span>
             {d.label}
           </button>
@@ -315,13 +314,16 @@ export default function DepartmentManagement() {
             <p className="text-text-muted text-sm mb-6">This consultant will handle {activeDept} clients.</p>
             <div className="space-y-4">
               {[
-                { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Consultant Name' },
-                { key: 'email', label: 'Email', type: 'email', placeholder: 'consultant@finbridge.com' },
-                { key: 'password', label: 'Password', type: 'password', placeholder: '••••••••' },
-                { key: 'phone', label: 'Phone (optional)', type: 'text', placeholder: '+91 9876543210' },
+                { key: 'name', label: 'Full Name', type: 'text', placeholder: 'Consultant Name', required: true },
+                { key: 'email', label: 'Email', type: 'email', placeholder: 'consultant@finbridge.com', required: true },
+                { key: 'password', label: 'Password', type: 'password', placeholder: '••••••••', required: true },
+                { key: 'phone', label: 'Phone', type: 'text', placeholder: '+91 9876543210', required: false },
               ].map(f => (
                 <div key={f.key}>
-                  <label className="text-xs text-text-muted block mb-1">{f.label}</label>
+                  <label className="text-xs text-text-muted block mb-1">
+                    {f.label}
+                    {f.required ? ' *' : ' (Optional)'}
+                  </label>
                   <input type={f.type} placeholder={f.placeholder} value={form[f.key]}
                     onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                     className="w-full p-2.5 rounded-xl border border-border bg-bg text-sm" />
@@ -329,7 +331,7 @@ export default function DepartmentManagement() {
               ))}
             </div>
             <div className="flex gap-3 mt-6">
-              <button onClick={() => setShowAddConsultant(false)} className="flex-1 btn-ghost py-3">Cancel</button>
+              <button onClick={() => { setShowAddConsultant(false); setForm({ name: '', email: '', password: '', phone: '' }); }} className="flex-1 btn-ghost py-3">Cancel</button>
               <button onClick={handleAddConsultant} disabled={saving}
                 className="flex-1 btn-primary py-3 disabled:opacity-60">
                 {saving ? 'Creating...' : 'Create Consultant'}

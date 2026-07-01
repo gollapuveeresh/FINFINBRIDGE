@@ -5,19 +5,19 @@ import { useB2BAuth } from '../../context/B2BAuthContext';
 import b2bApi from '../../services/b2bApi';
 
 const DOC_TYPES = [
-  { key:'GST_CERTIFICATE', label:'VAT Registration (BIN)', icon:'receipt_long', required:true },
-  { key:'PAN',             label:'TIN Certificate',        icon:'badge',        required:true },
-  { key:'CIN',             label:'CIN Document',   icon:'apartment',    required:true },
-  { key:'INCORPORATION',   label:'Incorporation Certificate', icon:'gavel', required:true },
-  { key:'BANK_STATEMENT',  label:'Bank Statement (6 months)', icon:'account_balance', required:true },
-  { key:'FINANCIAL_STATEMENT', label:'Financial Statements', icon:'bar_chart', required:false },
-  { key:'OTHER',           label:'Other Documents', icon:'attach_file',  required:false },
+  { key: 'GST_CERTIFICATE', label: 'VAT Registration (BIN)', icon: 'receipt_long', required: true },
+  { key: 'PAN', label: 'TIN Certificate', icon: 'badge', required: true },
+  { key: 'CIN', label: 'CIN Document', icon: 'apartment', required: true },
+  { key: 'INCORPORATION', label: 'Incorporation Certificate', icon: 'gavel', required: true },
+  { key: 'BANK_STATEMENT', label: 'Bank Statement (6 months)', icon: 'account_balance', required: true },
+  { key: 'FINANCIAL_STATEMENT', label: 'Financial Statements', icon: 'bar_chart', required: false },
+  { key: 'OTHER', label: 'Other Documents', icon: 'attach_file', required: false },
 ];
 
 const STATUS_COLORS = {
-  pending:'bg-amber-500/15 text-amber-400',
-  verified:'bg-green-500/15 text-green-400',
-  rejected:'bg-red-500/15 text-red-400',
+  pending: 'bg-amber-500/15 text-amber-400',
+  verified: 'bg-green-500/15 text-green-400',
+  rejected: 'bg-red-500/15 text-red-400',
 };
 
 export default function B2BDocuments() {
@@ -158,7 +158,7 @@ export default function B2BDocuments() {
             <ul className="space-y-1 text-xs">
               <li>• All documents must be clear, legible PDFs or images (JPG/PNG)</li>
               <li>• Bank statements should cover the last 6 months</li>
-              <li>• Maximum file size: 10MB per document</li>
+              <li>• Maximum file size: 6 MB per document</li>
               <li>• Our compliance team reviews within 24–48 business hours</li>
             </ul>
           </div>

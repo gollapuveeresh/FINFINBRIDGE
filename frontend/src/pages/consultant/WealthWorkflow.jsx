@@ -157,47 +157,265 @@ function AssetAllocation({ lc, onRefresh }) {
     { assetClass:'Real Estate',allocation:15, currentValue:'', targetValue:'' },
     { assetClass:'Gold',      allocation:10, currentValue:'', targetValue:'' },
   ]);
+  const [form, setForm] = useState({
+    retirementPlan: lc.retirementPlan || '',
+    wealthStrategy: lc.wealthStrategy || '',
+    growthProjection: lc.growthProjection || '',
+    note: lc.recommendationNotes || ''
+  });
+  const [recs, setRecs] = useState([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    api.get(`/recommendations/cases/${lc._id}`)
+      .then(res => {
+        if (res.data) {
+          if (res.data.recommendationData) {
+            try {
+              setRecs(JSON.parse(res.data.recommendationData) || []);
+            } catch {}
+          }
+          setForm(p => ({
+            ...p,
+            note: res.data.recommendationNotes || lc.recommendationNotes || ''
+          }));
+        }
+      })
+      .catch(() => {});
+  }, [lc._id]);
+
   const total = alloc.reduce((s,r)=>s+(+r.allocation||0),0);
   const update = (i,k,v) => setAlloc(prev=>prev.map((r,idx)=>idx===i?{...r,[k]:v}:r));
   const addRow = () => setAlloc(prev=>[...prev,{assetClass:'Alternative',allocation:0,currentValue:'',targetValue:''}]);
 
-  const send = async () => {
+  const handleGenerate = async () => {
+    try {
+      setLoadingRecs(true);
+      const res = await api.post(`/recommendations/cases/${lc._id}/generate`);
+      const generated = res.data.recommendations || [];
+      setRecs(generated);
+      if (generated.length > 0) {
+        setForm(p => ({
+          ...p,
+          wealthStrategy: generated.map(g => `${g.title}: ${g.description}`).join('\n\n')
+        }));
+      }
+      toast.success('Recommendations generated successfully!');
+    } catch {
+      toast.error('Failed to generate recommendations');
+    } finally {
+      setLoadingRecs(false);
+    }
+  };
+
+  const handleSave = async () => {
     if (Math.abs(total-100)>0.5) { toast.error('Must sum to 100%'); return; }
-    try { setSaving(true);
-      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, { assetAllocation:alloc, stage:'client_approval' });
-      toast.success('Asset allocation sent to client'); onRefresh();
-    } catch { toast.error('Failed'); } finally { setSaving(false); }
+    try {
+      setSaving(true);
+      const recommendations = recs.length ? recs : [
+        {
+          id: 'custom-wealth',
+          title: 'Asset Allocation Plan',
+          metricName: 'Total Allocation',
+          metricValue: `${total}%`,
+          detail1: `Strategy: ${form.wealthStrategy.substring(0, 30)}...`,
+          detail2: `Retirement: ${form.retirementPlan.substring(0, 30)}...`,
+          description: form.note || 'Custom wealth structure',
+          provider: 'Consultant Custom'
+        }
+      ];
+
+      // Save using recommendations endpoint
+      await api.post(`/recommendations/cases/${lc._id}/save`, { recommendations, notes: form.note });
+      // Update case attributes
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        assetAllocation: alloc,
+        retirementPlan: form.retirementPlan,
+        wealthStrategy: form.wealthStrategy,
+        growthProjection: form.growthProjection,
+        recommendationNotes: form.note
+      });
+      toast.success('Recommendation saved successfully!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to save recommendation');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSend = async () => {
+    if (Math.abs(total-100)>0.5) { toast.error('Must sum to 100%'); return; }
+    try {
+      setSaving(true);
+      const recommendations = recs.length ? recs : [
+        {
+          id: 'custom-wealth',
+          title: 'Asset Allocation Plan',
+          metricName: 'Total Allocation',
+          metricValue: `${total}%`,
+          detail1: `Strategy: ${form.wealthStrategy.substring(0, 30)}...`,
+          detail2: `Retirement: ${form.retirementPlan.substring(0, 30)}...`,
+          description: form.note || 'Custom wealth structure',
+          provider: 'Consultant Custom'
+        }
+      ];
+
+      await api.post(`/recommendations/cases/${lc._id}/send`, { recommendations, notes: form.note });
+      await api.patch(`/dept-cases/${DEPT}/${lc._id}`, {
+        assetAllocation: alloc,
+        retirementPlan: form.retirementPlan,
+        wealthStrategy: form.wealthStrategy,
+        growthProjection: form.growthProjection,
+        recommendationNotes: form.note
+      });
+      toast.success('Recommendation sent to client!');
+      onRefresh();
+    } catch {
+      toast.error('Failed to send recommendation');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <div className="space-y-gutter">
-      <div className="flex justify-between items-start flex-wrap gap-3">
-        <h2 className="text-xl font-bold text-accent">Asset Allocation</h2>
-        <span className={`text-sm font-bold px-3 py-1 rounded-full ${Math.abs(total-100)<1?'bg-green-500/20 text-green-400':'bg-red-500/20 text-red-400'}`}>{total}% allocated</span>
+    <div className="space-y-gutter animate-fade-in">
+      <div className="flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <h2 className="text-xl font-bold text-accent">Wealth Recommendation & Allocation</h2>
+          <p className="text-xs text-text-muted mt-0.5">Design portfolio allocation, strategy, and projection for the client</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={loadingRecs}
+            className="btn-secondary text-xs px-4 py-2 flex items-center gap-1.5"
+          >
+            <span className="material-symbols-outlined text-sm">psychology</span>
+            {loadingRecs ? 'Generating...' : 'Generate Recommendation'}
+          </button>
+          <span className={`text-xs font-bold px-3 py-2 rounded-xl flex items-center ${Math.abs(total-100)<1?'bg-green-500/20 text-green-400 border border-green-500/30':'bg-red-500/20 text-red-400 border border-red-500/30'}`}>{total}% allocated</span>
+        </div>
       </div>
-      <div className="card overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-surface border-b border-border">
-            <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
-              {['Asset Class','Allocation %','Current Value (₹)','Target Value (₹)',''].map(h=><th key={h} className="px-4 py-3">{h}</th>)}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {alloc.map((r,i)=>(
-              <tr key={i}>
-                <td className="px-4 py-3"><select value={r.assetClass} onChange={e=>update(i,'assetClass',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs">{ASSET_CLASSES.map(a=><option key={a} value={a}>{a}</option>)}</select></td>
-                <td className="px-4 py-3"><input type="number" value={r.allocation} onChange={e=>update(i,'allocation',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-16" /></td>
-                <td className="px-4 py-3"><input type="number" value={r.currentValue} onChange={e=>update(i,'currentValue',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-28" /></td>
-                <td className="px-4 py-3"><input type="number" value={r.targetValue} onChange={e=>update(i,'targetValue',e.target.value)} className="p-1.5 rounded-lg border border-border bg-bg text-xs w-28" /></td>
-                <td className="px-4 py-3"><button onClick={()=>setAlloc(prev=>prev.filter((_,idx)=>idx!==i))} className="text-red-400 hover:text-red-300"><span className="material-symbols-outlined text-base">delete</span></button></td>
-              </tr>
+
+      {/* Suggested Products list */}
+      {recs.length > 0 && (
+        <div className="card p-5 space-y-3">
+          <h3 className="text-xs font-bold text-accent">AI Generated Suggestions</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {recs.map((rec) => (
+              <button
+                key={rec.id}
+                onClick={() => {
+                  setForm(p => ({
+                    ...p,
+                    wealthStrategy: `Selected Strategy: ${rec.title}\n\n${rec.description}`
+                  }));
+                  toast.success(`Selected suggestion: ${rec.title}`);
+                }}
+                className="text-left p-3.5 rounded-xl border border-border bg-bg/30 hover:border-accent hover:bg-surface-hover/30 transition-all"
+              >
+                <div className="flex items-center justify-between gap-1 mb-1">
+                  <p className="text-xs font-bold text-text truncate">{rec.title}</p>
+                  <span className="text-[8px] bg-accent/10 text-accent font-semibold px-1 rounded truncate">{rec.provider}</span>
+                </div>
+                <p className="text-[10px] text-text-muted line-clamp-2 mt-1">"{rec.description}"</p>
+                <div className="flex justify-between items-center mt-2.5 pt-2 border-t border-border/20">
+                  <div>
+                    <p className="text-[8px] text-text-muted font-bold uppercase tracking-wider">{rec.metricName}</p>
+                    <p className="text-xs font-bold text-secondary">{rec.metricValue}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[8px] text-text-muted">{rec.detail1}</p>
+                    <p className="text-[8px] text-text-muted">{rec.detail2}</p>
+                  </div>
+                </div>
+              </button>
             ))}
-          </tbody>
-        </table>
-        <div className="px-4 py-3 border-t border-border"><button onClick={addRow} className="text-xs text-accent hover:underline font-semibold flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span> Add Class</button></div>
+          </div>
+        </div>
+      )}
+
+      {/* Inputs block */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+        {/* Table card */}
+        <div className="card p-6 space-y-4">
+          <h3 className="font-bold text-accent">Asset Allocation</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-surface border-b border-border">
+                <tr className="text-left text-text-muted text-xs uppercase tracking-wider">
+                  {['Asset Class','Allocation %','Current Value (₹)','Target Value (₹)',''].map(h=><th key={h} className="px-3 py-2">{h}</th>)}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {alloc.map((r,i)=>(
+                  <tr key={i}>
+                    <td className="px-3 py-2"><select value={r.assetClass} onChange={e=>update(i,'assetClass',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-full">{ASSET_CLASSES.map(a=><option key={a} value={a}>{a}</option>)}</select></td>
+                    <td className="px-3 py-2"><input type="number" value={r.allocation} onChange={e=>update(i,'allocation',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-16" /></td>
+                    <td className="px-3 py-2"><input type="number" value={r.currentValue} onChange={e=>update(i,'currentValue',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-20" /></td>
+                    <td className="px-3 py-2"><input type="number" value={r.targetValue} onChange={e=>update(i,'targetValue',e.target.value)} className="p-1 rounded-lg border border-border bg-bg text-xs w-20" /></td>
+                    <td className="px-3 py-2"><button onClick={()=>setAlloc(prev=>prev.filter((_,idx)=>idx!==i))} className="text-red-400 hover:text-red-300"><span className="material-symbols-outlined text-base">delete</span></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="pt-2 border-t border-border/20">
+            <button onClick={addRow} className="text-xs text-accent hover:underline font-semibold flex items-center gap-1"><span className="material-symbols-outlined text-sm">add</span> Add Class</button>
+          </div>
+        </div>
+
+        {/* Wealth parameters & strategy details */}
+        <div className="card p-6 space-y-4 flex flex-col justify-between">
+          <div className="space-y-4">
+            <h3 className="font-bold text-accent">Wealth Strategy Parameters</h3>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Wealth Strategy *</label>
+              <textarea value={form.wealthStrategy} onChange={e=>setForm(p=>({...p,wealthStrategy:e.target.value}))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-xs h-20 resize-none"
+                placeholder="Overall plan strategy summary..." />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Retirement Plan Details *</label>
+              <textarea value={form.retirementPlan} onChange={e=>setForm(p=>({...p,retirementPlan:e.target.value}))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-xs h-20 resize-none"
+                placeholder="Pension options, goals, timeline..." />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Growth Projections (₹) *</label>
+              <input type="text" value={form.growthProjection} onChange={e=>setForm(p=>({...p,growthProjection:e.target.value}))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-xs"
+                placeholder="e.g. Projected corpus of ₹5 Crores at 12% CAGR by 2035" />
+            </div>
+            <div>
+              <label className="text-xs text-text-muted block mb-1">Advisor Consultation Notes</label>
+              <textarea value={form.note} onChange={e=>setForm(p=>({...p,note:e.target.value}))}
+                className="w-full p-2.5 rounded-xl border border-border bg-bg text-xs h-20 resize-none"
+                placeholder="Notes for client approval..." />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 mt-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="py-3 text-xs font-bold border border-accent/40 bg-accent/5 text-accent hover:bg-accent/10 transition-all rounded-xl"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={saving || Math.abs(total-100)>1}
+              className="btn-primary py-3 text-xs font-bold disabled:opacity-40"
+            >
+              {saving ? 'Sending...' : 'Send for Approval'}
+            </button>
+          </div>
+        </div>
       </div>
-      <button onClick={send} disabled={saving} className="btn-primary px-8 py-3 disabled:opacity-50">{saving?'Sending...':'Send to Client for Approval'}</button>
     </div>
   );
 }
@@ -370,9 +588,6 @@ export default function WealthWorkflow() {
         <div><h1 className="text-headline-lg font-bold text-accent">Wealth Workflow</h1>
           <p className="text-text-muted text-sm mt-1">End-to-end wealth management</p></div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowRecommendations(true)} className="btn-secondary flex items-center gap-2 px-5">
-            <span className="material-symbols-outlined text-base">recommend</span> View Recommendations
-          </button>
           <button onClick={()=>setShowCreate(true)} className="btn-primary flex items-center gap-2 px-5"><span className="material-symbols-outlined text-base">add_circle</span> New Wealth Case</button>
         </div>
       </div>
@@ -383,9 +598,6 @@ export default function WealthWorkflow() {
           <span className="material-symbols-outlined text-5xl text-text-muted">account_balance</span>
           <p className="font-bold text-accent mt-4 text-xl">No wealth cases yet</p>
           <div className="flex justify-center gap-3 mt-6">
-            <button onClick={() => setShowRecommendations(true)} className="btn-secondary px-8 py-3">
-              View Recommendations
-            </button>
             <button onClick={()=>setShowCreate(true)} className="btn-primary px-8 py-3">Create Wealth Case</button>
           </div>
         </div>
